@@ -13,9 +13,11 @@ import (
 	"time"
 
 	"github.com/juju/loggo"
+
+	"github.com/makyo/stimmtausch/client"
 )
 
-var log = loggo.GetLogger("stimmtausch.client.connection")
+var log = loggo.GetLogger("stimmtausch.client")
 
 // hardcoded program settings
 const inFile string = "in"
@@ -57,13 +59,11 @@ type world struct {
 // getWorldFile returns a file (or directory) name within the scope of the
 // world. These live in $HOME/.config/stimmtausch/{worldname}.
 func (w *world) getWorldFile(name string) (string, error) {
-	u, err := user.Current()
+	home, err := config.HomeDir()
 	if err != nil {
-		log.Criticalf("cannot get current user! %v", err)
-		return "", err
+		panic(err)
 	}
-	homeDir := u.HomeDir
-	filename := filepath.Join(homeDir, ".config", "stimmtausch", w.name, name)
+	filename := filepath.Join(home, "worlds", w.name, name)
 	log.Tracef("file path: %s", filename)
 	return filename, nil
 }

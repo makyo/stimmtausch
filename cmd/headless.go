@@ -13,10 +13,12 @@ func init() {
 }
 
 var headlessCmd = &cobra.Command{
-	Use:   "headless",
-	Short: "Run Stimmtausch in headless mode.",
-	Long:  "",
+	Use:    "headless",
+	Short:  "Run Stimmtausch in headless mode.",
+	Long:   "",
+	PreRun: initConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Oooh, headless! Fancy~")
 	},
+	TraverseChildren: true,
 }
