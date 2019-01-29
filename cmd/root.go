@@ -8,11 +8,11 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use: "",
-	Short: "",
-	Long: "",
+	Use:   "",
+	Short: "Run Stimmtausch.",
+	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to stimmtausch")
+		fmt.Println("Welcome to Stimmtausch")
 	},
 }
 

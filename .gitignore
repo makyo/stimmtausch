@@ -13,3 +13,6 @@
 
 # Dep stuff
 vendor
+
+# Editor stuff
+*.sw[op]
