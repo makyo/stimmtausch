@@ -33,14 +33,14 @@ func Initialize(cmd *cobra.Command, args []string) {
   version: 1
 
   # The main difference in various server types is the connection string.
-  # An example server type for TinyMUCK style servers is show below, but
+  # An example server type for Tinymuck style servers is show below, but
   # feel free to add your own.
   server_types:
-    MUCK:
+    muck:
       connect_string: "connect $user $password"
 
   # You can specify the default server type to use for the serveres below.
-  default_server_type: MUCK
+  default_server_type: muck
   servers:
     spr:
       host: muck.sprmuck.org
@@ -60,7 +60,7 @@ func Initialize(cmd *cobra.Command, args []string) {
       ssl: true
       # If you want to use a different server type for one of the
       # servers, specify it like this.
-      type: MUCK
+      type: muck
 
   # Worlds are a cobination of a server and a character (think "user", in
   # modern web parlance). The worlds below are just examples. You'll probably
@@ -69,16 +69,25 @@ func Initialize(cmd *cobra.Command, args []string) {
     taps_foxface:
       server: tapestries
       username: foxface
-      password: 12345
+      password: fox_12345
+      # You can specify that all output from a world should be logged. it will
+      # be logged to files named after the date in
+      # $HOME/.config/stimmtausch/worlds/<world>
+      # This setting defaults to false.
+      log: true
     taps_rudderbutt:
       # You can associate as many characters as you want with a server.
       server: tapestries
       username: rudderbutt
-      password: 67890
+      password: rudder_67890
     furry_foxface:
+      # You can include an optional display name for the world which will show
+      # up in the UI (though you'll still use the key above to interact with
+      # the world). If you don't include this, the key will be used.
+      display_name: "Foxface (FM)"
       server: furrymuck
       username: foxface
-      password: 12345
+      password: fox_12345
 
   # The default world is what is connected to when you run Stimmtausch
   # without specifying a world on the command line.
