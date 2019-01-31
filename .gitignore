@@ -14,5 +14,8 @@
 # Dep stuff
 vendor
 
+# Jekyll
+.bundle
+
 # Editor stuff
 *.sw[op]
