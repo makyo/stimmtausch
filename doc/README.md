@@ -3,5 +3,5 @@
 ## Command docs
 
 * [`st`](st.md)
-* [`st init`](st-init.md)
-* [`st headless`](st-headless.md)
+* [`st init`](st_init.md)
+* [`st headless`](st_headless.md)
