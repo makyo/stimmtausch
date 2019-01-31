@@ -16,6 +16,8 @@ vendor
 
 # Jekyll
 .bundle
+_site
+.sass-cache
 
 # Editor stuff
 *.sw[op]
