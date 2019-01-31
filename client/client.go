@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type client struct {
+type Client struct {
 	connections       []*connection
 	worlds            map[string]*world
 	servers           map[string]*server
@@ -15,8 +15,8 @@ type client struct {
 	defaultWorld      string
 }
 
-func New() (*client, error) {
-	c := &client{
+func New() (*Client, error) {
+	c := &Client{
 		worlds:            map[string]*world{},
 		servers:           map[string]*server{},
 		serverTypes:       map[string]*serverType{},
@@ -53,7 +53,7 @@ func New() (*client, error) {
 	return c, nil
 }
 
-func (c *client) UpsertServerType(name string, spec map[string]interface{}) error {
+func (c *Client) UpsertServerType(name string, spec map[string]interface{}) error {
 	log.Debugf("upserting server type %s", name)
 	var connectString string
 
@@ -77,7 +77,7 @@ func (c *client) UpsertServerType(name string, spec map[string]interface{}) erro
 	return nil
 }
 
-func (c *client) UpsertServer(name string, spec map[string]interface{}) error {
+func (c *Client) UpsertServer(name string, spec map[string]interface{}) error {
 	log.Debugf("upserting server %s", name)
 	var host string
 	var port int
@@ -144,7 +144,7 @@ func (c *client) UpsertServer(name string, spec map[string]interface{}) error {
 	return nil
 }
 
-func (c *client) UpsertWorld(name string, spec map[string]interface{}) error {
+func (c *Client) UpsertWorld(name string, spec map[string]interface{}) error {
 	log.Debugf("upserting world %s", name)
 	var srv *server
 	var displayName string
@@ -209,11 +209,7 @@ func (c *client) UpsertWorld(name string, spec map[string]interface{}) error {
 	return nil
 }
 
-func (c *client) ConnectToWorld(name string) error {
-	w, ok := c.worlds[name]
-	if !ok {
-		return fmt.Errorf("world %s does not exist", name)
-	}
+func (c *client) connectToWorld(w *world) (*connection, error) {
 	conn, err := w.connect()
 	if err != nil {
 		log.Errorf("error connecting to world %s. %v", name, err)
@@ -222,4 +218,38 @@ func (c *client) ConnectToWorld(name string) error {
 	c.connections = append(c.connections, conn)
 
 	return nil
+}
+
+func (c *client) connectToServer(s *server) (*connection, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (c *client) connectToRaw(connectStr string) (*connection, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (c *Client) Connect(connectStr, string) (*connection, err) {
+	w, ok := c.worlds[conectStr]
+	if ok {
+		conn, err := c.connectToWorld(w)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
+
+	s, ok := c.servers[connectStr]
+	if ok {
+		conn, err := c.connectToServer(s)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
+
+	conn, err := c.connectToRaw(connectStr)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }

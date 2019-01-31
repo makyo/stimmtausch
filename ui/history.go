@@ -5,9 +5,10 @@ import (
 )
 
 type history struct {
-	curr  int
-	max   int
-	lines []string
+	curr           int
+	max            int
+	lines          []string
+	postWriteHooks []func() error
 }
 
 func (h *history) add(line string) {
@@ -54,6 +55,10 @@ func (h *history) Write(line []byte) (int, error) {
 
 func (h *history) Close() error {
 	return nil
+}
+
+func (h *history) AddPostWriteHook(f func() error) {
+	h.postWriteHooks = append(h.postWriteHooks, f)
 }
 
 func NewHistory(max int) *history {

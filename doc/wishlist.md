@@ -15,3 +15,4 @@
         * e.g: `post_limit_chunk_prefix: "spoof ...%s"` or something?
 * On that note, means of staging posts (ctrl+enter?)
 * List of open logfiles per world
+* Timestamps (both ui and logging)

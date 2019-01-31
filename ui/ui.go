@@ -12,10 +12,20 @@ import (
 	"github.com/makyo/st/client"
 )
 
-var log = loggo.GetLogger("stimmtausch.ui")
-var sent = NewHistory(1000)
-var received = NewHistory(10000)
-var lines = 1
+type receivedView struct {
+	connName string
+	viewName string
+	buffer   *history
+	current  bool
+}
+
+var (
+	c *client.Client
+
+	log   = loggo.GetLogger("stimmtausch.ui")
+	sent  = NewHistory(1000)
+	views = []*receivedView{}
+)
 
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
@@ -31,20 +41,25 @@ func send(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 	sent.add(buf)
-	received.add(buf)
 	v.Clear()
 	v.SetCursor(0, 0)
-	fmt.Fprintf(recv, "\n%s", received.current())
-	g.Update(updateRecvSize)
 	return nil
 }
 
-func updateRecvSize(g *gocui.Gui) error {
-	v, err := g.View("recv")
+func updateRecvSize(view *receivedView, g *gocui.Gui) error {
+	v, err := g.View(view.viewName)
 	if err != nil {
 		return err
 	}
-	lines = len(v.ViewBufferLines())
+	lines := len(v.ViewBufferLines())
+	maxX, maxY := g.Size()
+	recvY0 := 3
+	if lines < maxY-7 {
+		recvY0 = maxY - 5 - lines
+	}
+	if _, err := g.SetView(view.viewName, -1, recvY0, maxX, maxY-5); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -110,20 +125,6 @@ func keybindings(g *gocui.Gui) error {
 }
 
 func layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
-	recvY0 := 3
-	if lines < maxY-7 {
-		recvY0 = maxY - 5 - lines
-	}
-	if v, err := g.SetView("recv", -1, recvY0, maxX, maxY-5); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		fmt.Fprint(v, "\n")
-		v.Wrap = true
-		v.Frame = false
-		v.Autoscroll = true
-	}
 	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -141,7 +142,38 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 	}
+	for view, _ := range views {
+		if err := updateRecvSize(view, g); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func connect(connectStr string, g *gocui.Gui) error {
+	connection, err := c.Connect(connectStr)
+	if err != 0 {
+		log.Errorf("unable to connect to %s: %v", connectStr, err)
+	}
+	viewName := fmt.Sprintf("recv%d", len(views))
+	if v, err := g.SetView(viewName, 0, maxY-6, maxX-1, maxY-5); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		fmt.Fprintln(v, "\n")
+		v.Wrap = true
+		v.Frame = false
+		v.Autoscroll = true
+		view := &receivedView{
+			connName: world.GetConnName(),
+			viewName: viewName,
+			buffer:   NewHistory(10000),
+			current:  true,
+		}
+		world.AddOutput(view.buffer)
+		views = append(views, view)
+		g.SetViewOnTop(viewName)
+	}
 }
 
 func New(args []string) {
