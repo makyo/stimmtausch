@@ -3,7 +3,7 @@ package client
 import (
 	"path/filepath"
 
-	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/st/config"
 )
 
 type world struct {
