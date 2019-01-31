@@ -6,6 +6,8 @@ import (
 
 	"github.com/juju/loggo"
 	"github.com/spf13/cobra"
+
+	"github.com/makyo/st/ui"
 )
 
 var log = loggo.GetLogger("stimmtausch.cmd")
@@ -49,7 +51,7 @@ you could connect to bot worlds, plus a new server, with:
 	PreRun: initConfig,
 	Args:   cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to Stimmtausch! This is our 'coming soon' message :)")
+		ui.New(args)
 	},
 	Version: "0.0.0-pre",
 }
