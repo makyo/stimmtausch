@@ -16,3 +16,6 @@
 * On that note, means of staging posts (ctrl+enter?)
 * List of open logfiles per world
 * Timestamps (both ui and logging)
+* Connection tiling
+* Using ui only mode as a front end to headless mode
+    * Involves looser coupling between UI and `client`. Maybe a socket?

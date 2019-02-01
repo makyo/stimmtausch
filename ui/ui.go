@@ -20,11 +20,13 @@ type receivedView struct {
 }
 
 var (
-	c *client.Client
+	args     []string
+	stClient *client.Client
 
-	log   = loggo.GetLogger("stimmtausch.ui")
-	sent  = NewHistory(1000)
-	views = []*receivedView{}
+	log           = loggo.GetLogger("stimmtausch.ui")
+	sent          = NewHistory(1000)
+	views         = []*receivedView{}
+	currViewIndex = 0
 )
 
 func quit(g *gocui.Gui, v *gocui.View) error {
@@ -32,10 +34,6 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 }
 
 func send(g *gocui.Gui, v *gocui.View) error {
-	recv, err := g.View("recv")
-	if err != nil {
-		return err
-	}
 	buf := strings.TrimSpace(v.Buffer())
 	if len(buf) == 0 {
 		return nil
@@ -46,20 +44,25 @@ func send(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func updateRecvSize(view *receivedView, g *gocui.Gui) error {
-	v, err := g.View(view.viewName)
+func (v *receivedView) updateRecvSize(index int, g *gocui.Gui) error {
+	view, err := g.View(v.viewName)
 	if err != nil {
 		return err
 	}
-	lines := len(v.ViewBufferLines())
+	lines := len(view.ViewBufferLines())
 	maxX, maxY := g.Size()
 	recvY0 := 3
 	if lines < maxY-7 {
-		recvY0 = maxY - 5 - lines
+		recvY0 = maxY - 7 - lines
 	}
-	if _, err := g.SetView(view.viewName, -1, recvY0, maxX, maxY-5); err != nil {
-		return err
-	}
+	recvX0 := (maxX * index) - (maxX * currViewIndex)
+	g.Update(func(gg *gocui.Gui) error {
+		if _, err := gg.SetView(v.viewName, recvX0-1, recvY0, recvX0+maxX, maxY-5); err != nil {
+			log.Warningf("unable to create view %+v", err)
+			return err
+		}
+		return nil
+	})
 	return nil
 }
 
@@ -108,8 +111,25 @@ func arrowDown(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func scrollConsole(v *gocui.View, delta int) {
+	_, y := v.Origin()
+	v.SetOrigin(0, y+delta)
+}
+
 func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlLsqBracket, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		scrollConsole(v, -2)
+		return nil
+	}); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlRsqBracket, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		scrollConsole(v, 2)
+		return nil
+	}); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("send", gocui.KeyEnter, gocui.ModNone, send); err != nil {
@@ -124,16 +144,68 @@ func keybindings(g *gocui.Gui) error {
 	return nil
 }
 
-func layout(g *gocui.Gui) error {
-	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
+func connect(connectStr string, g *gocui.Gui) error {
+	log.Tracef("attempting to connect with connection string %s", connectStr)
+	conn, err := stClient.Connect(connectStr)
+	if err != nil {
+		log.Errorf("unable to connect to %s: %v", connectStr, err)
+	}
+	viewName := fmt.Sprintf("recv%d", len(views))
+	if v, err := g.SetView(viewName, -3, -3, -1, -1); err != nil {
 		if err != gocui.ErrUnknownView {
+			log.Warningf("unable to create view %+v", err)
 			return err
 		}
-		loggo.RegisterWriter("ui view", loggocolor.NewWriter(v))
+		fmt.Fprintln(v, "\na")
+		v.Wrap = true
+		v.Frame = false
+		v.Autoscroll = true
+		view := &receivedView{
+			connName: conn.GetConnectionName(),
+			viewName: viewName,
+			buffer:   NewHistory(10000),
+			current:  true,
+		}
+		views = append(views, view)
+		currViewIndex = len(views) - 1
+		view.buffer.AddPostWriteHook(func(line string) error {
+			fmt.Fprint(v, line)
+			return view.updateRecvSize(currViewIndex, g)
+		})
+		conn.AddOutput(viewName, view.buffer)
+		err = conn.Open()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func layout(g *gocui.Gui) error {
+	maxX, maxY := g.Size()
+	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
+		if err != gocui.ErrUnknownView {
+			log.Warningf("unable to create view %+v", err)
+			return err
+		}
+		v.Autoscroll = true
+
+		log.Tracef("attempting to connect with connection strings %v", args)
+		loggo.ReplaceDefaultWriter(loggocolor.NewWriter(v))
+		for _, arg := range args {
+			connect(arg, g)
+		}
 	}
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
+			log.Warningf("unable to create view %+v", err)
 			return err
+		} else {
+			for i, view := range views {
+				if err := view.updateRecvSize(i, g); err != nil {
+					return err
+				}
+			}
 		}
 		v.Editable = true
 		v.Wrap = true
@@ -142,47 +214,19 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 	}
-	for view, _ := range views {
-		if err := updateRecvSize(view, g); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
-func connect(connectStr string, g *gocui.Gui) error {
-	connection, err := c.Connect(connectStr)
-	if err != 0 {
-		log.Errorf("unable to connect to %s: %v", connectStr, err)
-	}
-	viewName := fmt.Sprintf("recv%d", len(views))
-	if v, err := g.SetView(viewName, 0, maxY-6, maxX-1, maxY-5); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		fmt.Fprintln(v, "\n")
-		v.Wrap = true
-		v.Frame = false
-		v.Autoscroll = true
-		view := &receivedView{
-			connName: world.GetConnName(),
-			viewName: viewName,
-			buffer:   NewHistory(10000),
-			current:  true,
-		}
-		world.AddOutput(view.buffer)
-		views = append(views, view)
-		g.SetViewOnTop(viewName)
-	}
-}
-
-func New(args []string) {
-	c, err := client.New()
+func New(argsIn []string) {
+	args = argsIn
+	var err error
+	stClient, err = client.New()
 	if err != nil {
 		log.Criticalf("could not create client: %v", err)
 		os.Exit(4)
 	}
-	log.Tracef("created client: %+v", c)
+	log.Tracef("created client: %+v", stClient)
+	defer stClient.CloseAll()
 
 	g, err := gocui.NewGui(gocui.Output256)
 	if err != nil {
@@ -190,6 +234,7 @@ func New(args []string) {
 		os.Exit(1)
 	}
 	defer g.Close()
+	defer loggo.ReplaceDefaultWriter(loggocolor.NewWriter(os.Stderr))
 
 	g.Cursor = true
 	g.Mouse = true
@@ -202,6 +247,7 @@ func New(args []string) {
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
+		stClient.CloseAll()
 		os.Exit(1)
 	}
 }

@@ -8,7 +8,7 @@ type history struct {
 	curr           int
 	max            int
 	lines          []string
-	postWriteHooks []func() error
+	postWriteHooks []func(string) error
 }
 
 func (h *history) add(line string) {
@@ -20,6 +20,9 @@ func (h *history) add(line string) {
 }
 
 func (h *history) current() string {
+	if len(h.lines) == 0 {
+		return ""
+	}
 	return h.lines[h.curr]
 }
 
@@ -49,7 +52,14 @@ func (h *history) String() string {
 }
 
 func (h *history) Write(line []byte) (int, error) {
+	log.Tracef("received %d bytes", len(line))
 	h.add(string(line))
+	for _, hook := range h.postWriteHooks {
+		err := hook(string(line))
+		if err != nil {
+			return len(line), err
+		}
+	}
 	return len(line), nil
 }
 
@@ -57,7 +67,7 @@ func (h *history) Close() error {
 	return nil
 }
 
-func (h *history) AddPostWriteHook(f func() error) {
+func (h *history) AddPostWriteHook(f func(string) error) {
 	h.postWriteHooks = append(h.postWriteHooks, f)
 }
 

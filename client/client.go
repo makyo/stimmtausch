@@ -7,7 +7,7 @@ import (
 )
 
 type Client struct {
-	connections       []*connection
+	connections       map[string]*connection
 	worlds            map[string]*world
 	servers           map[string]*server
 	serverTypes       map[string]*serverType
@@ -20,6 +20,7 @@ func New() (*Client, error) {
 		worlds:            map[string]*world{},
 		servers:           map[string]*server{},
 		serverTypes:       map[string]*serverType{},
+		connections:       map[string]*connection{},
 		defaultServerType: viper.GetString("stimmtausch.default_server_type"),
 		defaultWorld:      viper.GetString("stimmtausch.default_world"),
 	}
@@ -209,29 +210,30 @@ func (c *Client) UpsertWorld(name string, spec map[string]interface{}) error {
 	return nil
 }
 
-func (c *client) connectToWorld(w *world) (*connection, error) {
-	conn, err := w.connect()
+func (c *Client) connectToWorld(connectStr string, w *world) (*connection, error) {
+	conn, err := w.connect(connectStr)
 	if err != nil {
-		log.Errorf("error connecting to world %s. %v", name, err)
-		return err
+		log.Errorf("error connecting to world %s. %v", w.name, err)
+		return nil, err
 	}
-	c.connections = append(c.connections, conn)
+	c.connections[connectStr] = conn
 
-	return nil
+	return conn, nil
 }
 
-func (c *client) connectToServer(s *server) (*connection, error) {
+func (c *Client) connectToServer(connectStr string, s *server) (*connection, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (c *client) connectToRaw(connectStr string) (*connection, error) {
+func (c *Client) connectToRaw(connectStr string) (*connection, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (c *Client) Connect(connectStr, string) (*connection, err) {
-	w, ok := c.worlds[conectStr]
+func (c *Client) Connect(connectStr string) (*connection, error) {
+	log.Tracef("attempting to connect to %s in %v", connectStr, c)
+	w, ok := c.worlds[connectStr]
 	if ok {
-		conn, err := c.connectToWorld(w)
+		conn, err := c.connectToWorld(connectStr, w)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +242,7 @@ func (c *Client) Connect(connectStr, string) (*connection, err) {
 
 	s, ok := c.servers[connectStr]
 	if ok {
-		conn, err := c.connectToServer(s)
+		conn, err := c.connectToServer(connectStr, s)
 		if err != nil {
 			return nil, err
 		}
@@ -252,4 +254,15 @@ func (c *Client) Connect(connectStr, string) (*connection, err) {
 		return nil, err
 	}
 	return conn, nil
+}
+
+func (c *Client) Close(name string) {
+	c.connections[name].Close()
+}
+
+func (c *Client) CloseAll() {
+	log.Tracef("Closing all connections")
+	for _, conn := range c.connections {
+		conn.Close()
+	}
 }

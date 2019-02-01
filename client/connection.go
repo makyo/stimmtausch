@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/textproto"
 	"os"
@@ -27,29 +28,33 @@ func getTimestamp() string {
 	return time.Now().Format(timeString)
 }
 
+type closeableWriter interface {
+	io.Writer
+	io.Closer
+}
+
 type output struct {
 	name   string
 	global bool
-	output interface {
-		Write([]byte) (int, error)
-		Close() error
-	}
+	output closeableWriter
 }
 
 // conn stores all connection settings
 type connection struct {
-	world      *world
-	addr       *net.TCPAddr
-	workingDir string
-	connection net.Conn
-	fifo       *os.File
-	outputs    []*output
-	disconnect chan bool
+	name         string
+	world        *world
+	addr         *net.TCPAddr
+	workingDir   string
+	connection   net.Conn
+	fifo         *os.File
+	outputs      []*output
+	disconnect   chan bool
+	disconnected chan bool
 }
 
 // lookupHostname gets the TCP address for the world's hostname.
 func (c *connection) lookupHostname() error {
-	addr, err := net.ResolveTCPAddr("tcp", c.world.server.host)
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.world.server.host, c.world.server.port))
 	if err != nil {
 		log.Errorf("unable to resolve host %s: %v", c.world.server.host, err)
 		return err
@@ -88,11 +93,12 @@ func (c *connection) makeLogfile(out *output) error {
 	if err == nil {
 		fmt.Printf("Warning: %v already exists; appending.\n", out.name)
 	}
-	out.output, err = os.OpenFile(out.name, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(out.name, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Warningf("could not open logfile %s for %s, not logging. %v", out.name, c.world.name, err)
 		return err
 	}
+	out.output = f
 	log.Debugf("logfile created as %s", out.name)
 	return nil
 }
@@ -137,6 +143,7 @@ func (c *connection) readToConn() {
 		select {
 		case <-c.disconnect:
 			log.Debugf("%s received disconnect; returning", c.world.name)
+			c.disconnected <- true
 			return
 		default:
 			// This pause between reads from the FIFO is the difference between 0.2%
@@ -155,33 +162,36 @@ func (c *connection) readToConn() {
 			if err != nil {
 				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.name, err)
 			}
-			log.Tracef("%d bytes written to file", bytesOut)
+			log.Tracef("%d bytes written to connection", bytesOut)
 		}
 	}
 }
 
 // readToFile reads from the FIFO and writes to outfiles.
 func (c *connection) readToFile() {
+	reader := bufio.NewReader(c.connection)
+	tp := textproto.NewReader(reader)
 	for {
-		for _, out := range c.outputs {
-			reader := bufio.NewReader(c.connection)
-			tp := textproto.NewReader(reader)
-			line, err := tp.ReadLine()
-			if err != nil {
-				log.Warningf("server disconnected with %v", err)
-				if _, err := fmt.Fprintln(out.output, "\n~Connection lost at %v\n", getTimestamp()); err != nil {
+		line, err := tp.ReadLine()
+		if err != nil {
+			log.Warningf("server disconnected with %v", err)
+			disconnectMsg := fmt.Sprintf("\n~Connection lost at %v\n", getTimestamp())
+			for _, out := range c.outputs {
+				if _, err := fmt.Fprintln(out.output, disconnectMsg); err != nil {
 					log.Warningf("unable to write to output %s for %s. %v", out.name, c.world.name, err)
 				}
-				c.disconnect <- true
-				return
 			}
-			log.Tracef("%d characters read from %s", len(line), c.world.name)
+			c.disconnect <- true
+			return
+		}
+		log.Tracef("%d characters read from %s", len(line), c.world.name)
 
+		for _, out := range c.outputs {
 			bytesOut, err := fmt.Fprintln(out.output, line)
 			if err != nil {
 				log.Warningf("unable to write to output %s for world %s. %v", out.name, c.world.name, err)
 			}
-			log.Tracef("%d bytes written to output for %s", bytesOut, c.world.name)
+			log.Tracef("%d bytes written to output %s for %s", bytesOut, out.name, c.world.name)
 		}
 	}
 }
@@ -225,15 +235,25 @@ func (c *connection) closeOut() {
 	}
 }
 
+func (c *connection) Write(in []byte) (int, error) {
+	out, err := fmt.Fprintln(c.fifo, in)
+	if err != nil {
+		return 0, err
+	}
+	return out, nil
+}
+
 // Close closes the connection and all open files.
 func (c *connection) Close() {
+	log.Tracef("Closing connection %s", c.name)
 	c.disconnect <- true
+	if <-c.disconnected {
+		c.closeConnection()
+		c.closeFIFO()
+		c.closeOut()
 
-	c.closeConnection()
-	c.closeFIFO()
-	c.closeOut()
-
-	log.Infof("quit %s at %s", c.world.name, getTimestamp())
+		log.Infof("quit %s at %s", c.world.name, getTimestamp())
+	}
 }
 
 // Open opens the connection and all output files.
@@ -267,17 +287,39 @@ func (c *connection) Open() error {
 	c.connect()
 
 	c.disconnect = make(chan bool)
+	c.disconnected = make(chan bool)
 	go c.readToFile()
 	go c.readToConn()
 
 	return nil
 }
 
+func (c *connection) World() *world {
+	return c.world
+}
+
+func (c *connection) Server() *server {
+	return c.world.server
+}
+
+func (c *connection) GetConnectionName() string {
+	return c.name
+}
+
+func (c *connection) AddOutput(name string, w closeableWriter) {
+	c.outputs = append(c.outputs, &output{
+		name:   name,
+		global: false,
+		output: w,
+	})
+}
+
 // NewConnection creates a new conneciton with the given world. One can
 // also specify whether or not to use SSL, allow insecure SSL certs, and
 // whether to log all output by default.
-func NewConnection(w *world) (*connection, error) {
+func NewConnection(name string, w *world) (*connection, error) {
 	c := &connection{
+		name:  name,
 		world: w,
 	}
 	var err error

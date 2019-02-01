@@ -27,8 +27,8 @@ func (w *world) getWorldFile(name string) (string, error) {
 	return filename, nil
 }
 
-func (w *world) connect() (*connection, error) {
-	return NewConnection(w)
+func (w *world) connect(name string) (*connection, error) {
+	return NewConnection(name, w)
 }
 
 func NewWorld(name, displayName string, srv *server, username, password string, logByDefault bool) *world {
