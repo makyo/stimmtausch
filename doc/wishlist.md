@@ -1,4 +1,9 @@
-# Wishlist
+---
+layout: default
+title: Wishlist
+---
+
+## Wishlist
 
 * Global config with common settings/servers (viper can handle it)
 * Config editor in the UI
