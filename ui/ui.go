@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -14,14 +15,16 @@ import (
 
 type receivedView struct {
 	connName string
+	conn     *io.WriteCloser
 	viewName string
 	buffer   *history
 	current  bool
 }
 
 var (
-	args     []string
-	stClient *client.Client
+	args      []string
+	stClient  *client.Client
+	currtView *receivedView
 
 	log           = loggo.GetLogger("stimmtausch.ui")
 	sent          = NewHistory(1000)
@@ -38,7 +41,7 @@ func send(g *gocui.Gui, v *gocui.View) error {
 	if len(buf) == 0 {
 		return nil
 	}
-	sent.add(buf)
+	fmt.Fprintln(sent, buf)
 	v.Clear()
 	v.SetCursor(0, 0)
 	return nil
@@ -160,25 +163,44 @@ func connect(connectStr string, g *gocui.Gui) error {
 		v.Wrap = true
 		v.Frame = false
 		v.Autoscroll = true
-		view := &receivedView{
+		currView = &receivedView{
 			connName: conn.GetConnectionName(),
+			conn:     conn,
 			viewName: viewName,
 			buffer:   NewHistory(10000),
 			current:  true,
 		}
-		views = append(views, view)
+		views = append(views, currView)
 		currViewIndex = len(views) - 1
-		view.buffer.AddPostWriteHook(func(line string) error {
+		currView.buffer.AddPostWriteHook(func(line string) error {
 			fmt.Fprint(v, line)
 			return view.updateRecvSize(currViewIndex, g)
 		})
-		conn.AddOutput(viewName, view.buffer)
+		conn.AddOutput(viewName, currView.buffer)
 		err = conn.Open()
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func postCreate(g *gocui.Gui) error {
+	console, err := g.View("console")
+	if err != nil {
+		return err
+	}
+	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
+
+	log.Tracef("setting up sent buffer to write to active connection")
+	sent.AddPostWriteHook(func(line string) error {
+		fmt.Fprintln(currView.conn, line)
+		return nil
+	})
+	log.Tracef("attempting to connect with connection strings %v", args)
+	for _, arg := range args {
+		connect(arg, g)
+	}
 }
 
 func layout(g *gocui.Gui) error {
@@ -189,12 +211,7 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Autoscroll = true
-
-		log.Tracef("attempting to connect with connection strings %v", args)
-		loggo.ReplaceDefaultWriter(loggocolor.NewWriter(v))
-		for _, arg := range args {
-			connect(arg, g)
-		}
+		postCreate(g)
 	}
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -219,6 +236,7 @@ func layout(g *gocui.Gui) error {
 
 func New(argsIn []string) {
 	args = argsIn
+
 	var err error
 	stClient, err = client.New()
 	if err != nil {

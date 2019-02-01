@@ -28,15 +28,10 @@ func getTimestamp() string {
 	return time.Now().Format(timeString)
 }
 
-type closeableWriter interface {
-	io.Writer
-	io.Closer
-}
-
 type output struct {
 	name   string
 	global bool
-	output closeableWriter
+	output io.WriteCloser
 }
 
 // conn stores all connection settings
@@ -306,7 +301,7 @@ func (c *connection) GetConnectionName() string {
 	return c.name
 }
 
-func (c *connection) AddOutput(name string, w closeableWriter) {
+func (c *connection) AddOutput(name string, w io.WriteCloser) {
 	c.outputs = append(c.outputs, &output{
 		name:   name,
 		global: false,
