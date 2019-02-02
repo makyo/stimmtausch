@@ -74,7 +74,7 @@ func (c *connection) makeFIFO() error {
 		return err
 	}
 	log.Debugf("FIFO created as %s", file)
-	if c.fifo, err = os.OpenFile(file, os.O_RDWR|syscall.O_NONBLOCK, os.ModeNamedPipe); err != nil {
+	if c.fifo, err = os.OpenFile(file, os.O_RDONLY|syscall.O_NONBLOCK, os.ModeNamedPipe); err != nil {
 		log.Criticalf("unable to open FIFO for reading %s! %v", file, err)
 		return err
 	}
@@ -235,7 +235,7 @@ func (c *connection) Write(in []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND, os.ModeNamedPipe)
 	if err != nil {
 		log.Warningf("could not open FIFO for %s! %v", c.world.name, err)
 		return 0, err

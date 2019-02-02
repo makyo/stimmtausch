@@ -192,7 +192,8 @@ func postCreate(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	loggo.RegisterWriter("console", loggocolor.NewWriter(console))
+	//loggo.RegisterWriter("console", loggocolor.NewWriter(console))
+	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	sent.AddPostWriteHook(func(line string) error {
