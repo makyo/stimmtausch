@@ -45,6 +45,7 @@ type connection struct {
 	outputs      []*output
 	disconnect   chan bool
 	disconnected chan bool
+	connected    bool
 }
 
 // lookupHostname gets the TCP address for the world's hostname.
@@ -128,6 +129,7 @@ func (c *connection) connect() error {
 	//	if err = c.connection.SetKeepAlivePeriod(keepalive); err != nil {
 	//		log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.world.name, err)
 	//	}
+	c.connected = true
 	return nil
 }
 
@@ -193,9 +195,13 @@ func (c *connection) readToFile() {
 
 // closeConnection closes the world's TCP connection.
 func (c *connection) closeConnection() {
+	if !c.connected {
+		log.Debugf("%s already closed", c.name)
+	}
 	if err := c.connection.Close(); err != nil {
 		log.Warningf("error closing connection. %v", err)
 	}
+	c.connected = false
 	log.Debugf("connection closed for %s", c.world.name)
 }
 
@@ -250,6 +256,10 @@ func (c *connection) Write(in []byte) (int, error) {
 
 // Close closes the connection and all open files.
 func (c *connection) Close() error {
+	if !c.connected {
+		log.Debugf("%s already closed", c.name)
+		return nil
+	}
 	log.Tracef("closing connection %s", c.name)
 	c.disconnect <- true
 	if <-c.disconnected {
@@ -325,8 +335,9 @@ func (c *connection) AddOutput(name string, w io.WriteCloser) {
 // whether to log all output by default.
 func NewConnection(name string, w *world) (*connection, error) {
 	c := &connection{
-		name:  name,
-		world: w,
+		name:      name,
+		world:     w,
+		connected: false,
 	}
 	var err error
 	if c.workingDir, err = c.world.getWorldFile(""); err != nil {
