@@ -13,5 +13,3 @@ All the logging works, too!
 [![Screenshot of Stimmtausch in one pane and the log file in another](/assets/2019-01-31.2.png)](/assets/2019-01-31.2.png)
 
 Still lots to do - I can connect and read data, but I can't send anything yet. This is tons of fun, though :D
-
-~Maddy
