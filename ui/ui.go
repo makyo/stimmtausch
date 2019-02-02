@@ -15,17 +15,19 @@ import (
 
 type receivedView struct {
 	connName string
-	conn     *io.WriteCloser
+	conn     io.WriteCloser
 	viewName string
 	buffer   *history
 	current  bool
 }
 
 var (
-	args      []string
-	stClient  *client.Client
-	currtView *receivedView
+	args     []string
+	stClient *client.Client
+	currView *receivedView
+)
 
+var (
 	log           = loggo.GetLogger("stimmtausch.ui")
 	sent          = NewHistory(1000)
 	views         = []*receivedView{}
@@ -174,7 +176,7 @@ func connect(connectStr string, g *gocui.Gui) error {
 		currViewIndex = len(views) - 1
 		currView.buffer.AddPostWriteHook(func(line string) error {
 			fmt.Fprint(v, line)
-			return view.updateRecvSize(currViewIndex, g)
+			return currView.updateRecvSize(currViewIndex, g)
 		})
 		conn.AddOutput(viewName, currView.buffer)
 		err = conn.Open()
@@ -190,17 +192,22 @@ func postCreate(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
+	loggo.RegisterWriter("console", loggocolor.NewWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	sent.AddPostWriteHook(func(line string) error {
-		fmt.Fprintln(currView.conn, line)
+		_, err := fmt.Fprintln(currView.conn, line)
+		if err != nil {
+			log.Warningf("error writing to connection")
+			return err
+		}
 		return nil
 	})
 	log.Tracef("attempting to connect with connection strings %v", args)
 	for _, arg := range args {
 		connect(arg, g)
 	}
+	return nil
 }
 
 func layout(g *gocui.Gui) error {

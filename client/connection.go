@@ -74,8 +74,8 @@ func (c *connection) makeFIFO() error {
 		return err
 	}
 	log.Debugf("FIFO created as %s", file)
-	if c.fifo, err = os.OpenFile(file, os.O_RDONLY|syscall.O_NONBLOCK, os.ModeNamedPipe); err != nil {
-		log.Criticalf("unable to open FIFO for %s! %v", file)
+	if c.fifo, err = os.OpenFile(file, os.O_RDWR|syscall.O_NONBLOCK, os.ModeNamedPipe); err != nil {
+		log.Criticalf("unable to open FIFO for reading %s! %v", file, err)
 		return err
 	}
 	log.Debugf("FIFO opened as", c.fifo.Name())
@@ -204,7 +204,7 @@ func (c *connection) closeFIFO() {
 	name := c.fifo.Name()
 	log.Debugf("closing and deleting FIFO %s", name)
 	if err := c.fifo.Close(); err != nil {
-		log.Warningf("error closing FIFO for %s. %v", c.world.name, err)
+		log.Warningf("error closing FIFO for reading %s. %v", c.world.name, err)
 	}
 	if err := syscall.Unlink(name); err != nil {
 		log.Warningf("error unlinking FIFO for %s. %v", c.world.name, err)
@@ -231,7 +231,17 @@ func (c *connection) closeOut() {
 }
 
 func (c *connection) Write(in []byte) (int, error) {
-	out, err := fmt.Fprintln(c.fifo, in)
+	fname, err := c.world.getWorldFile("_fifo")
+	if err != nil {
+		return 0, err
+	}
+	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Warningf("could not open FIFO for %s! %v", c.world.name, err)
+		return 0, err
+	}
+	defer f.Close()
+	out, err := fmt.Fprintln(f, in)
 	if err != nil {
 		return 0, err
 	}
@@ -239,8 +249,8 @@ func (c *connection) Write(in []byte) (int, error) {
 }
 
 // Close closes the connection and all open files.
-func (c *connection) Close() {
-	log.Tracef("Closing connection %s", c.name)
+func (c *connection) Close() error {
+	log.Tracef("closing connection %s", c.name)
 	c.disconnect <- true
 	if <-c.disconnected {
 		c.closeConnection()
@@ -249,13 +259,14 @@ func (c *connection) Close() {
 
 		log.Infof("quit %s at %s", c.world.name, getTimestamp())
 	}
+	return nil
 }
 
 // Open opens the connection and all output files.
 func (c *connection) Open() error {
 	log.Infof("connected to %s at %s", c.world.name, getTimestamp())
 
-	// Make the in FIFO
+	// Make the FIFO
 	if err := c.makeFIFO(); err != nil {
 		return err
 	}

@@ -261,7 +261,7 @@ func (c *Client) Close(name string) {
 }
 
 func (c *Client) CloseAll() {
-	log.Tracef("Closing all connections")
+	log.Tracef("closing all connections")
 	for _, conn := range c.connections {
 		conn.Close()
 	}
