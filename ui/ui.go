@@ -43,7 +43,7 @@ func send(g *gocui.Gui, v *gocui.View) error {
 	if len(buf) == 0 {
 		return nil
 	}
-	fmt.Fprintln(sent, buf)
+	fmt.Fprint(sent, buf)
 	v.Clear()
 	v.SetCursor(0, 0)
 	return nil
@@ -192,8 +192,8 @@ func postCreate(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	//loggo.RegisterWriter("console", loggocolor.NewWriter(console))
-	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
+	loggo.RegisterWriter("console", loggocolor.NewWriter(console))
+	//loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	sent.AddPostWriteHook(func(line string) error {

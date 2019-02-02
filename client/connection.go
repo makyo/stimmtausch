@@ -152,7 +152,7 @@ func (c *connection) readToConn() {
 			} else if bytesIn == 0 {
 				continue
 			}
-			log.Tracef("%d bytes read from FIFO", bytesIn)
+			log.Tracef("%d bytes read from FIFO: %s", bytesIn, string(buf[:bytesIn]))
 			bytesOut, err := c.connection.Write(buf[:bytesIn])
 			if err != nil {
 				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.name, err)
@@ -241,7 +241,7 @@ func (c *connection) Write(in []byte) (int, error) {
 		return 0, err
 	}
 	defer f.Close()
-	out, err := fmt.Fprintln(f, in)
+	out, err := fmt.Fprintln(f, string(in))
 	if err != nil {
 		return 0, err
 	}
