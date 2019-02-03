@@ -15,6 +15,7 @@ import (
 
 var log = loggo.GetLogger("stimmtausch.config")
 
+// HomeDir returns the directory in which Stimmtausch does all of its work.
 func HomeDir() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {

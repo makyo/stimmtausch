@@ -12,13 +12,22 @@ import (
 	"github.com/makyo/st/config"
 )
 
+// world represents the union between a server and a character.
 type world struct {
-	name        string
+	// The key for the world in the configuration file.
+	name string
+
+	// A free-form display name for the world.
 	displayName string
-	server      *server
-	username    string
-	password    string
-	log         bool
+
+	// The server to which this world belongs.
+	server *server
+
+	// The username and password to connect with.
+	username, password string
+
+	// Whether or not to maintain a rotated log of each connection to this world.
+	log bool
 }
 
 // getWorldFile returns a file (or directory) name within the scope of the
@@ -33,10 +42,12 @@ func (w *world) getWorldFile(name string) (string, error) {
 	return filename, nil
 }
 
+// connect creates a new connection for the world with the provided name.
 func (w *world) connect(name string) (*connection, error) {
 	return NewConnection(name, w)
 }
 
+// NewWorld returns a new world object for the given values.
 func NewWorld(name, displayName string, srv *server, username, password string, logByDefault bool) *world {
 	return &world{
 		name:        name,

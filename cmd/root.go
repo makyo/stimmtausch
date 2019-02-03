@@ -4,6 +4,7 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
+// Package cmd contains all of the cobra commands used to run Stimmtausch.
 package cmd
 
 import (
@@ -21,6 +22,7 @@ var log = loggo.GetLogger("stimmtausch.cmd")
 var cfgFile string
 var initialServer string
 
+// rootCmd runs Stimmtausch with the GUI and connects to the specified world.
 var rootCmd = &cobra.Command{
 	Use:   "st [flags] world-or-server [world-or-server...]",
 	Short: "Run Stimmtausch.",
@@ -62,6 +64,7 @@ you could connect to bot worlds, plus a new server, with:
 	Version: "0.0.0-pre",
 }
 
+// Execute executes the specified command via the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -69,6 +72,7 @@ func Execute() {
 	}
 }
 
+// init initializes the flags required by the root command.
 func init() {
 	initFlags(rootCmd)
 }

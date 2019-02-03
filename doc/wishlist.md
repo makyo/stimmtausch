@@ -24,3 +24,4 @@ title: Wishlist
 * Connection tiling
 * Using ui only mode as a front end to headless mode
     * Involves looser coupling between UI and `client`. Maybe a socket?
+* MCP support

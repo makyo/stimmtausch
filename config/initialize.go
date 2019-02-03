@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Initialize tries to initialize the per-user configuration file used
+// to connect to the servers the user specifies.
 func Initialize(cmd *cobra.Command, args []string) {
 	fmt.Print("Initializing configuration...\n\n")
 	initialConfig := []byte(`stimmtausch:
@@ -106,11 +108,14 @@ func Initialize(cmd *cobra.Command, args []string) {
     # ...what log level to show (TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)
     log_level: INFO
 `)
+	log.Tracef("getting home dir")
 	home, err := HomeDir()
 	if err != nil {
 		log.Criticalf("unable to get homedir, bailing... %v", err)
 		os.Exit(4)
 	}
+
+	log.Tracef("checking if the home dir exists")
 	if _, err = os.Stat(home); err != nil {
 		fmt.Printf("Looks like %s doesn't exist yet. Creating that for you...\n\n", home)
 		if err = os.MkdirAll(home, 0755); err != nil {
@@ -118,17 +123,22 @@ func Initialize(cmd *cobra.Command, args []string) {
 			os.Exit(4)
 		}
 	}
+
+	log.Tracef("checking if the config.yaml file exists")
 	configFile := filepath.Join(home, "config.yaml")
 	if _, err = os.Stat(configFile); err == nil {
 		fmt.Println("Yikes! you already have a config.yaml file! I won't overwite that!")
 		fmt.Println("Bailing early. If you want to run this again, maybe stash that file somewhere safe first.")
 		os.Exit(4)
 	}
+
+	log.Tracef("writing the config.yaml file")
 	err = ioutil.WriteFile(configFile, initialConfig, 0644)
 	if err != nil {
 		log.Criticalf("uanble to write config file! %v", err)
 		os.Exit(4)
 	}
+
 	fmt.Printf(`A new configuration file has been written for you in %s!
 
 This file contains a bunch of sensible defaults, but also some stubbed-out data,

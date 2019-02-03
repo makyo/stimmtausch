@@ -16,6 +16,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
+// initCmd initializes a configuration file for the current user.
 var initCmd = &cobra.Command{
 	Use:              "init",
 	Short:            "Initialize a config file if none exists.",

@@ -20,6 +20,8 @@ func init() {
 	rootCmd.AddCommand(headlessCmd)
 }
 
+// headlessCmd runs Stimmtausch in headless mode, connecting to a world without
+// creating the UI.
 var headlessCmd = &cobra.Command{
 	Use:   "headless [flags] world-or-server [world-or-server...]",
 	Short: "Run Stimmtausch in headless mode (advanced).",

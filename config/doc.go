@@ -4,5 +4,6 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-// Package ui provides the user interface for Stimmtausch.
-package ui
+// Package config contains tools and utilities for working with the viper
+// configuration used by Stimmtausch.
+package config

@@ -19,12 +19,23 @@ import (
 	"github.com/makyo/st/client"
 )
 
+// recievedView represents the gotui view which holds text received from the
+// connection (the output buffer, basically).
 type receivedView struct {
+	// The name of the connection
 	connName string
-	conn     io.WriteCloser
+
+	// The name of the gotui View
 	viewName string
-	buffer   *history
-	current  bool
+
+	// The connection object itself in the form of an io.WriteCloser.
+	conn io.WriteCloser
+
+	// The connection's output buffer
+	buffer *history
+
+	// Whether or not the world is currently active.
+	current bool
 }
 
 var (
@@ -40,10 +51,8 @@ var (
 	currViewIndex = 0
 )
 
-func quit(g *gotui.Gui, v *gotui.View) error {
-	return gotui.ErrQuit
-}
-
+// send sends whatever line is currently active in the input View to the
+// sent buffer (and thus to the world via a post-write hook).
 func send(g *gotui.Gui, v *gotui.View) error {
 	buf := strings.TrimSpace(v.Buffer())
 	if len(buf) == 0 {
@@ -55,6 +64,10 @@ func send(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+// updateRecvSize updates the size of every output gotui.View according to
+// how many lines are in the buffer. This is how we mock having the text
+// scroll up from the bottom before the buffer gets to be larger than the
+// window size, as text is always written from the top of the view down.
 func (v *receivedView) updateRecvSize(index int, g *gotui.Gui) error {
 	view, err := g.View(v.viewName)
 	if err != nil {
@@ -77,97 +90,27 @@ func (v *receivedView) updateRecvSize(index int, g *gotui.Gui) error {
 	return nil
 }
 
-func arrowUp(g *gotui.Gui, v *gotui.View) error {
-	cx, cy := v.Cursor()
-	if cx == 0 {
-		if cy == 0 {
-			v.Clear()
-			fmt.Fprint(v, sent.back())
-		} else {
-			v.SetCursor(0, 0)
-		}
-	} else {
-		v.SetCursor(cx-1, cy)
-	}
-	return nil
-}
-
-func arrowDown(g *gotui.Gui, v *gotui.View) error {
-	cx, cy := v.Cursor()
-	lines := v.ViewBufferLines()
-	lineCount := len(v.ViewBufferLines()) - 1
-	if lineCount == -1 {
-		return nil
-	}
-	lastLineLen := len(lines[lineCount])
-	if cx == lastLineLen || (cx == 0 && cy == 0 && !sent.onLast()) {
-		if cy == lineCount {
-			v.Clear()
-			v.SetCursor(0, 0)
-			if !sent.onLast() {
-				fmt.Fprint(v, sent.forward())
-			}
-		} else {
-			if lineCount == 0 {
-				v.SetCursor(cx, cy+1)
-			}
-		}
-	} else {
-		if cy == lineCount {
-			v.SetCursor(lastLineLen, cy)
-		} else {
-			v.SetCursor(cx, cy+1)
-		}
-	}
-	return nil
-}
-
-func scrollConsole(v *gotui.View, delta int) {
-	_, y := v.Origin()
-	v.SetOrigin(0, y+delta)
-}
-
-func keybindings(g *gotui.Gui) error {
-	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, quit); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlLsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		scrollConsole(v, -2)
-		return nil
-	}); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlRsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		scrollConsole(v, 2)
-		return nil
-	}); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, send); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, arrowUp); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, arrowDown); err != nil {
-		return err
-	}
-	return nil
-}
-
+// connect tells the client to connect to the provided connection string, If
+// successful, it will construct a receivedView to represent and hold that
+// connection.
 func connect(connectStr string, g *gotui.Gui) error {
-	log.Tracef("attempting to connect with connection string %s", connectStr)
+	log.Tracef("creating a connection with connection string %s", connectStr)
 	conn, err := stClient.Connect(connectStr)
 	if err != nil {
 		log.Errorf("unable to connect to %s: %v", connectStr, err)
 	}
+
 	viewName := fmt.Sprintf("recv%d", len(views))
+	log.Tracef("building received view %s", viewName)
 	if v, err := g.SetView(viewName, -3, -3, -1, -1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return err
 		}
-		fmt.Fprintln(v, "\na")
+
+		// Prime the view with a newline, which keeps it from complaining about
+		// coordinates later.
+		fmt.Fprintln(v, "\n")
 		v.Wrap = true
 		v.Frame = false
 		v.Autoscroll = true
@@ -179,25 +122,45 @@ func connect(connectStr string, g *gotui.Gui) error {
 			current:  true,
 		}
 		views = append(views, currView)
+
+		// Set this view's index as the current view index.
 		currViewIndex = len(views) - 1
+
+		// Attach a hook that writes to the view when a line is received in
+		// the received history for the connection.
 		currView.buffer.AddPostWriteHook(func(line string) error {
 			fmt.Fprint(v, line)
 			return currView.updateRecvSize(currViewIndex, g)
 		})
+
+		// Add the received history to the connection as an output.
 		conn.AddOutput(viewName, currView.buffer)
+
+		log.Tracef("opening connection for %s", connectStr)
 		err = conn.Open()
 		if err != nil {
+			log.Errorf("unable to open connection for %s: %v", connectStr, err)
 			return err
 		}
 	}
 	return nil
 }
 
+// postCreate finishes setting up stuff after the ui has been built for the
+// first time.
 func postCreate(g *gotui.Gui) error {
 	console, err := g.View("console")
 	if err != nil {
 		return err
 	}
+
+	// XXX Leaving the default writer in place writes to stderr, which
+	// obviously writes to the screen. However, replacing it means that a lot
+	// of the logging disappears. Currently, running with, e.g:
+	//     go run main.go world 2>log.out
+	// and then tailing the log in a separate window works, but bleh. Need to
+	// either figure out logging to a file or why stderr shows through the UI.
+	// Probably both.
 	loggo.RegisterWriter("console", loggocolor.NewWriter(console))
 	//loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
 
@@ -210,6 +173,10 @@ func postCreate(g *gotui.Gui) error {
 		}
 		return nil
 	})
+
+	// This is the real reason for this method. Connecting before everything
+	// is set up means that some of the output from the worlds gets eaten by
+	// the UI getting built.
 	log.Tracef("attempting to connect with connection strings %v", args)
 	for _, arg := range args {
 		connect(arg, g)
@@ -217,6 +184,7 @@ func postCreate(g *gotui.Gui) error {
 	return nil
 }
 
+// layout acts as the layout manager for the gotui.Gui, creating views.
 func layout(g *gotui.Gui) error {
 	maxX, maxY := g.Size()
 	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
@@ -225,7 +193,7 @@ func layout(g *gotui.Gui) error {
 			return err
 		}
 		v.Autoscroll = true
-		postCreate(g)
+		g.Update(postCreate)
 	}
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gotui.ErrUnknownView {
@@ -248,9 +216,11 @@ func layout(g *gotui.Gui) error {
 	return nil
 }
 
+// New instantiates a new Stimmtausch UI.
 func New(argsIn []string) {
 	args = argsIn
 
+	log.Tracef("creating client")
 	var err error
 	stClient, err = client.New()
 	if err != nil {
@@ -260,12 +230,15 @@ func New(argsIn []string) {
 	log.Tracef("created client: %+v", stClient)
 	defer stClient.CloseAll()
 
+	log.Tracef("creating UI")
 	g, err := gotui.NewGui(gotui.Output256)
 	if err != nil {
 		log.Criticalf("unable to create ui: %v", err)
 		os.Exit(1)
 	}
 	defer g.Close()
+
+	// XXX See above note on default writers.
 	defer loggo.ReplaceDefaultWriter(loggocolor.NewWriter(os.Stderr))
 
 	g.Cursor = true
@@ -273,10 +246,12 @@ func New(argsIn []string) {
 
 	g.SetManagerFunc(layout)
 
+	log.Tracef("adding keybindings")
 	if err := keybindings(g); err != nil {
 		log.Criticalf("ui couldn't create keybindings: %v", err)
 	}
 
+	log.Tracef("running UI...")
 	if err := g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
 		stClient.CloseAll()

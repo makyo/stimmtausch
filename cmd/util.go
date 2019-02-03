@@ -20,6 +20,7 @@ import (
 	"github.com/makyo/st/config"
 )
 
+// initFlags constructs all of the flags that might be used by Stimmtausch.
 func initFlags(cmd *cobra.Command) {
 	home, err := config.HomeDir()
 	if err != nil {
@@ -28,6 +29,7 @@ func initFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&cfgFile, "config", "c", filepath.Join(home, "config.yaml"), "config file")
 }
 
+// initConfig initializes the viper configuration,
 func initConfig(cmd *cobra.Command, args []string) {
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
@@ -38,6 +40,8 @@ func initConfig(cmd *cobra.Command, args []string) {
 	loggo.ConfigureLoggers(fmt.Sprintf("<root>=%s", viper.GetString("stimmtausch.client.log_level")))
 }
 
+// GenMarkdownDocs generates markdown files for each command, which are used
+// on stimmtausch.com
 func GenMarkdownDocs() {
 	if err := doc.GenMarkdownTree(rootCmd, "./doc/"); err != nil {
 		log.Criticalf("unable to generate docs: %v", err)
@@ -45,6 +49,7 @@ func GenMarkdownDocs() {
 	}
 }
 
+// GenManPages generates the man pages used for Stimmtausch.
 func GenManPages() {
 	header := &doc.GenManHeader{
 		Title:   "STIMMTAUSCH",
