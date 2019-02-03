@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jroimartin/gocui"
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
+	"github.com/makyo/gotui"
 
 	"github.com/makyo/st/client"
 )
@@ -34,11 +34,11 @@ var (
 	currViewIndex = 0
 )
 
-func quit(g *gocui.Gui, v *gocui.View) error {
-	return gocui.ErrQuit
+func quit(g *gotui.Gui, v *gotui.View) error {
+	return gotui.ErrQuit
 }
 
-func send(g *gocui.Gui, v *gocui.View) error {
+func send(g *gotui.Gui, v *gotui.View) error {
 	buf := strings.TrimSpace(v.Buffer())
 	if len(buf) == 0 {
 		return nil
@@ -49,7 +49,7 @@ func send(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (v *receivedView) updateRecvSize(index int, g *gocui.Gui) error {
+func (v *receivedView) updateRecvSize(index int, g *gotui.Gui) error {
 	view, err := g.View(v.viewName)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (v *receivedView) updateRecvSize(index int, g *gocui.Gui) error {
 		recvY0 = maxY - 7 - lines
 	}
 	recvX0 := (maxX * index) - (maxX * currViewIndex)
-	g.Update(func(gg *gocui.Gui) error {
+	g.Update(func(gg *gotui.Gui) error {
 		if _, err := gg.SetView(v.viewName, recvX0-1, recvY0, recvX0+maxX, maxY-5); err != nil {
 			log.Warningf("unable to create view %+v", err)
 			return err
@@ -71,7 +71,7 @@ func (v *receivedView) updateRecvSize(index int, g *gocui.Gui) error {
 	return nil
 }
 
-func arrowUp(g *gocui.Gui, v *gocui.View) error {
+func arrowUp(g *gotui.Gui, v *gotui.View) error {
 	cx, cy := v.Cursor()
 	if cx == 0 {
 		if cy == 0 {
@@ -86,7 +86,7 @@ func arrowUp(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func arrowDown(g *gocui.Gui, v *gocui.View) error {
+func arrowDown(g *gotui.Gui, v *gotui.View) error {
 	cx, cy := v.Cursor()
 	lines := v.ViewBufferLines()
 	lineCount := len(v.ViewBufferLines()) - 1
@@ -116,40 +116,40 @@ func arrowDown(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func scrollConsole(v *gocui.View, delta int) {
+func scrollConsole(v *gotui.View, delta int) {
 	_, y := v.Origin()
 	v.SetOrigin(0, y+delta)
 }
 
-func keybindings(g *gocui.Gui) error {
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+func keybindings(g *gotui.Gui) error {
+	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlLsqBracket, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	if err := g.SetKeybinding("", gotui.KeyCtrlLsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
 		scrollConsole(v, -2)
 		return nil
 	}); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlRsqBracket, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	if err := g.SetKeybinding("", gotui.KeyCtrlRsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
 		scrollConsole(v, 2)
 		return nil
 	}); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gocui.KeyEnter, gocui.ModNone, send); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, send); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gocui.KeyArrowUp, gocui.ModNone, arrowUp); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, arrowUp); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gocui.KeyArrowDown, gocui.ModNone, arrowDown); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, arrowDown); err != nil {
 		return err
 	}
 	return nil
 }
 
-func connect(connectStr string, g *gocui.Gui) error {
+func connect(connectStr string, g *gotui.Gui) error {
 	log.Tracef("attempting to connect with connection string %s", connectStr)
 	conn, err := stClient.Connect(connectStr)
 	if err != nil {
@@ -157,7 +157,7 @@ func connect(connectStr string, g *gocui.Gui) error {
 	}
 	viewName := fmt.Sprintf("recv%d", len(views))
 	if v, err := g.SetView(viewName, -3, -3, -1, -1); err != nil {
-		if err != gocui.ErrUnknownView {
+		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return err
 		}
@@ -187,7 +187,7 @@ func connect(connectStr string, g *gocui.Gui) error {
 	return nil
 }
 
-func postCreate(g *gocui.Gui) error {
+func postCreate(g *gotui.Gui) error {
 	console, err := g.View("console")
 	if err != nil {
 		return err
@@ -211,10 +211,10 @@ func postCreate(g *gocui.Gui) error {
 	return nil
 }
 
-func layout(g *gocui.Gui) error {
+func layout(g *gotui.Gui) error {
 	maxX, maxY := g.Size()
 	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
-		if err != gocui.ErrUnknownView {
+		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return err
 		}
@@ -222,7 +222,7 @@ func layout(g *gocui.Gui) error {
 		postCreate(g)
 	}
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
-		if err != gocui.ErrUnknownView {
+		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return err
 		} else {
@@ -254,7 +254,7 @@ func New(argsIn []string) {
 	log.Tracef("created client: %+v", stClient)
 	defer stClient.CloseAll()
 
-	g, err := gocui.NewGui(gocui.Output256)
+	g, err := gotui.NewGui(gotui.Output256)
 	if err != nil {
 		log.Criticalf("unable to create ui: %v", err)
 		os.Exit(1)
@@ -271,7 +271,7 @@ func New(argsIn []string) {
 		log.Criticalf("ui couldn't create keybindings: %v", err)
 	}
 
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+	if err := g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
 		stClient.CloseAll()
 		os.Exit(1)

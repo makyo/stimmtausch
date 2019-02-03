@@ -45,14 +45,6 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:114ecad51af93a73ae6781fd0d0bc28e52b433c852b84ab4b4c109c15e6c6b6d"
-  name = "github.com/jroimartin/gocui"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c055c87ae801372cd74a0839b972db4f7697ae5f"
-  version = "v0.4.0"
-
-[[projects]]
   branch = "master"
   digest = "1:e51f40f0c19b39c1825eadd07d5c0a98a2ad5942b166d9fc4f54750ce9a04810"
   name = "github.com/juju/ansiterm"
@@ -89,6 +81,14 @@
   pruneopts = "UT"
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
   version = "v1.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:01773b7c29d143d7ab1fc7676da285702caf70cad898c7e6e2a2f2822096ee58"
+  name = "github.com/makyo/gotui"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bc24e2a9a1ab63c45086d5bddc407a49a3bf5682"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -243,9 +243,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/jroimartin/gocui",
     "github.com/juju/loggo",
     "github.com/juju/loggo/loggocolor",
+    "github.com/makyo/gotui",
     "github.com/mitchellh/go-homedir",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",

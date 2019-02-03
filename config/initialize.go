@@ -10,7 +10,7 @@ import (
 )
 
 func Initialize(cmd *cobra.Command, args []string) {
-	fmt.Println("Initializing configuration...\n")
+	fmt.Print("Initializing configuration...\n\n")
 	initialConfig := []byte(`stimmtausch:
   # This is a basic Stimmtausch configuration file! It contains some handy
   # default settings, as well as some stubbed-out data you'll want to change
