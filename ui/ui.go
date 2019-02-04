@@ -129,8 +129,8 @@ func connect(connectStr string, g *gotui.Gui) error {
 
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
-		currView.buffer.AddPostWriteHook(func(line string) error {
-			fmt.Fprint(v, line)
+		currView.buffer.AddPostWriteHook(func(line *historyLine) error {
+			fmt.Fprint(v, line.text)
 			return currView.updateRecvSize(currViewIndex, g)
 		})
 
@@ -166,8 +166,8 @@ func postCreate(g *gotui.Gui) error {
 	//loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
-	sent.AddPostWriteHook(func(line string) error {
-		_, err := fmt.Fprintln(currView.conn, line)
+	sent.AddPostWriteHook(func(line *historyLine) error {
+		_, err := fmt.Fprintln(currView.conn, line.text)
 		if err != nil {
 			log.Warningf("error writing to connection")
 			return err

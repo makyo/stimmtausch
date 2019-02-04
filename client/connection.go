@@ -246,6 +246,9 @@ func (c *connection) readToFile() {
 	for {
 		line, err := tp.ReadLine()
 		if err != nil {
+			if !c.connected {
+				return
+			}
 			log.Warningf("server disconnected with %v", err)
 			disconnectMsg := fmt.Sprintf("\n~Connection lost at %v\n", getTimestamp())
 			for _, out := range c.outputs {
