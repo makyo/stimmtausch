@@ -67,12 +67,12 @@
   revision = "584905176618da46b895b176c721b02c476b6993"
 
 [[projects]]
-  branch = "master"
-  digest = "1:bb08c7bb1c7224636b1a00639f079ed4391eb822945f26db74b8d8ee3f14d991"
+  digest = "1:2dc8db55c5b223e6cd50aa7915e698cfcf56d1ddfa89bbbf65e24729e0a0200a"
   name = "github.com/lunixbochs/vtclean"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2d01aacdc34a083dca635ba869909f5fc0cd4f41"
+  revision = "88cfb0c2efe8ed7b0ccf0af83db39359829027bb"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -84,11 +84,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:01773b7c29d143d7ab1fc7676da285702caf70cad898c7e6e2a2f2822096ee58"
+  digest = "1:f1fdda081a0928a29e484a5bc3c3428971d8c543fb8cfb149dffb21472d26e2f"
   name = "github.com/makyo/gotui"
   packages = ["."]
   pruneopts = "UT"
-  revision = "bc24e2a9a1ab63c45086d5bddc407a49a3bf5682"
+  revision = "de68f7c33a7c3fe49b5a0290fc7ac0dffc773e69"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -155,15 +155,15 @@
   version = "v1.5.2"
 
 [[projects]]
-  digest = "1:d707dbc1330c0ed177d4642d6ae102d5e2c847ebd0eb84562d0dc4f024531cfc"
+  digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
   ]
   pruneopts = "UT"
-  revision = "a5d6946387efe7d64d09dcba68cdd523dc1273a3"
-  version = "v1.2.0"
+  revision = "f4711e4db9e9a1d3887343acb72b2bbfc2f686f5"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
@@ -210,11 +210,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c3cf8f9e513ba8a0bd2f2c694646397a45e9d7458e61fabd774abb0f6149372"
+  digest = "1:e148a4a19f62c442c03fbab1c8810780d739bcc3e9e6b818971035e1c4946582"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "302c3dd5f1cc82baae8e44d9c3178e89b6e2b345"
+  revision = "7ae0202eb74c2b534255c71b5a15fa4115aabbcc"
 
 [[projects]]
   digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"

@@ -112,6 +112,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 		// coordinates later.
 		fmt.Fprintln(v, "\n")
 		v.Wrap = true
+		v.WordWrap = true
 		v.Frame = false
 		v.Autoscroll = true
 		currView = &receivedView{
