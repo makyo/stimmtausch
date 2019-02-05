@@ -22,11 +22,11 @@ import (
 
 // initFlags constructs all of the flags that might be used by Stimmtausch.
 func initFlags(cmd *cobra.Command) {
-	home, err := config.HomeDir()
+	configDir, err := config.ConfigDir()
 	if err != nil {
 		os.Exit(2)
 	}
-	cmd.Flags().StringVarP(&cfgFile, "config", "c", filepath.Join(home, "config.yaml"), "config file")
+	cmd.Flags().StringVarP(&cfgFile, "config", "c", filepath.Join(configDir, "config.yaml"), "config file")
 }
 
 // initConfig initializes the viper configuration,

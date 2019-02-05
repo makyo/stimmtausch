@@ -4,34 +4,35 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package client
+package config
 
-// server represents information required to connect to a remote server.
-type server struct {
+// Server represents information required to connect to a remote server.
+type Server struct {
 	// The key for the server in the configuration file.
-	name string
+	Name string
 
 	// The hostname for the server.
-	host string
+	Host string
 
 	// The port to connect to.
-	port uint
+	Port uint
 
 	// Whether or not to use SSL.
-	ssl bool
+	SSL bool
 
 	// Whether or not self-signed certs should be trusted.
-	insecure bool
+	Insecure bool
 
 	// The type of server (MUCK, MUSH, etc...) this is.
-	serverType *serverType
+	ServerType string
 }
 
-// serverType represents a type of server (MUCK, MUSH, etc...), which mostly
+// ServerType represents a type of server (MUCK, MUSH, etc...), which mostly
 // boils down to things such as how to connect to it, etc.
-type serverType struct {
-	name          string
-	connectString string
+type ServerType struct {
+	Name             string
+	ConnectString    string
+	DisconnectString string
 }
 
 // NewServer returns a new server object for the given values.

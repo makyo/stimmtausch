@@ -4,35 +4,33 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package client
+package config
 
 import (
 	"path/filepath"
-
-	"github.com/makyo/st/config"
 )
 
-// world represents the union between a server and a character.
-type world struct {
+// World represents the union between a server and a character.
+type World struct {
 	// The key for the world in the configuration file.
-	name string
+	Name string
 
 	// A free-form display name for the world.
-	displayName string
+	DisplayName string
 
 	// The server to which this world belongs.
-	server *server
+	ServerName string
 
 	// The username and password to connect with.
-	username, password string
+	Username, Password string
 
 	// Whether or not to maintain a rotated log of each connection to this world.
-	log bool
+	Log bool
 }
 
-// getWorldFile returns a file (or directory) name within the scope of the
+// GetWorldFile returns a file (or directory) name within the scope of the
 // world. These live in $HOME/.config/stimmtausch/worlds/{worldname}.
-func (w *world) getWorldFile(name string) (string, error) {
+func (w *World) GetWorldFile(name string) (string, error) {
 	home, err := config.HomeDir()
 	if err != nil {
 		panic(err)
@@ -40,11 +38,6 @@ func (w *world) getWorldFile(name string) (string, error) {
 	filename := filepath.Join(home, "worlds", w.name, name)
 	log.Tracef("file path: %s", filename)
 	return filename, nil
-}
-
-// connect creates a new connection for the world with the provided name.
-func (w *world) connect(name string) (*connection, error) {
-	return NewConnection(name, w)
 }
 
 // NewWorld returns a new world object for the given values.
