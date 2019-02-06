@@ -36,3 +36,6 @@ stimmtausch:
       # Whether or not to keep a separate history buffer for each connection
       # or to have one history boffer for all connections.
       unified_history_buffer: true
+
+      # Whether or not to use Vim-style key bindings
+      vim_keybindings: false

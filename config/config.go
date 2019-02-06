@@ -74,6 +74,9 @@ type Config struct {
 			// Whether or not to use a unified history buffer for all
 			// connections, or one per.
 			UnifiedHistoryBuffer bool
+
+			// Whether or not to use Vim-style key bindings
+			VimKeybindings bool
 		}
 	}
 }
