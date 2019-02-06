@@ -19,7 +19,7 @@ type World struct {
 	DisplayName string
 
 	// The server to which this world belongs.
-	ServerName string
+	Server string
 
 	// The username and password to connect with.
 	Username, Password string
@@ -31,23 +31,19 @@ type World struct {
 // GetWorldFile returns a file (or directory) name within the scope of the
 // world. These live in $HOME/.config/stimmtausch/worlds/{worldname}.
 func (w *World) GetWorldFile(name string) (string, error) {
-	home, err := config.HomeDir()
-	if err != nil {
-		panic(err)
-	}
-	filename := filepath.Join(home, "worlds", w.name, name)
+	filename := filepath.Join(HomeDir, "worlds", w.Name, name)
 	log.Tracef("file path: %s", filename)
 	return filename, nil
 }
 
 // NewWorld returns a new world object for the given values.
-func NewWorld(name, displayName string, srv *server, username, password string, logByDefault bool) *world {
-	return &world{
-		name:        name,
-		displayName: displayName,
-		server:      srv,
-		username:    username,
-		password:    password,
-		log:         logByDefault,
+func NewWorld(name, displayName, srv, username, password string, logByDefault bool) *World {
+	return &World{
+		Name:        name,
+		DisplayName: displayName,
+		Server:      srv,
+		Username:    username,
+		Password:    password,
+		Log:         logByDefault,
 	}
 }

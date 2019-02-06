@@ -5,7 +5,7 @@ title: Wishlist
 
 ## Wishlist
 
-* Global config with common settings/servers (viper can handle it)
+* ~~Global config with common settings/servers (viper can handle it)~~ Viper couldn't handle it, but snuffler can.
 * Config editor in the UI
     * Create server/serverType/world entries in views, fiddle with client settings
     * Write to config file
@@ -16,9 +16,10 @@ title: Wishlist
     * Maybe highlight characters over limit
     * Break it up at post limit, with command to run before each successive post?
         * Break at one word before limit
-        * Use command prefix to send next chunk
+        * Use command prefix to send next chun
         * e.g: `post_limit_chunk_prefix: "spoof ...%s"` or something?
 * On that note, means of staging posts (ctrl+enter?)
+* Similarly, ability for input buffer to optionally expand with long posts.
 * List of open logfiles per world
 * Timestamps (both ui and logging)
 * Connection tiling

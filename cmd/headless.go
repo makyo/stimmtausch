@@ -7,12 +7,12 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/makyo/st/client"
+	"github.com/makyo/st/config"
+	"github.com/makyo/st/headless"
 )
 
 func init() {
@@ -31,16 +31,26 @@ This will run Stimmtausch in headless mode. That is, it will connect to any
 servers or worlds you specify (see "st help" for details on that), but not
 create a user interface. Use this if you want to use your own FIFO-aware
 UI such as <https://github.com/onlyhavecans/mm.vim>.`,
-	PreRun: initConfig,
-	Args:   cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Oooh, headless! Fancy~")
-		c, err := client.New()
-		if err != nil {
-			log.Criticalf("could not create client: %v", err)
-			os.Exit(4)
+		if logLevel == "" {
+			initLogging("INFO")
+		} else {
+			initLogging(logLevel)
 		}
-		log.Infof("%+v", c)
+		var additionalLocations []string
+		if len(cfgFile) != 0 {
+			additionalLocations = append(additionalLocations, cfgFile)
+		}
+		cfg, err := config.Load(additionalLocations)
+		if err != nil {
+			log.Criticalf("unable to read config: %v", err)
+			os.Exit(1)
+		}
+		if logLevel == "" {
+			initLogging(cfg.Client.Syslog.LogLevel)
+		}
+		headless.New(args, cfg)
 	},
 	TraverseChildren: true,
 }

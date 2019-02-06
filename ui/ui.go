@@ -17,6 +17,7 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/st/client"
+	"github.com/makyo/st/config"
 )
 
 // recievedView represents the gotui view which holds text received from the
@@ -42,11 +43,12 @@ var (
 	args     []string
 	stClient *client.Client
 	currView *receivedView
+	sent     *history
+	cfg      *config.Config
 )
 
 var (
 	log           = loggo.GetLogger("stimmtausch.ui")
-	sent          = NewHistory(1000)
 	views         = []*receivedView{}
 	currViewIndex = 0
 )
@@ -119,7 +121,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 			connName: conn.GetConnectionName(),
 			conn:     conn,
 			viewName: viewName,
-			buffer:   NewHistory(10000),
+			buffer:   NewHistory(cfg.Client.UI.Scrollback),
 			current:  true,
 		}
 		views = append(views, currView)
@@ -218,15 +220,18 @@ func layout(g *gotui.Gui) error {
 }
 
 // New instantiates a new Stimmtausch UI.
-func New(argsIn []string) {
-	args = argsIn
+func New(_args []string, _cfg *config.Config) {
+	args = _args
+	cfg = _cfg
+
+	sent = NewHistory(cfg.Client.UI.History)
 
 	log.Tracef("creating client")
 	var err error
-	stClient, err = client.New()
+	stClient, err = client.New(cfg)
 	if err != nil {
 		log.Criticalf("could not create client: %v", err)
-		os.Exit(4)
+		os.Exit(2)
 	}
 	log.Tracef("created client: %+v", stClient)
 	defer stClient.CloseAll()
@@ -235,7 +240,7 @@ func New(argsIn []string) {
 	g, err := gotui.NewGui(gotui.Output256)
 	if err != nil {
 		log.Criticalf("unable to create ui: %v", err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 	defer g.Close()
 
@@ -256,6 +261,6 @@ func New(argsIn []string) {
 	if err := g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
 		stClient.CloseAll()
-		os.Exit(1)
+		os.Exit(2)
 	}
 }

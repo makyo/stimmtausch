@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/juju/loggo"
+
+	"github.com/makyo/st/config"
 )
 
 var log = loggo.GetLogger("stimmtausch.client")
@@ -32,6 +34,7 @@ const (
 	outFile string = "out"
 
 	// Used for building a format.
+	// XXX this comes from config!
 	timeString string = "2006-01-02T150405"
 
 	// The size of buffer to read from the connection.
@@ -66,8 +69,14 @@ type connection struct {
 	// The name (usually connectStr) of the connection.
 	name string
 
-	// The world to which this connection belongs.
-	world *world
+	// The world and server to which this connection belongs.
+	// These are maintained separately from the app config as they may be
+	// connected and passed in for settings not in the user's config.
+	world  config.World
+	server config.Server
+
+	// The app configuration.
+	config *config.Config
 
 	// The TCP address of the server.
 	addr *net.TCPAddr
@@ -96,14 +105,14 @@ type connection struct {
 
 // lookupHostname gets the TCP address for the world's hostname.
 func (c *connection) lookupHostname() error {
-	log.Debugf("attempting to resolve %s:%d", c.world.server.host, c.world.server.port)
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.world.server.host, c.world.server.port))
+	log.Debugf("attempting to resolve %s:%d", c.server.Host, c.server.Port)
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.server.Host, c.server.Port))
 	if err != nil {
-		log.Errorf("unable to resolve host %s: %v", c.world.server.host, err)
+		log.Errorf("unable to resolve host %s: %v", c.server.Host, err)
 		return err
 	}
 	c.addr = addr
-	log.Debugf("host %s resolves to %v", c.world.server.host, c.addr)
+	log.Debugf("host %s resolves to %v", c.server.Host, c.addr)
 	return nil
 }
 
@@ -114,7 +123,7 @@ func (c *connection) getConnectionFile(name string) (string, error) {
 	if c.workingDir != "" {
 		return filepath.Join(c.workingDir, name), nil
 	}
-	return c.world.getWorldFile(filepath.Join("connections", c.name, name))
+	return c.world.GetWorldFile(filepath.Join("connections", c.name, name))
 }
 
 // makeFIFO creates the FIFO file for the world, used to manage the information
@@ -128,12 +137,12 @@ func (c *connection) makeFIFO() error {
 
 	log.Tracef("checking if FIFO exists")
 	if _, err = os.Stat(file); err == nil {
-		log.Criticalf("FIFO for connection %s already exists!", c.world.name)
+		log.Criticalf("FIFO for connection %s already exists!", c.world.Name)
 	}
 
 	log.Tracef("making FIFO")
 	if err = syscall.Mkfifo(file, 0644); err != nil {
-		log.Criticalf("unable to make FIFO for %s!", c.world.name, err)
+		log.Criticalf("unable to make FIFO for %s!", c.world.Name, err)
 		return err
 	}
 	log.Tracef("FIFO created as %s", file)
@@ -160,7 +169,7 @@ func (c *connection) makeLogfile(out *output) error {
 	log.Tracef("opening %s for logging", c.name)
 	f, err := os.OpenFile(out.name, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Warningf("could not open logfile %s for %s, not logging. %v", out.name, c.world.name, err)
+		log.Warningf("could not open logfile %s for %s, not logging. %v", out.name, c.world.Name, err)
 		return err
 	}
 
@@ -174,35 +183,35 @@ func (c *connection) makeLogfile(out *output) error {
 func (c *connection) connect() error {
 	log.Debugf("creating TCP connection for %s", c.name)
 	var err error
-	if c.world.server.ssl {
+	if c.server.SSL {
 		log.Tracef("creating SSL connection")
 		var conf *tls.Config
-		if c.world.server.insecure {
+		if c.server.Insecure {
 			conf = &tls.Config{InsecureSkipVerify: true}
 		} else {
-			conf = &tls.Config{ServerName: c.world.server.host}
+			conf = &tls.Config{ServerName: c.server.Host}
 		}
 		if c.connection, err = tls.Dial("tcp", c.addr.String(), conf); err != nil {
-			log.Criticalf("unable to dial %v over SSL for %s! %v", c.addr, c.world.name, err)
+			log.Criticalf("unable to dial %v over SSL for %s! %v", c.addr, c.world.Name, err)
 			return err
 		}
-		log.Debugf("connected to server over SSL for %s", c.world.name)
+		log.Debugf("connected to server over SSL for %s", c.world.Name)
 	} else {
 		log.Tracef("creating regular TCP connection")
 		if c.connection, err = net.DialTCP("tcp", nil, c.addr); err != nil {
-			log.Criticalf("unable to dial %v for %s! %v", c.addr, c.world.name, err)
+			log.Criticalf("unable to dial %v for %s! %v", c.addr, c.world.Name, err)
 			return err
 		}
-		log.Debugf("connected to server for %s", c.world.name)
+		log.Debugf("connected to server for %s", c.world.Name)
 	}
 	//
 	//		// XXX This doesn't work with SSL connections, need to find an alternative...
 	//		log.Tracef("attempting to set a keepalive for %s", c.name)
 	//		if err = c.connection.SetKeepAlive(true); err != nil {
-	//			log.Warningf("unable to set keep alive for %s - you may get booted. %v", c.world.name, err)
+	//			log.Warningf("unable to set keep alive for %s - you may get booted. %v", c.world.Name, err)
 	//		}
 	//		if err = c.connection.SetKeepAlivePeriod(keepalive); err != nil {
-	//			log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.world.name, err)
+	//			log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.world.Name, err)
 	//		}
 	c.connected = true
 	return nil
@@ -214,7 +223,7 @@ func (c *connection) readToConn() {
 	for {
 		select {
 		case <-c.disconnect:
-			log.Debugf("%s received disconnect; returning", c.world.name)
+			log.Debugf("%s received disconnect; returning", c.world.Name)
 			c.disconnected <- true
 			return
 		default:
@@ -225,14 +234,14 @@ func (c *connection) readToConn() {
 			buf := make([]byte, bufferSize)
 			bytesIn, err := c.fifo.Read(buf)
 			if err != nil && err.Error() != "EOF" && err.Error() != tmpError {
-				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.name, err)
+				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.Name, err)
 			} else if bytesIn == 0 {
 				continue
 			}
 			log.Tracef("%d bytes read from FIFO", bytesIn)
 			bytesOut, err := c.connection.Write(buf[:bytesIn])
 			if err != nil {
-				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.name, err)
+				log.Criticalf("FIFO broke??¿? World %s. %v", c.world.Name, err)
 			}
 			log.Tracef("%d bytes written to connection", bytesOut)
 		}
@@ -253,20 +262,20 @@ func (c *connection) readToFile() {
 			disconnectMsg := fmt.Sprintf("\n~Connection lost at %v\n", getTimestamp())
 			for _, out := range c.outputs {
 				if _, err := fmt.Fprintln(out.output, disconnectMsg); err != nil {
-					log.Warningf("unable to write to output %s for %s. %v", out.name, c.world.name, err)
+					log.Warningf("unable to write to output %s for %s. %v", out.name, c.world.Name, err)
 				}
 			}
 			c.disconnect <- true
 			return
 		}
-		log.Tracef("%d characters read from %s", len(line), c.world.name)
+		log.Tracef("%d characters read from %s", len(line), c.world.Name)
 
 		for _, out := range c.outputs {
 			bytesOut, err := fmt.Fprintln(out.output, line)
 			if err != nil {
-				log.Warningf("unable to write to output %s for world %s. %v", out.name, c.world.name, err)
+				log.Warningf("unable to write to output %s for world %s. %v", out.name, c.world.Name, err)
 			}
-			log.Tracef("%d bytes written to output %s for %s", bytesOut, out.name, c.world.name)
+			log.Tracef("%d bytes written to output %s for %s", bytesOut, out.name, c.world.Name)
 		}
 	}
 }
@@ -282,7 +291,7 @@ func (c *connection) closeConnection() {
 		log.Warningf("error closing connection. %v", err)
 	}
 	c.connected = false
-	log.Debugf("connection closed for %s", c.world.name)
+	log.Debugf("connection closed for %s", c.world.Name)
 }
 
 // closeFIFO closes the FIFO for the world.
@@ -290,27 +299,27 @@ func (c *connection) closeFIFO() {
 	name := c.fifo.Name()
 	log.Debugf("closing and deleting FIFO %s", name)
 	if err := c.fifo.Close(); err != nil {
-		log.Warningf("error closing FIFO for reading %s. %v", c.world.name, err)
+		log.Warningf("error closing FIFO for reading %s. %v", c.world.Name, err)
 	}
 	if err := syscall.Unlink(name); err != nil {
-		log.Warningf("error unlinking FIFO for %s. %v", c.world.name, err)
+		log.Warningf("error unlinking FIFO for %s. %v", c.world.Name, err)
 	}
-	log.Debugf("FIFO %s closed and deleted for %s", name, c.world.name)
+	log.Debugf("FIFO %s closed and deleted for %s", name, c.world.Name)
 }
 
 // closeOutputs closes open outfiles.
 func (c *connection) closeOutputs() {
 	for _, out := range c.outputs {
-		log.Debugf("closing output file %s for %s", out.name, c.world.name)
+		log.Debugf("closing output file %s for %s", out.name, c.world.Name)
 		if err := out.output.Close(); err != nil {
-			log.Warningf("error closing output %s for %s. %v", out.name, c.world.name, err)
+			log.Warningf("error closing output %s for %s. %v", out.name, c.world.Name, err)
 		}
-		log.Debugf("output file %s for %s closed", out.name, c.world.name)
+		log.Debugf("output file %s for %s closed", out.name, c.world.Name)
 		if !out.global {
 			continue
 		}
-		if c.world.log {
-			rotateTo, err := c.world.getWorldFile(fmt.Sprintf("%s.log", getTimestamp()))
+		if c.world.Log {
+			rotateTo, err := c.world.GetWorldFile(fmt.Sprintf("%s.log", getTimestamp()))
 			if err != nil {
 				log.Warningf("unable to rotate log file %s, you'll need to do that on your own. %v", out.name, err)
 				continue
@@ -319,7 +328,7 @@ func (c *connection) closeOutputs() {
 				log.Warningf("unable to rotate log file %s, you'll need to do that on your own. %v", out.name, err)
 				continue
 			}
-			log.Debugf("output file for %s rotated", c.world.name)
+			log.Debugf("output file for %s rotated", c.world.Name)
 		} else {
 			if err := os.Remove(out.name); err != nil {
 				log.Warningf("unable to remove outfile %s", out.name)
@@ -353,7 +362,7 @@ func (c *connection) Write(in []byte) (int, error) {
 	}
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND, os.ModeNamedPipe)
 	if err != nil {
-		log.Warningf("could not open FIFO for %s! %v", c.world.name, err)
+		log.Warningf("could not open FIFO for %s! %v", c.world.Name, err)
 		return 0, err
 	}
 	defer f.Close()
@@ -376,7 +385,7 @@ func (c *connection) Close() error {
 		c.closeConnection()
 		c.cleanup()
 
-		log.Infof("quit %s at %s", c.world.name, getTimestamp())
+		log.Infof("quit %s at %s", c.world.Name, getTimestamp())
 	}
 	return nil
 }
@@ -429,7 +438,7 @@ func (c *connection) GetConnectionName() string {
 
 // GetDisplayName gets the world's display name.
 func (c *connection) GetDisplayName() string {
-	return c.world.displayName
+	return c.world.DisplayName
 }
 
 // AddOutput creates an output struct with the given io.WriteCloser. This can
@@ -447,11 +456,13 @@ func (c *connection) AddOutput(name string, w io.WriteCloser) {
 // NewConnection creates a new conneciton with the given world. One can
 // also specify whether or not to use SSL, allow insecure SSL certs, and
 // whether to log all output by default.
-func NewConnection(name string, w *world) (*connection, error) {
-	log.Debugf("creating a new connection %s for world %s", name, w.name)
+func NewConnection(name string, w config.World, s config.Server, cfg *config.Config) (*connection, error) {
+	log.Debugf("creating a new connection %s for world %s", name, w.Name)
 	c := &connection{
 		name:       name,
 		world:      w,
+		server:     s,
+		config:     cfg,
 		connected:  false,
 		workingDir: "",
 	}
@@ -470,7 +481,7 @@ func NewConnection(name string, w *world) (*connection, error) {
 	// Look up hostname early on as a network connectivity check.
 	log.Tracef("looking up hostname")
 	if err := c.lookupHostname(); err != nil {
-		log.Errorf("could not look up hostname %s for %s", c.world.server.host, c.name)
+		log.Errorf("could not look up hostname %s for %s", c.server.Host, c.name)
 		return nil, err
 	}
 

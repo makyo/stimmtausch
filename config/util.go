@@ -3,40 +3,43 @@
 // https://github.com/makyo/stimmtausch
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
-//
-// +build !windows
 
 package config
 
 import (
+	"os"
 	"path/filepath"
 
-	"github.com/juju/loggo"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	globalConfigDirs   = []string{"/etc/stimmtausch/conf.d/*"}
-	globalMasterConfig = "/etc/stimmtausch/st.yaml"
+	globalConfigDirs   []string
+	globalMasterConfig string
+	HomeDir            string
+	ConfigDir          string
+	WorkingDir         string
+	Environment        string
 )
 
-// ConfigDir returns the directory in which Stimmtausch expects its config
-// files to be stored.
-func configDir() (string, error) {
-	home, err := homedir.Dir()
+// initDirs initializes the directories used by Stimmtausch.
+func initEnv() error {
+	HomeDir, err := homedir.Dir()
 	if err != nil {
 		log.Criticalf("could not find homedir: %v", err)
-		return "", err
+		return err
 	}
-	return filepath.Join(home, ".config", "stimmtausch"), nil
-}
-
-// WorkingDir returns the directory in which Stimmtausch does all of its work.
-func WorkingDir() (string, error) {
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Criticalf("could not find homedir: %v", err)
-		return "", err
+	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
+	WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
+	if Environment := os.Getenv("ST_ENV"); !(Environment == "DEV" || Environment == "PROD") {
+		Environment = "PROD"
 	}
-	return filepath.Join(home, ".local", "share", "stimmtausch"), nil
+	if Environment == "PROD" {
+		globalConfigDirs = []string{"/etc/stimmtausch/conf.d/*"}
+		globalMasterConfig = "/etc/stimmtausch/st.yaml"
+	} else {
+		globalConfigDirs = []string{"_conf/conf.d/*"}
+		globalMasterConfig = "_conf/st.yaml"
+	}
+	return nil
 }

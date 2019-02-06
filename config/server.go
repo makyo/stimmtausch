@@ -36,21 +36,22 @@ type ServerType struct {
 }
 
 // NewServer returns a new server object for the given values.
-func NewServer(name, host string, port uint, ssl, insecure bool, srvType *serverType) *server {
-	return &server{
-		name:       name,
-		host:       host,
-		port:       port,
-		ssl:        ssl,
-		insecure:   insecure,
-		serverType: srvType,
+func NewServer(name, host string, port uint, ssl, insecure bool, srvType string) *Server {
+	return &Server{
+		Name:       name,
+		Host:       host,
+		Port:       port,
+		SSL:        ssl,
+		Insecure:   insecure,
+		ServerType: srvType,
 	}
 }
 
 // NewServerType returns a new serverType object for the given values.
-func NewServerType(name, connectString string) *serverType {
-	return &serverType{
-		name:          name,
-		connectString: connectString,
+func NewServerType(name, connectString, disconnectString string) *ServerType {
+	return &ServerType{
+		Name:             name,
+		ConnectString:    connectString,
+		DisconnectString: disconnectString,
 	}
 }
