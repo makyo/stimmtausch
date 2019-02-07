@@ -19,6 +19,7 @@ var (
 	HomeDir            string
 	ConfigDir          string
 	WorkingDir         string
+	LogDir             string
 	Environment        string
 )
 
@@ -31,6 +32,7 @@ func initEnv() error {
 	}
 	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
 	WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
+	LogDir = filepath.Join(HomeDir, ".local", "log", "stimmtausch")
 	if Environment := os.Getenv("ST_ENV"); !(Environment == "DEV" || Environment == "PROD") {
 		Environment = "PROD"
 	}

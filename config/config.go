@@ -79,6 +79,11 @@ type Config struct {
 			VimKeybindings bool
 		}
 	}
+
+	HomeDir    string `yaml:"-" toml:"-"`
+	ConfigDir  string `yaml:"-" toml:"-"`
+	WorkingDir string `yaml:"-" toml:"-"`
+	LogDir     string `yaml:"-" toml:"-"`
 }
 
 func (c *Config) finalizeAndValidate() []error {
@@ -100,12 +105,17 @@ func (c *Config) finalizeAndValidate() []error {
 			errs = append(errs, fmt.Errorf("server %s refers to unknown server type %s", name, server.ServerType))
 		}
 	}
+
+	c.HomeDir = HomeDir
+	c.ConfigDir = ConfigDir
+	c.WorkingDir = WorkingDir
+	c.LogDir = LogDir
 	return errs
 }
 
 // Load populates a config object with configuration data from all available
 // sources.
-func Load(additionalLocations []string) (*Config, error) {
+func Load() (*Config, error) {
 	log.Debugf("loading configuration")
 	err := initEnv()
 	if err != nil {
@@ -129,11 +139,6 @@ func Load(additionalLocations []string) (*Config, error) {
 	snoot.AddGlob(filepath.Join(ConfigDir, "*.st.*"))
 	snoot.AddGlob(filepath.Join(ConfigDir, "*", "*.st.*"))
 	snoot.MaybeAddFile(filepath.Join(HomeDir, ".strc"))
-
-	log.Tracef("loading additional locations")
-	for _, location := range additionalLocations {
-		snoot.AddGlob(location)
-	}
 
 	if err := snoot.Snuffle(); err != nil {
 		return nil, err

@@ -100,6 +100,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 	conn, err := stClient.Connect(connectStr)
 	if err != nil {
 		log.Errorf("unable to connect to %s: %v", connectStr, err)
+		return err
 	}
 
 	viewName := fmt.Sprintf("recv%d", len(views))

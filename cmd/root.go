@@ -61,11 +61,7 @@ you could connect to bot worlds, plus a new server, with:
 		} else {
 			initLogging(logLevel)
 		}
-		var additionalLocations []string
-		if len(cfgFile) != 0 {
-			additionalLocations = append(additionalLocations, cfgFile)
-		}
-		cfg, err := config.Load(additionalLocations)
+		cfg, err := config.Load()
 		if err != nil {
 			log.Criticalf("unable to read config: %v", err)
 			os.Exit(1)

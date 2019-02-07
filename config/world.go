@@ -6,10 +6,6 @@
 
 package config
 
-import (
-	"path/filepath"
-)
-
 // World represents the union between a server and a character.
 type World struct {
 	// The key for the world in the configuration file.
@@ -26,14 +22,6 @@ type World struct {
 
 	// Whether or not to maintain a rotated log of each connection to this world.
 	Log bool
-}
-
-// GetWorldFile returns a file (or directory) name within the scope of the
-// world. These live in $HOME/.config/stimmtausch/worlds/{worldname}.
-func (w *World) GetWorldFile(name string) (string, error) {
-	filename := filepath.Join(HomeDir, "worlds", w.Name, name)
-	log.Tracef("file path: %s", filename)
-	return filename, nil
 }
 
 // NewWorld returns a new world object for the given values.

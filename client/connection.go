@@ -25,17 +25,13 @@ import (
 
 var log = loggo.GetLogger("stimmtausch.client")
 
-// XXX hardcoded program settings; some should be configurable.
+// Hardcoded client settings.
 const (
 	// The name of the FIFO file.
 	inFile string = "in"
 
 	// The name of the global output file.
 	outFile string = "out"
-
-	// Used for building a format.
-	// XXX this comes from config!
-	timeString string = "2006-01-02T150405"
 
 	// The size of buffer to read from the connection.
 	bufferSize int = 1024
@@ -48,8 +44,8 @@ const (
 )
 
 // getTimestamp gets the current time in the format specified above.
-func getTimestamp() string {
-	return time.Now().Format(timeString)
+func (c *connection) getTimestamp() string {
+	return time.Now().Format(c.config.Client.Logging.TimeString)
 }
 
 // output represents a named io.WriteCloser.
@@ -80,9 +76,6 @@ type connection struct {
 
 	// The TCP address of the server.
 	addr *net.TCPAddr
-
-	// The working directory used by the client.
-	workingDir string
 
 	// The TCP connection itself.
 	connection net.Conn
@@ -118,22 +111,24 @@ func (c *connection) lookupHostname() error {
 
 // getConnectionFile returns a file (or directory) name within the scope of
 // the connection. These live in
-// $HOME/.config/stimmtausch/worlds/{worldname}/connections/{connname}.
-func (c *connection) getConnectionFile(name string) (string, error) {
-	if c.workingDir != "" {
-		return filepath.Join(c.workingDir, name), nil
-	}
-	return c.world.GetWorldFile(filepath.Join("connections", c.name, name))
+// $HOME/.local/share/stimmtausch/{connname}.
+func (c *connection) getConnectionFile(name string) string {
+	return filepath.Join(c.config.WorkingDir, c.name, name)
+}
+
+// getLogFile returns a file (or directory) name within the scope of the
+// connection for the sake of logging. These live in
+// $HOME/.local/log/stimmtausch/{worldname}.
+func (c *connection) getLogFile(name string) string {
+	return filepath.Join(c.config.LogDir, c.world.Name, name)
 }
 
 // makeFIFO creates the FIFO file for the world, used to manage the information
 // sent to and recieved from the connection.
 func (c *connection) makeFIFO() error {
 	log.Debugf("creating FIFO file for %s", c.name)
-	file, err := c.getConnectionFile(inFile)
-	if err != nil {
-		return err
-	}
+	file := c.getConnectionFile(inFile)
+	var err error
 
 	log.Tracef("checking if FIFO exists")
 	if _, err = os.Stat(file); err == nil {
@@ -259,7 +254,7 @@ func (c *connection) readToFile() {
 				return
 			}
 			log.Warningf("server disconnected with %v", err)
-			disconnectMsg := fmt.Sprintf("\n~Connection lost at %v\n", getTimestamp())
+			disconnectMsg := fmt.Sprintf("\n~Connection lost at %v\n", c.getTimestamp())
 			for _, out := range c.outputs {
 				if _, err := fmt.Fprintln(out.output, disconnectMsg); err != nil {
 					log.Warningf("unable to write to output %s for %s. %v", out.name, c.world.Name, err)
@@ -319,11 +314,7 @@ func (c *connection) closeOutputs() {
 			continue
 		}
 		if c.world.Log {
-			rotateTo, err := c.world.GetWorldFile(fmt.Sprintf("%s.log", getTimestamp()))
-			if err != nil {
-				log.Warningf("unable to rotate log file %s, you'll need to do that on your own. %v", out.name, err)
-				continue
-			}
+			rotateTo := c.getLogFile(fmt.Sprintf("%s.log", c.getTimestamp()))
 			if err := os.Rename(out.name, rotateTo); err != nil {
 				log.Warningf("unable to rotate log file %s, you'll need to do that on your own. %v", out.name, err)
 				continue
@@ -340,9 +331,10 @@ func (c *connection) closeOutputs() {
 // removeWorkingDir removes the (hopefully empty) working directory for the
 // connection.
 func (c *connection) removeWorkingDir() {
-	log.Debugf("removing working directory %s", c.workingDir)
-	if err := os.Remove(c.workingDir); err != nil {
-		log.Errorf("unable to remove working directory %s: %v", c.workingDir, err)
+	workingDir := c.getConnectionFile("")
+	log.Debugf("removing working directory %s", workingDir)
+	if err := os.Remove(workingDir); err != nil {
+		log.Errorf("unable to remove working directory %s: %v", workingDir, err)
 	}
 }
 
@@ -356,10 +348,7 @@ func (c *connection) cleanup() {
 
 // Write sends data to the connection via the FIFO file
 func (c *connection) Write(in []byte) (int, error) {
-	fname, err := c.getConnectionFile(inFile)
-	if err != nil {
-		return 0, err
-	}
+	fname := c.getConnectionFile(inFile)
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND, os.ModeNamedPipe)
 	if err != nil {
 		log.Warningf("could not open FIFO for %s! %v", c.world.Name, err)
@@ -385,7 +374,7 @@ func (c *connection) Close() error {
 		c.closeConnection()
 		c.cleanup()
 
-		log.Infof("quit %s at %s", c.world.Name, getTimestamp())
+		log.Infof("quit %s at %s", c.world.Name, c.getTimestamp())
 	}
 	return nil
 }
@@ -393,35 +382,33 @@ func (c *connection) Close() error {
 // Open opens the connection and all output files.
 func (c *connection) Open() error {
 	log.Debugf("connecting to %s", c.name)
+	var err error
 
 	log.Tracef("creating FIFO for %s", c.name)
-	if err := c.makeFIFO(); err != nil {
+	if err = c.makeFIFO(); err != nil {
 		return err
 	}
 
 	log.Tracef("creating outfile for %s", c.name)
-	name, err := c.getConnectionFile(outFile)
-	if err != nil {
-		log.Criticalf("could not create output file for %s: %v", c.name, err)
-		c.cleanup()
-		return err
-	}
+	name := c.getConnectionFile(outFile)
 	globalOut := &output{
 		name:   name,
 		global: true,
 		output: nil,
 	}
 	if err = c.makeLogfile(globalOut); err != nil {
+		log.Criticalf("could not create output file for %s: %v", c.name, err)
+		c.cleanup()
 		return err
 	}
 	c.outputs = append(c.outputs, globalOut)
 
-	if err := c.connect(); err != nil {
+	if err = c.connect(); err != nil {
 		log.Errorf("could not connect to %s! %v", c.name, err)
 		c.cleanup()
 		return err
 	}
-	log.Infof("connected to %s at %s", c.name, getTimestamp())
+	log.Infof("connected to %s at %s", c.name, c.getTimestamp())
 
 	c.disconnect = make(chan bool)
 	c.disconnected = make(chan bool)
@@ -459,22 +446,22 @@ func (c *connection) AddOutput(name string, w io.WriteCloser) {
 func NewConnection(name string, w config.World, s config.Server, cfg *config.Config) (*connection, error) {
 	log.Debugf("creating a new connection %s for world %s", name, w.Name)
 	c := &connection{
-		name:       name,
-		world:      w,
-		server:     s,
-		config:     cfg,
-		connected:  false,
-		workingDir: "",
+		name:      name,
+		world:     w,
+		server:    s,
+		config:    cfg,
+		connected: false,
 	}
 
 	log.Tracef("ensuring connection working directory")
-	var err error
-	if c.workingDir, err = c.getConnectionFile(""); err != nil {
+	if err := os.MkdirAll(c.getConnectionFile(""), 0755); err != nil {
 		log.Criticalf("unable to ensure connection directory! %v", err)
 		return nil, err
 	}
-	if err = os.MkdirAll(c.workingDir, 0755); err != nil {
-		log.Criticalf("unable to ensure connection directory! %v", err)
+
+	log.Tracef("ensuring world log directory")
+	if err := os.MkdirAll(c.getLogFile(""), 0755); err != nil {
+		log.Criticalf("unable to ensure log directory! %v", err)
 		return nil, err
 	}
 

@@ -13,9 +13,12 @@ stimmtausch:
 
     # Settings pertaining to connectiong logging.
     logging:
-      # Date/time format to use (the numbers don't particularly matter; the
-      # parser will generate a format that looks like this).
-      time_string: 2019-01-21T201901
+      # Date/time format to use. The numbers matter, weirdly enough. The date
+      # must follow the reference date/time of 3:04:05PM on January 2nd, 2016,
+      # Mountain Standard Time (-0700). 1-2 3:4:5 6 7. It's silly, but I don't
+      # make the rules.
+      # https://golang.org/pkg/time/#Time.Format
+      time_string: 2006-01-02T150405
 
       # Whether or not to include the date/time messages were received from the
       # server in the default log files.
