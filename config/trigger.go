@@ -4,7 +4,7 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package client
+package config
 
 import (
 	"regexp"

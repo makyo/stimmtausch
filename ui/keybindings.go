@@ -88,6 +88,13 @@ func keybindings(g *gotui.Gui) error {
 	}); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
+		g.Update(func(g *gotui.Gui) error { return nil })
+		log.Debugf("redrawing")
+		return nil
+	}); err != nil {
+		return err
+	}
 	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, send); err != nil {
 		return err
 	}

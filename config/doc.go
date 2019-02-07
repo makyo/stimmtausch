@@ -4,6 +4,6 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-// Package config contains tools and utilities for working with the viper
-// configuration used by Stimmtausch.
+// Package config contains various structs and utilities meant to hold and
+// deal with configuration for Stimmtausch.
 package config

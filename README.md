@@ -1,3 +1,8 @@
+[![GoDoc reference](https://godoc.org/github.com/makyo/st?status.svg)](https://godoc.org/github.com/makyo/st)
+[![Support me on Patreon](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://patreon.com/makyo)
+[![Buy me a Coffee](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://ko-fi.com/drabmakyo)
+[![Support me on LiberaPay](https://img.shields.io/badge/liberapay-support-%23222222.svg)](https://liberapay.com/makyo)
+
 # Stimmtausch
 
 Stimmtausch (`st`) is a curses-based MUCK client written in Go.
@@ -14,12 +19,9 @@ TinyFugue (`tf`) has been the gold-standard terminal MU\* client for decades. Ho
 
 TinyFugue, of course, was a big inspiration for this project, but [`mm`](https://github.com/onlyhavecans/mm) played a role as well, as a MUCK client written in Go using some interesting ideas. Many portions of `mm` are found in Stimmtausch, though, rather than use it as a library, it was modified to fit the design goals of the project.
 
-## Libraries
+## More information
 
-* gocui
-* cobra
-* viper
-* goconvey
+You can find out more on [stimmtausch.com](https://stimmtausch.com).
 
 ## Contributors
 

@@ -1,0 +1,29 @@
+stimmtausch:
+  server_types:
+    muck:
+      connect_string: "connect $user $password"
+      disconnect_string: "QUIT"
+  servers:
+    spr:
+      host: muck.sprmuck.org
+      port: 23551
+      ssl: true
+      insecure: true
+      type: muck
+    furrymuck:
+      host: furrymuck.com
+      port: 8899
+      ssl: true
+      insecure: true
+      type: muck
+    tapestries:
+      host: tapestries.fur.com
+      port: 6699
+      ssl: true
+      insecure: true
+      type: muck
+    spindizzy:
+      host: muck.spindizzy.org
+      port: 7073
+      ssl: true
+      type: muck

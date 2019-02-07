@@ -7,20 +7,41 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 
-	"github.com/juju/loggo"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-var log = loggo.GetLogger("stimmtausch.config")
+var (
+	globalConfigDirs   []string
+	globalMasterConfig string
+	HomeDir            string
+	ConfigDir          string
+	WorkingDir         string
+	LogDir             string
+	Environment        string
+)
 
-// HomeDir returns the directory in which Stimmtausch does all of its work.
-func HomeDir() (string, error) {
-	home, err := homedir.Dir()
+// initDirs initializes the directories used by Stimmtausch.
+func initEnv() error {
+	HomeDir, err := homedir.Dir()
 	if err != nil {
 		log.Criticalf("could not find homedir: %v", err)
-		return "", err
+		return err
 	}
-	return filepath.Join(home, ".config", "stimmtausch"), nil
+	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
+	WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
+	LogDir = filepath.Join(HomeDir, ".local", "log", "stimmtausch")
+	if Environment := os.Getenv("ST_ENV"); !(Environment == "DEV" || Environment == "PROD") {
+		Environment = "PROD"
+	}
+	if Environment == "PROD" {
+		globalConfigDirs = []string{"/etc/stimmtausch/conf.d/*"}
+		globalMasterConfig = "/etc/stimmtausch/st.yaml"
+	} else {
+		globalConfigDirs = []string{"_conf/conf.d/*"}
+		globalMasterConfig = "_conf/st.yaml"
+	}
+	return nil
 }

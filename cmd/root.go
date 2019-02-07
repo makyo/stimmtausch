@@ -14,13 +14,11 @@ import (
 	"github.com/juju/loggo"
 	"github.com/spf13/cobra"
 
+	"github.com/makyo/st/config"
 	"github.com/makyo/st/ui"
 )
 
 var log = loggo.GetLogger("stimmtausch.cmd")
-
-var cfgFile string
-var initialServer string
 
 // rootCmd runs Stimmtausch with the GUI and connects to the specified world.
 var rootCmd = &cobra.Command{
@@ -56,10 +54,22 @@ You can combine these at will, of course. if you have the world "spr_rudder",
 you could connect to bot worlds, plus a new server, with:
 
     st fm_fox spr_rudder mu.example.org:8889`,
-	PreRun: initConfig,
-	Args:   cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ui.New(args)
+		if logLevel == "" {
+			initLogging("INFO")
+		} else {
+			initLogging(logLevel)
+		}
+		cfg, err := config.Load()
+		if err != nil {
+			log.Criticalf("unable to read config: %v", err)
+			os.Exit(1)
+		}
+		if logLevel == "" {
+			initLogging(cfg.Client.Syslog.LogLevel)
+		}
+		ui.New(args, cfg)
 	},
 	Version: "0.0.0-pre",
 }
@@ -68,7 +78,7 @@ you could connect to bot worlds, plus a new server, with:
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 }
 
