@@ -1,7 +1,5 @@
 [![GoDoc reference](https://godoc.org/github.com/makyo/st?status.svg)](https://godoc.org/github.com/makyo/st)
-[![Support me on Patreon](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://patreon.com/makyo)
-[![Buy me a Coffee](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://ko-fi.com/drabmakyo)
-[![Support me on LiberaPay](https://img.shields.io/badge/liberapay-support-%23222222.svg)](https://liberapay.com/makyo)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/5d1d3d2e-6fd3-4562-af33-70ac71eeb4eb/deploy-status)](https://app.netlify.com/sites/practical-bell-8414a4/deploys)
 
 # Stimmtausch
 
@@ -25,4 +23,7 @@ You can find out more on [stimmtausch.com](https://stimmtausch.com).
 
 ## Contributors
 
-* Madison Scott-Clary (@makyo; Maddy on FurryMUCK and Tapestries).
+* Madison Scott-Clary (@makyo; Maddy on FurryMUCK and Tapestries).  
+  [![Support me on Patreon](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://patreon.com/makyo)
+  [![Buy me a Coffee](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://ko-fi.com/drabmakyo)
+  [![Support me on LiberaPay](https://img.shields.io/badge/liberapay-support-%23222222.svg)](https://liberapay.com/makyo)
