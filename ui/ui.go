@@ -116,6 +116,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 		fmt.Fprintln(v, "\n")
 		v.Wrap = true
 		v.WordWrap = true
+		v.IndentSubsequent = 4
 		v.Frame = false
 		v.Autoscroll = true
 		currView = &receivedView{
