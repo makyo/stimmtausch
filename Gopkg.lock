@@ -57,11 +57,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6b2dc023798bf2dcc900fc7906fac4a027cb7402c5df25a748acebe013a28a4f"
+  digest = "1:5103f4ffd7a9287d1dd35289e8f1e16b1d847000cccae7abd7368dedfbb1950a"
   name = "github.com/makyo/gotui"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3d8d16d5f4191f385128952a94e4c56ef02a61fb"
+  revision = "898f0801ec62b9f2923acc8ee35ba3b4d7e143fd"
 
 [[projects]]
   digest = "1:94892f041853bd09edfbafae5b8e0b98d6f32c23df57a4d6cd0ccbdfce3c81f0"
