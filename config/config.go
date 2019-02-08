@@ -40,6 +40,9 @@ type Config struct {
 	// to servers.
 	Worlds map[string]World
 
+	// A list of triggers to match on input.
+	Triggers []Trigger
+
 	// Information regarding how Stimmtausch runs.
 	Client struct {
 
@@ -115,6 +118,20 @@ func (c *Config) finalizeAndValidate() []error {
 		server.Name = name
 		if _, ok := c.ServerTypes[server.ServerType]; server.ServerType != "" && !ok {
 			errs = append(errs, fmt.Errorf("server %s refers to unknown server type %s", name, server.ServerType))
+		}
+	}
+
+	log.Tracef("finalizing and validating triggers")
+	for _, trigger := range c.Triggers {
+		if !(trigger.Type == "hilite" ||
+			trigger.Type == "gag" ||
+			trigger.Type == "script" ||
+			trigger.Type == "macro") {
+			errs = append(errs, fmt.Errorf("invalid trigger type %s in %v", trigger.Type, trigger))
+		}
+		err := trigger.compile()
+		if err != nil {
+			errs = append(errs, err)
 		}
 	}
 
