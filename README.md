@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/makyo/stimmtausch.svg?branch=master)](https://travis-ci.org/makyo/stimmtausch)
-[![GoDoc reference](https://godoc.org/github.com/makyo/st?status.svg)](https://godoc.org/github.com/makyo/st)
+[![GoDoc reference](https://godoc.org/github.com/makyo/stimmtausch?status.svg)](https://godoc.org/github.com/makyo/stimmtausch)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/5d1d3d2e-6fd3-4562-af33-70ac71eeb4eb/deploy-status)](https://app.netlify.com/sites/practical-bell-8414a4/deploys)
 
 # Stimmtausch
