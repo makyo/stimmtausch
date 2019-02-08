@@ -37,7 +37,11 @@ func initEnv() error {
 		Environment = "PROD"
 	}
 	if Environment == "PROD" {
-		globalConfigDirs = []string{"/etc/stimmtausch/conf.d/*"}
+		globalConfigDirs = []string{
+			"/etc/stimmtausch/conf.d/*.yaml",
+			"/etc/stimmtausch/conf.d/*.toml",
+			"/etc/stimmtausch/conf.d/*.json",
+		}
 		globalMasterConfig = "/etc/stimmtausch/st.yaml"
 	} else {
 		globalConfigDirs = []string{"_conf/conf.d/*"}

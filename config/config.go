@@ -73,10 +73,16 @@ type Config struct {
 
 			// Whether or not to use a unified history buffer for all
 			// connections, or one per.
-			UnifiedHistoryBuffer bool
+			// TODO
+			UnifiedHistoryBuffer bool `yaml:"unified_history_buffer" toml:"unified_history_buffer"`
 
 			// Whether or not to use Vim-style key bindings
-			VimKeybindings bool
+			// TODO
+			VimKeybindings bool `yaml:"vim_keybindings" toml:"vim_keybindings"`
+
+			// Indentation of wrapped lines.
+			IndentFirst      int `yaml:"indent_first" toml:"indent_first"`
+			IndentSubsequent int `yaml:"indent_subsequent" toml:"indent_subsequent"`
 		}
 	}
 

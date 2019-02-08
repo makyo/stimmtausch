@@ -260,7 +260,7 @@ func (c *connection) readToFile() {
 					log.Warningf("unable to write to output %s for %s. %v", out.name, c.world.Name, err)
 				}
 			}
-			c.disconnect <- true
+			c.Close()
 			return
 		}
 		log.Tracef("%d characters read from %s", len(line), c.world.Name)
