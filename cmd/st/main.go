@@ -9,7 +9,7 @@
 package main
 
 import (
-	"github.com/makyo/st/cmd"
+	"github.com/makyo/stimmtausch/cmd/st"
 )
 
 func main() {

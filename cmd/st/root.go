@@ -14,8 +14,8 @@ import (
 	"github.com/juju/loggo"
 	"github.com/spf13/cobra"
 
-	"github.com/makyo/st/config"
-	"github.com/makyo/st/ui"
+	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/ui"
 )
 
 var log = loggo.GetLogger("stimmtausch.cmd")

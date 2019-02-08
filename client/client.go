@@ -9,7 +9,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/makyo/st/config"
+	"github.com/makyo/stimmtausch/config"
 )
 
 // Client contains all of the information and objects Stimmtausch knows about.

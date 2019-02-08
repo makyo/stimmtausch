@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/makyo/st/config"
-	"github.com/makyo/st/headless"
+	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/headless"
 )
 
 func init() {

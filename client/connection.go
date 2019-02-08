@@ -20,7 +20,7 @@ import (
 
 	"github.com/juju/loggo"
 
-	"github.com/makyo/st/config"
+	"github.com/makyo/stimmtausch/config"
 )
 
 var log = loggo.GetLogger("stimmtausch.client")

@@ -16,8 +16,8 @@ import (
 	"github.com/juju/loggo/loggocolor"
 	"github.com/makyo/gotui"
 
-	"github.com/makyo/st/client"
-	"github.com/makyo/st/config"
+	"github.com/makyo/stimmtausch/client"
+	"github.com/makyo/stimmtausch/config"
 )
 
 // recievedView represents the gotui view which holds text received from the
