@@ -113,7 +113,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 
 		// Prime the view with a newline, which keeps it from complaining about
 		// coordinates later.
-		fmt.Fprintln(v, "\n")
+		fmt.Fprintln(v, "\n ")
 		v.Wrap = true
 		v.WordWrap = true
 		v.IndentSubsequent = 4
