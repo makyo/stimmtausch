@@ -42,3 +42,7 @@ stimmtausch:
 
       # Whether or not to use Vim-style key bindings
       vim_keybindings: false
+
+      # Indentation of wrapped lines.
+      indent_first: 0
+      indent_subsequent: 4

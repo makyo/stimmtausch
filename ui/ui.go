@@ -116,6 +116,8 @@ func connect(connectStr string, g *gotui.Gui) error {
 		fmt.Fprintln(v, "\n ")
 		v.Wrap = true
 		v.WordWrap = true
+		v.IndentFirst = cfg.Client.UI.IndentFirst
+		v.IndentSubsequent = cfg.Client.UI.IndentSubsequent
 		v.Frame = false
 		v.Autoscroll = true
 		currView = &receivedView{
