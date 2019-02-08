@@ -17,4 +17,4 @@ Any values showing up in later files override values in earlier files. See [snuf
 
 Files can be YAML, TOML, or JSON.
 
-Actual documentation forthcoming, but for now, you can check out [the godocs](https://godoc.org/github.com/makyo/st/config).
+Actual documentation forthcoming, but for now, you can check out [the godocs](https://godoc.org/github.com/makyo/stimmtausch/config).
