@@ -258,6 +258,7 @@ func New(_args []string, _cfg *config.Config) {
 	log.Tracef("adding keybindings")
 	if err := keybindings(g); err != nil {
 		log.Criticalf("ui couldn't create keybindings: %v", err)
+		os.Exit(2)
 	}
 
 	log.Tracef("running UI...")
