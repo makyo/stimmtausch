@@ -105,6 +105,9 @@ func (c *Config) finalizeAndValidate() []error {
 	log.Debugf("finalizing and validating config")
 	var errs []error
 
+	if c.Version == 0 {
+		errs = append(errs, fmt.Errorf("version key wasn't set, perhaps no global configuration was loaded?"))
+
 	log.Tracef("finalizing and validating worlds")
 	for name, world := range c.Worlds {
 		world.Name = name
@@ -154,13 +157,8 @@ func Load() (*Config, error) {
 	var wrap wrapper
 	snoot := snuffler.New(&wrap)
 
-	log.Tracef("loading global master config")
-	if err := snoot.AddFile(globalMasterConfig); err != nil {
-		return nil, err
-	}
-
 	log.Tracef("loading global config dirs")
-	for _, location := range globalConfigDirs {
+	for _, location := range globalConfig {
 		snoot.AddGlob(location)
 	}
 
