@@ -1,0 +1,15 @@
+Source: st
+Section: games
+Priority: optional
+Maintainer: Madiosn Scott-Clary <makyo@drab-makyo.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://stimmtausch.com
+Vcs-Git: https://github.com/makyo/stimmtausch.git
+
+Package: st
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Terminal-based MU* client
+ Stimmtausch is a terminal-based MU* client for connecting to multi-user online
+ roleplaying games such as MUDs, MUSHes, MUCKs, and MOOs.
