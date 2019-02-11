@@ -15,6 +15,9 @@ import (
 )
 
 type Trigger struct {
+	// The name of the trigger.
+	Name string
+
 	// The type of trigger: hilite, gag, script, macro.
 	Type string
 
@@ -55,8 +58,11 @@ func compileTrigger(t Trigger) (*Trigger, error) {
 	default:
 		return nil, fmt.Errorf("unknown trigger type %s", t.Type)
 	}
+	if t.Name == "" {
+		t.Name = fmt.Sprintf("%+v", t)
+	}
 	if t.Match == "" && len(t.Matches) == 0 {
-		return nil, fmt.Errorf("no matches for trigger")
+		return nil, fmt.Errorf("no matches for trigger %s", t.Name)
 	}
 	if t.Match != "" {
 		re, err := regexp.Compile(t.Match)
@@ -80,7 +86,7 @@ func compileTrigger(t Trigger) (*Trigger, error) {
 // macro). It returns the (potentially modified) input, whether or not the
 // trigger matched, and any errors it encountered along the way.
 func (t *Trigger) Run(input string, cfg *Config) (bool, string, []error) {
-	log.Tracef("running trigger %+v", t)
+	log.Tracef("running trigger %s", t.Name)
 	applies := false
 	var errs []error
 	for _, re := range t.reList {

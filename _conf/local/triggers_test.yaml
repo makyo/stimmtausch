@@ -1,6 +1,7 @@
 stimmtausch:
   triggers:
     - type: hilite
+      name: multimatch test
       matches:
         - AUP
         - NEWS
