@@ -26,7 +26,7 @@ type Client struct {
 // connectToWorld takes a given world and a connection name and creates a new
 // connection in the client by calling connect on that world.
 func (c *Client) connectToWorld(connectStr string, w config.World) (*connection, error) {
-	log.Debugf("connecting to world %s (%s)", w.Name, connectStr)
+	log.Tracef("connecting to world %s (%s)", w.Name, connectStr)
 	conn, err := NewConnection(connectStr, w, c.config.Servers[w.Server], c.config)
 	if err != nil {
 		log.Errorf("error connecting to world %s. %v", w.Name, err)
@@ -56,7 +56,7 @@ func (c *Client) connectToRaw(connectStr string) (*connection, error) {
 // * It will try to connect to that string as if it were a host:port; finally
 // * It will fail.
 func (c *Client) Connect(connectStr string) (*connection, error) {
-	log.Debugf("attempting to connect to %s in %v", connectStr, c)
+	log.Tracef("attempting to connect to %s in %v", connectStr, c)
 
 	log.Tracef("checking if it's a world...")
 	w, ok := c.config.Worlds[connectStr]
@@ -91,13 +91,13 @@ func (c *Client) Connect(connectStr string) (*connection, error) {
 
 // Close will close a connection with the given name (usually the connectStr).
 func (c *Client) Close(name string) {
-	log.Debugf("closing connection %s", name)
+	log.Tracef("closing connection %s", name)
 	c.connections[name].Close()
 }
 
 // CloseAll will attempt to close all open connections.
 func (c *Client) CloseAll() {
-	log.Debugf("closing all connections")
+	log.Tracef("closing all connections")
 	for _, conn := range c.connections {
 		conn.Close()
 	}
@@ -105,7 +105,7 @@ func (c *Client) CloseAll() {
 
 // New creates a new Client and populates it using information from the config.
 func New(cfg *config.Config) (*Client, error) {
-	log.Debugf("creating client")
+	log.Tracef("creating client")
 	c := &Client{
 		config:      cfg,
 		connections: map[string]*connection{},

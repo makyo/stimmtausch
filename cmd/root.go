@@ -8,7 +8,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/juju/loggo"
@@ -53,7 +52,9 @@ Finally, if you want to connect to another server entirely, you can do so with:
 You can combine these at will, of course. if you have the world "spr_rudder",
 you could connect to bot worlds, plus a new server, with:
 
-    st fm_fox spr_rudder mu.example.org:8889`,
+    st fm_fox spr_rudder mu.example.org:8889
+	
+For more help, see https://stimmtausch.com`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if logLevel == "" {
@@ -77,7 +78,7 @@ you could connect to bot worlds, plus a new server, with:
 // Execute executes the specified command via the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Criticalf("error executing the command: %v", err)
 		os.Exit(2)
 	}
 }

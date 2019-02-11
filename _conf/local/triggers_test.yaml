@@ -1,0 +1,18 @@
+stimmtausch:
+  triggers:
+    - type: hilite
+      match: "AUP"
+      attributes: "green:bg+brightblack+bold"
+    - type: hilite
+      match: "Stimmtausch"
+      attributes: "brightgreen+bold"
+    - type: gag
+      match: "Stimmtausch is badass"
+      log_anyway: true
+    - type: gag
+      match: "Stimmtausch is bad"
+    - type: script
+      match: "Hey Stimmtausch, run test-script.py!"
+      script: _conf/test-script.py
+    - type: macro
+      match: "Hi, Stimmtausch"

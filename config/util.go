@@ -7,20 +7,18 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	globalConfigDirs   []string
-	globalMasterConfig string
-	HomeDir            string
-	ConfigDir          string
-	WorkingDir         string
-	LogDir             string
-	Environment        string
+	globalConfig []string
+	HomeDir      string
+	ConfigDir    string
+	WorkingDir   string
+	LogDir       string
+	Environment  string
 )
 
 // initDirs initializes the directories used by Stimmtausch.
@@ -33,19 +31,21 @@ func initEnv() error {
 	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
 	WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
 	LogDir = filepath.Join(HomeDir, ".local", "log", "stimmtausch")
-	if Environment := os.Getenv("ST_ENV"); !(Environment == "DEV" || Environment == "PROD") {
-		Environment = "PROD"
-	}
-	if Environment == "PROD" {
-		globalConfigDirs = []string{
-			"/etc/stimmtausch/conf.d/*.yaml",
-			"/etc/stimmtausch/conf.d/*.toml",
-			"/etc/stimmtausch/conf.d/*.json",
-		}
-		globalMasterConfig = "/etc/stimmtausch/st.yaml"
-	} else {
-		globalConfigDirs = []string{"_conf/conf.d/*"}
-		globalMasterConfig = "_conf/st.yaml"
+	globalConfig = []string{
+		// Locations for installed configuration files.
+		"/etc/stimmtausch/st.yaml",
+		"/etc/stimmtausch/conf.d/*.yaml",
+		"/etc/stimmtausch/conf.d/*.toml",
+		"/etc/stimmtausch/conf.d/*.json",
+
+		// Locations for development configuration files.
+		"_conf/global/st.yaml",
+		"_conf/global/conf.d/*.yaml",
+		"_conf/global/conf.d/*.toml",
+		"_conf/global/conf.d/*.json",
+		"_conf/local/*.yaml",
+		"_conf/local/*.toml",
+		"_conf/local/*.json",
 	}
 	return nil
 }

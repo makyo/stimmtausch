@@ -40,6 +40,12 @@ type Config struct {
 	// to servers.
 	Worlds map[string]World
 
+	// A list of triggers to match on input.
+	Triggers []Trigger
+
+	// References to compiled triggers.
+	CompiledTriggers []*Trigger `yaml:"-" toml:"-"`
+
 	// Information regarding how Stimmtausch runs.
 	Client struct {
 
@@ -51,7 +57,7 @@ type Config struct {
 			ShowSyslog bool `yaml:"show_syslog" toml:"log_level"`
 
 			// Lowest log level to show by default. Options are:
-			// TRACE, DEBUG, INFO*, WARNING, ERROR, CRITICAL
+			// TRACE, DEBUG, INFO (default), WARNING, ERROR, CRITICAL
 			LogLevel string `yaml:"log_level" toml:"log_level"`
 		}
 
@@ -102,6 +108,10 @@ func (c *Config) finalizeAndValidate() []error {
 	log.Debugf("finalizing and validating config")
 	var errs []error
 
+	if c.Version == 0 {
+		errs = append(errs, fmt.Errorf("version key wasn't set, perhaps no global configuration was loaded?"))
+	}
+
 	log.Tracef("finalizing and validating worlds")
 	for name, world := range c.Worlds {
 		world.Name = name
@@ -116,6 +126,24 @@ func (c *Config) finalizeAndValidate() []error {
 		if _, ok := c.ServerTypes[server.ServerType]; server.ServerType != "" && !ok {
 			errs = append(errs, fmt.Errorf("server %s refers to unknown server type %s", name, server.ServerType))
 		}
+	}
+
+	log.Tracef("finalizing and validating triggers")
+	for _, trigger := range c.Triggers {
+		switch trigger.Type {
+		case "hilite":
+		case "gag":
+		case "script":
+		case "macro":
+			break
+		default:
+			errs = append(errs, fmt.Errorf("invalid trigger type %s in %v", trigger.Type, trigger))
+		}
+		triggerRef, err := compileTrigger(trigger)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		c.CompiledTriggers = append(c.CompiledTriggers, triggerRef)
 	}
 
 	c.HomeDir = HomeDir
@@ -137,13 +165,8 @@ func Load() (*Config, error) {
 	var wrap wrapper
 	snoot := snuffler.New(&wrap)
 
-	log.Tracef("loading global master config")
-	if err := snoot.AddFile(globalMasterConfig); err != nil {
-		return nil, err
-	}
-
 	log.Tracef("loading global config dirs")
-	for _, location := range globalConfigDirs {
+	for _, location := range globalConfig {
 		snoot.AddGlob(location)
 	}
 
