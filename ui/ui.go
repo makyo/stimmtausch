@@ -140,7 +140,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 		})
 
 		// Add the received history to the connection as an output.
-		conn.AddOutput(viewName, currView.buffer)
+		conn.AddOutput(viewName, currView.buffer, true)
 
 		log.Tracef("opening connection for %s", connectStr)
 		err = conn.Open()
