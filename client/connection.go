@@ -293,7 +293,11 @@ func (c *connection) readToFile() {
 			if gag && !(logAnyway && out.global) {
 				continue
 			}
-			bytesOut, err := fmt.Fprintln(out.output, line)
+			toWrite := line
+			if !out.supportsANSI {
+				toWrite = util.StripANSI.ReplaceAllString(line, "")
+			}
+			bytesOut, err := fmt.Fprintln(out.output, toWrite)
 			if err != nil {
 				log.Warningf("unable to write to output %s for connection %s. %v", out.name, c.name, err)
 			}
@@ -423,7 +427,7 @@ func (c *connection) Open() error {
 		name:         name,
 		global:       true,
 		output:       nil,
-		supportsANSI: true,
+		supportsANSI: true, // Global out supports ANSI, which is stripped during rotation.
 	}
 	if err = c.makeLogfile(globalOut); err != nil {
 		log.Errorf("could not create output file for %s: %v", c.name, err)
