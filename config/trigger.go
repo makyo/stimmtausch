@@ -98,7 +98,7 @@ func (t *Trigger) hiliteString(input string, matches [][]int) (bool, string, err
 		offset = match[1]
 		// We need to use ApplyWithReset here because termbox doesn't support
 		// color-off codes
-		target, err := ansi.ApplyWithReset(t.Attributes, target)
+		target, err := ansi.Apply(t.Attributes, target)
 		if err != nil {
 			log.Warningf("error applying hilites: %v (continuing anyway)", err)
 		}
