@@ -4,7 +4,7 @@
 
 # Stimmtausch
 
-Stimmtausch (`st`) is a curses-based MUCK client written in Go.
+Stimmtausch (`st`) is a terminal-based MUCK client written in Go.
 
 ## Reasoning
 

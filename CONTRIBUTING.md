@@ -1,6 +1,9 @@
 # Contributing to Stimmtausch
 
-Please abide by the [code of conduct](code-of-conduct.md).
+So you want to contribute to Stimmtausch! Yay!
+
+* Please abide by the [code of conduct](code-of-conduct.md).
+* Consider picking something from the [current milestone][currms]/[current project][currproj]
 
 ## Some notes
 
@@ -16,4 +19,11 @@ Please abide by the [code of conduct](code-of-conduct.md).
     * 0: success
     * 1: misconfigured, non-recoverable, user should fix it
     * 2: code failed, non-recoverable, devs should fix it
-* You should run with `ST_ENV=DEV go run main.go --log-level TRACE <world> 2>log.out`. That will use the development config files and show logging at trace level, which will be dumped into `log.out` (which you can `tail -F`).
+
+## Running
+
+* Run with `go run cmd/st/main.go 2>log.out` (which you can then `tail -F`
+* You'll need to create a config file for your worlds, currently. This can live in `~/.strc` or `~/.config/stimmtausch/<whatever>.st.yaml`
+
+[currms]: https://github.com/makyo/stimmtausch/milestone/1
+[currproj]: https://github.com/makyo/stimmtausch/projects/1
