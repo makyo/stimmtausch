@@ -27,10 +27,11 @@ title: Wishlist
     * Involves looser coupling between UI and `client`. Maybe a socket?
 * MCP support
 * Triggers¹
-    * Hilite
-    * Gag
+    * ~~Hilite~~
+    * ~~Gag~~
     * Script
     * Macro
+* ~~Allow multiple matches per trigger~~ (plus case-sensitivity?)⁵
 * Macros
     * [Zygo?](https://github.com/glycerine/zygomys)² - either way, use a predefined embedded language for better docs early on
     * Use `/<macro>` to call that macro
@@ -97,3 +98,16 @@ Use fn keys. (F1=help, F2=file, etc...)
 * Separately: Alt mode
     * Alt + → : Next world
     * Alt + ← : Prev world
+
+### 5
+
+```
+triggers:
+    # My characters
+    - type: hilite
+      case-sensitive: false
+      matches:
+        - Maddy
+        - Makyo
+        - Younes
+        - Happenstance

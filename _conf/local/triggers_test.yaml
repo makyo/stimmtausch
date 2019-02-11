@@ -1,7 +1,10 @@
 stimmtausch:
   triggers:
     - type: hilite
-      match: "AUP"
+      name: multimatch test
+      matches:
+        - AUP
+        - NEWS
       attributes: "green:bg+brightblack+bold"
     - type: hilite
       match: "Stimmtausch"

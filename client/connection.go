@@ -269,12 +269,12 @@ func (c *connection) readToFile() {
 		log.Tracef("%d characters read from %s", len(line), c.name)
 
 		log.Tracef("running triggers against line")
-		var errs []error
+		var errs, triggerErrs []error
 		var applies, gag, logAnyway bool
 		for _, trigger := range c.config.CompiledTriggers {
-			applies, line, err = trigger.Run(line, c.config)
-			if err != nil {
-				errs = append(errs, err)
+			applies, line, triggerErrs = trigger.Run(line, c.config)
+			if len(triggerErrs) != 0 {
+				errs = append(errs, triggerErrs...)
 			}
 			if applies && trigger.Type == "gag" {
 				log.Tracef("gag %+v applies", trigger)
