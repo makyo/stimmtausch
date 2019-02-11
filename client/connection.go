@@ -268,7 +268,27 @@ func (c *connection) readToFile() {
 		}
 		log.Tracef("%d characters read from %s", len(line), c.name)
 
+		log.Tracef("running triggers against line")
+		var errs []error
+		var applies, gag, logAnyway bool
+		for _, trigger := range c.config.CompiledTriggers {
+			applies, line, err = trigger.Run(line, c.config)
+			if err != nil {
+				errs = append(errs, err)
+			}
+			if applies && trigger.Type == "gag" {
+				log.Tracef("gag %+v applies", trigger)
+				gag = true
+				logAnyway = trigger.LogAnyway
+			}
+		}
+		if len(errs) != 0 {
+			log.Errorf("errors encountered processing triggers: %q", errs)
+		}
 		for _, out := range c.outputs {
+			if gag && !(logAnyway && out.global) {
+				continue
+			}
 			bytesOut, err := fmt.Fprintln(out.output, line)
 			if err != nil {
 				log.Warningf("unable to write to output %s for connection %s. %v", out.name, c.name, err)

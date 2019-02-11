@@ -8,7 +8,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/juju/loggo"
@@ -79,7 +78,7 @@ For more help, see https://stimmtausch.com`,
 // Execute executes the specified command via the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Criticalf(err)
+		log.Criticalf("error executing the command: %v", err)
 		os.Exit(2)
 	}
 }

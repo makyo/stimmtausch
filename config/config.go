@@ -43,6 +43,9 @@ type Config struct {
 	// A list of triggers to match on input.
 	Triggers []Trigger
 
+	// References to compiled triggers.
+	CompiledTriggers []*Trigger `yaml:"-" toml:"-"`
+
 	// Information regarding how Stimmtausch runs.
 	Client struct {
 
@@ -54,7 +57,7 @@ type Config struct {
 			ShowSyslog bool `yaml:"show_syslog" toml:"log_level"`
 
 			// Lowest log level to show by default. Options are:
-			// TRACE, DEBUG, INFO*, WARNING, ERROR, CRITICAL
+			// TRACE, DEBUG, INFO (default), WARNING, ERROR, CRITICAL
 			LogLevel string `yaml:"log_level" toml:"log_level"`
 		}
 
@@ -107,6 +110,7 @@ func (c *Config) finalizeAndValidate() []error {
 
 	if c.Version == 0 {
 		errs = append(errs, fmt.Errorf("version key wasn't set, perhaps no global configuration was loaded?"))
+	}
 
 	log.Tracef("finalizing and validating worlds")
 	for name, world := range c.Worlds {
@@ -126,16 +130,20 @@ func (c *Config) finalizeAndValidate() []error {
 
 	log.Tracef("finalizing and validating triggers")
 	for _, trigger := range c.Triggers {
-		if !(trigger.Type == "hilite" ||
-			trigger.Type == "gag" ||
-			trigger.Type == "script" ||
-			trigger.Type == "macro") {
+		switch trigger.Type {
+		case "hilite":
+		case "gag":
+		case "script":
+		case "macro":
+			break
+		default:
 			errs = append(errs, fmt.Errorf("invalid trigger type %s in %v", trigger.Type, trigger))
 		}
-		err := trigger.compile()
+		triggerRef, err := compileTrigger(trigger)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		c.CompiledTriggers = append(c.CompiledTriggers, triggerRef)
 	}
 
 	c.HomeDir = HomeDir

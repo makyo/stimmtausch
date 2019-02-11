@@ -1,6 +1,9 @@
 stimmtausch:
   triggers:
     - type: hilite
+      match: "AUP"
+      attributes: "green:bg+brightblack+bold"
+    - type: hilite
       match: "Stimmtausch"
       attributes: "brightgreen+bold"
     - type: gag

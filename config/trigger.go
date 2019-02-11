@@ -7,7 +7,11 @@
 package config
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
+
+	ansi "github.com/makyo/ansigo"
 )
 
 type Trigger struct {
@@ -21,7 +25,7 @@ type Trigger struct {
 	Attributes string
 
 	// For gags, whether or not to log the gagged string anyway.
-	LogAnyway string `yaml:"log_anyway" toml:"log_anyway"`
+	LogAnyway bool `yaml:"log_anyway" toml:"log_anyway"`
 
 	// The path of a script to run.
 	Script string
@@ -38,7 +42,7 @@ type Trigger struct {
 }
 
 // compile compiles the regexp specified in the trigger's Match attribute.
-func (t *Trigger) compile() error {
+func compileTrigger(t Trigger) (*Trigger, error) {
 	switch t.Type {
 	case "hilite":
 	case "gag":
@@ -46,29 +50,29 @@ func (t *Trigger) compile() error {
 	case "macro":
 		break
 	default:
-		return fmt.Errorf("unknown trigger type %s", t.Type)
+		return nil, fmt.Errorf("unknown trigger type %s", t.Type)
 	}
 	re, err := regexp.Compile(t.Match)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	t.re = re
-	return nil
+	return &t, nil
 }
 
 // Run takes the provided byte-slice from the world and, if it matches, runs
 // the action specified in the trigger based on the type (hilite, gag, script
 // macro). It returns the (potentially modified) input, whether or not the
 // trigger matched, and any errors it encountered along the way.
-func (t *Trigger) Run(input string, cfg *Config) (string, error) {
-	log.Tracef("running trigger %v", t)
+func (t *Trigger) Run(input string, cfg *Config) (bool, string, error) {
+	log.Tracef("running trigger %+v", t)
 	if matches := t.re.FindAllStringSubmatchIndex(input, -1); len(matches) != 0 {
 		switch t.Type {
 		case "hilite":
 			return t.hiliteString(input, matches)
 			break
 		case "gag":
-			return "", nil
+			return true, input, nil
 			break
 		case "script":
 			return t.runScript(input, matches)
@@ -78,29 +82,45 @@ func (t *Trigger) Run(input string, cfg *Config) (string, error) {
 			break
 		}
 	}
-	return nil
+	return false, input, nil
 }
 
 // hiliteString applies ANSI escape-code highlighting to an matches within the
 // provided string. It ignores submatches. If it encounters an error in the
 // process, it returns as much highlighting as it got done and the error
 // generated in the process.
-func (t *Trigger) hiliteString(input string, matches [][]int) (string, error) {
+func (t *Trigger) hiliteString(input string, matches [][]int) (bool, string, error) {
 	log.Tracef("hiliting string")
-	panic("not implemented")
+	var parts []string
+	offset := 0
+	for _, match := range matches {
+		before, target, after := input[:match[0]-offset], input[match[0]-offset:match[1]-offset], input[match[1]-offset:]
+		offset = match[1]
+		// We need to use ApplyWithReset here because termbox doesn't support
+		// color-off codes
+		target, err := ansi.ApplyWithReset(t.Attributes, target)
+		if err != nil {
+			log.Warningf("error applying hilites: %v (continuing anyway)", err)
+		}
+		parts = append(parts, before, target)
+		input = after
+	}
+	parts = append(parts, input)
+	return true, strings.Join(parts, ""), nil
 }
 
 // runScript runs a script (or any executable in $PATH) with the input string
 // and matches as input, each properly quoted. The matches will be sent as as
 // is, in JSON format.
-func (t *Trigger) runScript(input string, matches [][]int) (string, error) {
+func (t *Trigger) runScript(input string, matches [][]int) (bool, string, error) {
 	log.Tracef("running script")
 	// We could JSON-encode this, oooor...
 	matchesStr := strings.Replace(fmt.Sprintf("%v", matches), " ", ",", -1)
-	panic("not implemented")
+	matchesStr = matchesStr
+	return true, input, fmt.Errorf("not implemented")
 }
 
-func (t *Trigger) runMacro(input string, matches [][]int, cfg *Config) (string, error) {
+func (t *Trigger) runMacro(input string, matches [][]int, cfg *Config) (bool, string, error) {
 	log.Tracef("running macro")
-	panic("not implemented")
+	return true, input, fmt.Errorf("not implemented")
 }

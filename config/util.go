@@ -7,7 +7,6 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -40,10 +39,13 @@ func initEnv() error {
 		"/etc/stimmtausch/conf.d/*.json",
 
 		// Locations for development configuration files.
-		"_conf/st.yaml",
-		"_conf/conf.d/*.yaml",
-		"_conf/conf.d/*.toml",
-		"_conf/conf.d/*.json",
+		"_conf/global/st.yaml",
+		"_conf/global/conf.d/*.yaml",
+		"_conf/global/conf.d/*.toml",
+		"_conf/global/conf.d/*.json",
+		"_conf/local/*.yaml",
+		"_conf/local/*.toml",
+		"_conf/local/*.json",
 	}
 	return nil
 }
