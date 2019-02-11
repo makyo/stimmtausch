@@ -130,15 +130,6 @@ func (c *Config) finalizeAndValidate() []error {
 
 	log.Tracef("finalizing and validating triggers")
 	for _, trigger := range c.Triggers {
-		switch trigger.Type {
-		case "hilite":
-		case "gag":
-		case "script":
-		case "macro":
-			break
-		default:
-			errs = append(errs, fmt.Errorf("invalid trigger type %s in %v", trigger.Type, trigger))
-		}
 		triggerRef, err := compileTrigger(trigger)
 		if err != nil {
 			errs = append(errs, err)

@@ -1,7 +1,9 @@
 stimmtausch:
   triggers:
     - type: hilite
-      match: "AUP"
+      matches:
+        - AUP
+        - NEWS
       attributes: "green:bg+brightblack+bold"
     - type: hilite
       match: "Stimmtausch"
