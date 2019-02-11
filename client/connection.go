@@ -21,6 +21,7 @@ import (
 	"github.com/juju/loggo"
 
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/util"
 )
 
 var log = loggo.GetLogger("stimmtausch.client")
@@ -53,11 +54,14 @@ type output struct {
 	// A name used for logging and referencing down the line.
 	name string
 
-	// Whether or not this is the global output (XXX is this necessary?).
+	// Whether or not- this is the global output.
 	global bool
 
 	// The io.Writecloser itself.
 	output io.WriteCloser
+
+	// Whether or not the output supports ANSI escape codes.
+	supportsANSI bool
 }
 
 // conn stores all connection settings
@@ -289,7 +293,11 @@ func (c *connection) readToFile() {
 			if gag && !(logAnyway && out.global) {
 				continue
 			}
-			bytesOut, err := fmt.Fprintln(out.output, line)
+			toWrite := line
+			if !out.supportsANSI {
+				toWrite = util.StripANSI.ReplaceAllString(line, "")
+			}
+			bytesOut, err := fmt.Fprintln(out.output, toWrite)
 			if err != nil {
 				log.Warningf("unable to write to output %s for connection %s. %v", out.name, c.name, err)
 			}
@@ -339,15 +347,14 @@ func (c *connection) closeOutputs() {
 		}
 		if c.world.Log {
 			rotateTo := c.getLogFile(fmt.Sprintf("%s.log", c.getTimestamp()))
-			if err := os.Rename(out.name, rotateTo); err != nil {
-				log.Warningf("unable to rotate log file %s, you'll need to do that on your own. %v", out.name, err)
+			if err := util.StripANSIFromFile(out.name, rotateTo); err != nil {
+				log.Warningf("unable to clean and rotate log file %s, you'll need to do that on your own. %v", out.name, err)
 				continue
 			}
-			log.Debugf("output file for %s rotated", c.name)
-		} else {
-			if err := os.Remove(out.name); err != nil {
-				log.Warningf("unable to remove outfile %s", out.name)
-			}
+		}
+		log.Debugf("output file for %s rotated", c.name)
+		if err := os.Remove(out.name); err != nil {
+			log.Warningf("unable to remove outfile %s", out.name)
 		}
 	}
 }
@@ -417,9 +424,10 @@ func (c *connection) Open() error {
 	log.Tracef("creating outfile for %s", c.name)
 	name := c.getConnectionFile(outFile)
 	globalOut := &output{
-		name:   name,
-		global: true,
-		output: nil,
+		name:         name,
+		global:       true,
+		output:       nil,
+		supportsANSI: true, // Global out supports ANSI, which is stripped during rotation.
 	}
 	if err = c.makeLogfile(globalOut); err != nil {
 		log.Errorf("could not create output file for %s: %v", c.name, err)
@@ -456,12 +464,13 @@ func (c *connection) GetDisplayName() string {
 // AddOutput creates an output struct with the given io.WriteCloser. This can
 // be a file, of course, but many other things as well, including the buffer
 // that the UI uses.
-func (c *connection) AddOutput(name string, w io.WriteCloser) {
+func (c *connection) AddOutput(name string, w io.WriteCloser, supportsANSI bool) {
 	log.Tracef("creating output %s for %s", name, c.name)
 	c.outputs = append(c.outputs, &output{
-		name:   name,
-		global: false,
-		output: w,
+		name:         name,
+		global:       false,
+		output:       w,
+		supportsANSI: supportsANSI,
 	})
 }
 
