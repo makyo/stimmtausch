@@ -12,7 +12,7 @@ type World struct {
 	Name string
 
 	// A free-form display name for the world.
-	DisplayName string
+	DisplayName string `yaml:"display_name" toml:"display_name"`
 
 	// The server to which this world belongs.
 	Server string
