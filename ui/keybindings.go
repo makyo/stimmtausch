@@ -27,7 +27,10 @@ func arrowUp(g *gotui.Gui, v *gotui.View) error {
 	if cx == 0 {
 		if cy == 0 {
 			v.Clear()
-			fmt.Fprint(v, sent.back().text)
+			hl := sent.back()
+			if hl != nil {
+				fmt.Fprint(v, hl.text)
+			}
 		} else {
 			v.SetCursor(0, 0)
 		}
@@ -77,21 +80,51 @@ func scrollConsole(v *gotui.View, delta int) {
 	v.SetOrigin(0, y+delta)
 }
 
+func scrollUp(g *gotui.Gui, v *gotui.View) error {
+	v, err := g.View(currView.viewName)
+	if err != nil {
+		return err
+	}
+	_, y := v.Origin()
+	_, maxY := v.Size()
+	lines := len(v.ViewBufferLines())
+	result := y - maxY
+	if result < 0 {
+		result = 0
+	}
+	log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, v.SetOrigin(0, result))
+	return nil
+}
+
+func scrollDown(g *gotui.Gui, v *gotui.View) error {
+	v, err := g.View(currView.viewName)
+	if err != nil {
+		return err
+	}
+	_, y := v.Origin()
+	_, maxY := v.Size()
+	lines := len(v.ViewBufferLines())
+	result := y + maxY
+	if result < lines {
+		if result+maxY > lines {
+			result = result - (result + maxY - lines) - 1
+		}
+		if result != y {
+			log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, v.SetOrigin(0, result))
+		}
+	}
+	return nil
+}
+
 // keybindings sets all keybindings used by the UI.
 func keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlLsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		scrollConsole(v, -2)
-		return nil
-	}); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyPgup, gotui.ModNone, scrollUp); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlRsqBracket, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		scrollConsole(v, 2)
-		return nil
-	}); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyPgdn, gotui.ModNone, scrollDown); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
