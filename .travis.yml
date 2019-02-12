@@ -5,5 +5,5 @@ before_install:
   - "go get -u -v github.com/golang/dep"
   - "go install github.com/golang/dep"
   - "go get -u -v -t ./..."
-  - "dep ensure -v"
+  - "$GOPATH/bin/dep ensure -v"
 script: go test -v ./...
