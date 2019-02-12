@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/juju/loggo"
-	"github.com/juju/loggo/loggocolor"
 	"github.com/makyo/gotui"
+	"github.com/makyo/loggocolor"
 
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
@@ -79,8 +79,8 @@ func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui) error {
 			_, vmaxY := vv.Size()
 			_, y := vv.Origin()
 			result := lines - vmaxY - 1
-			if result != y {
-				log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, lines-vmaxY-1, vv.SetOrigin(0, lines-vmaxY-1))
+			if result != y && result >= 0 {
+				log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, vv.SetOrigin(0, result))
 			}
 			return nil
 		})
@@ -136,8 +136,8 @@ func connect(connectStr string, g *gotui.Gui) error {
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
 		currView.buffer.AddPostWriteHook(func(line *HistoryLine) error {
+			fmt.Fprint(v, line.Text)
 			g.Update(func(gg *gotui.Gui) error {
-				fmt.Fprint(v, line.Text)
 				return currView.updateRecvOrigin(currViewIndex, gg)
 			})
 			return nil
@@ -164,15 +164,7 @@ func postCreate(g *gotui.Gui) error {
 		return err
 	}
 
-	// XXX Leaving the default writer in place writes to stderr, which
-	// obviously writes to the screen. However, replacing it means that a lot
-	// of the logging disappears. Currently, running with, e.g:
-	//     go run main.go world 2>log.out
-	// and then tailing the log in a separate window works, but bleh. Need to
-	// either figure out logging to a file or why stderr shows through the UI.
-	// Probably both.
-	loggo.RegisterWriter("console", loggocolor.NewWriter(console))
-	//loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
+	loggo.RegisterWriter("console", loggocolor.NewColorWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	sent.AddPostWriteHook(func(line *HistoryLine) error {
@@ -250,9 +242,6 @@ func New(_args []string, _cfg *config.Config) {
 		os.Exit(2)
 	}
 	defer g.Close()
-
-	// XXX See above note on default writers.
-	defer loggo.ReplaceDefaultWriter(loggocolor.NewWriter(os.Stderr))
 
 	g.Cursor = true
 	g.Mouse = true

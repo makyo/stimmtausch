@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/juju/loggo"
-	"github.com/juju/loggo/loggocolor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -25,8 +24,6 @@ func initFlags(cmd *cobra.Command) {
 
 // initConfig initializes the configuration used within the session.
 func initLogging(logLevel string) {
-	// TODO log to file
-	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(os.Stderr))
 	loggo.ConfigureLoggers(fmt.Sprintf("<root>=%s", logLevel))
 }
 

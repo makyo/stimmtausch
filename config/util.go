@@ -7,6 +7,7 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -18,15 +19,16 @@ var (
 	ConfigDir    string
 	WorkingDir   string
 	LogDir       string
-	Environment  string
 )
 
-// initDirs initializes the directories used by Stimmtausch.
-func initEnv() error {
+// InitDirs initializes the directories used by Stimmtausch.
+func InitDirs() {
+	if HomeDir != "" && ConfigDir != "" && WorkingDir != "" && LogDir != "" {
+		return
+	}
 	HomeDir, err := homedir.Dir()
 	if err != nil {
-		log.Criticalf("could not find homedir: %v", err)
-		return err
+		panic(fmt.Sprintf("could not find home dir: %v", err))
 	}
 	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
 	WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
@@ -47,5 +49,4 @@ func initEnv() error {
 		"_conf/local/*.toml",
 		"_conf/local/*.json",
 	}
-	return nil
 }

@@ -80,6 +80,8 @@ func scrollConsole(v *gotui.View, delta int) {
 	v.SetOrigin(0, y+delta)
 }
 
+// scrollUp scrolls the output buffer up by one screen. If that would go
+// negative, it only scrolls to zero to prevent an error.
 func scrollUp(g *gotui.Gui, v *gotui.View) error {
 	v, err := g.View(currView.viewName)
 	if err != nil {
@@ -96,6 +98,8 @@ func scrollUp(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+// scrollDown scrolls the output buffer down by one screen. If that would go
+// past where the text is written, it scrolls by only that amount.
 func scrollDown(g *gotui.Gui, v *gotui.View) error {
 	v, err := g.View(currView.viewName)
 	if err != nil {
@@ -116,6 +120,25 @@ func scrollDown(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+// redraw forces a rerender of the current view in order to ensure that everything is in order
+func redraw(g *gotui.Gui, v *gotui.View) error {
+	log.Debugf("redrawing")
+	v, err := g.View(currView.viewName)
+	if err != nil {
+		return err
+	}
+	x, y := v.Origin()
+	v.Clear()
+	fmt.Fprint(v, currView.buffer.String())
+	// XXX This doesn't preserve, and I don't know why. Drat.
+	// https://github.com/makyo/stimmtausch/issues/46
+	v.SetOrigin(x, y)
+	g.Update(func(gg *gotui.Gui) error {
+		return currView.updateRecvOrigin(currViewIndex, gg)
+	})
+	return nil
+}
+
 // keybindings sets all keybindings used by the UI.
 func keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, quit); err != nil {
@@ -127,19 +150,7 @@ func keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyPgdn, gotui.ModNone, scrollDown); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		log.Debugf("redrawing")
-		v, err := g.View(currView.viewName)
-		if err != nil {
-			return err
-		}
-		v.Clear()
-		fmt.Fprint(v, currView.buffer.String())
-		g.Update(func(gg *gotui.Gui) error {
-			return currView.updateRecvOrigin(currViewIndex, gg)
-		})
-		return nil
-	}); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, redraw); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, send); err != nil {
