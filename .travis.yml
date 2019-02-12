@@ -2,5 +2,7 @@ language: go
 go:
   - "1.10"
 before_install:
+  - "go install github.com/golang/dep"
   - "go get -u -v -t ./..."
+  - "dep ensure -v"
 script: go test -v ./...
