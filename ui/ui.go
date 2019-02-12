@@ -69,18 +69,19 @@ func send(g *gotui.Gui, v *gotui.View) error {
 // updateRecvOrigin updates the origin of every output gotui.View according to
 // how many lines are in the buffer.
 func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui) error {
-	view, err := g.View(v.viewName)
-	if err != nil {
-		return err
-	}
-	lines := len(view.ViewBufferLines())
 	maxX, maxY := g.Size()
 	recvX0 := (maxX * index) - (maxX * currViewIndex)
 	if vv, err := g.SetView(v.viewName, recvX0-1, 3, recvX0+maxX, maxY-5); err != nil {
 		return err
 	} else {
 		g.Update(func(gg *gotui.Gui) error {
-			vv.SetOrigin(0, -lines)
+			lines := len(vv.ViewBufferLines())
+			_, vmaxY := vv.Size()
+			_, y := vv.Origin()
+			result := lines - vmaxY - 1
+			if result != y {
+				log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, lines-vmaxY-1, vv.SetOrigin(0, lines-vmaxY-1))
+			}
 			return nil
 		})
 	}
@@ -114,7 +115,6 @@ func connect(connectStr string, g *gotui.Gui) error {
 		v.IndentFirst = cfg.Client.UI.IndentFirst
 		v.IndentSubsequent = cfg.Client.UI.IndentSubsequent
 		v.Frame = false
-		v.Autoscroll = true
 		currView = &receivedView{
 			connName: conn.GetConnectionName(),
 			conn:     conn,
@@ -136,8 +136,11 @@ func connect(connectStr string, g *gotui.Gui) error {
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
 		currView.buffer.AddPostWriteHook(func(line *historyLine) error {
-			fmt.Fprint(v, line.text)
-			return currView.updateRecvOrigin(currViewIndex, g)
+			g.Update(func(gg *gotui.Gui) error {
+				fmt.Fprint(v, line.text)
+				return currView.updateRecvOrigin(currViewIndex, gg)
+			})
+			return nil
 		})
 
 		// Add the received history to the connection as an output.
