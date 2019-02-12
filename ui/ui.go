@@ -33,7 +33,7 @@ type receivedView struct {
 	conn io.WriteCloser
 
 	// The connection's output buffer
-	buffer *history
+	buffer *History
 
 	// Whether or not the world is currently active.
 	current bool
@@ -43,7 +43,7 @@ var (
 	args     []string
 	stClient *client.Client
 	currView *receivedView
-	sent     *history
+	sent     *History
 	cfg      *config.Config
 )
 
@@ -135,9 +135,9 @@ func connect(connectStr string, g *gotui.Gui) error {
 
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
-		currView.buffer.AddPostWriteHook(func(line *historyLine) error {
+		currView.buffer.AddPostWriteHook(func(line *HistoryLine) error {
 			g.Update(func(gg *gotui.Gui) error {
-				fmt.Fprint(v, line.text)
+				fmt.Fprint(v, line.Text)
 				return currView.updateRecvOrigin(currViewIndex, gg)
 			})
 			return nil
@@ -175,8 +175,8 @@ func postCreate(g *gotui.Gui) error {
 	//loggo.ReplaceDefaultWriter(loggocolor.NewWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
-	sent.AddPostWriteHook(func(line *historyLine) error {
-		_, err := fmt.Fprintln(currView.conn, line.text)
+	sent.AddPostWriteHook(func(line *HistoryLine) error {
+		_, err := fmt.Fprintln(currView.conn, line.Text)
 		if err != nil {
 			log.Warningf("error writing to connection")
 			return err

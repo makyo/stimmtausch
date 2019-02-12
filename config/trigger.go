@@ -61,15 +61,11 @@ func compileTrigger(t Trigger) (*Trigger, error) {
 	if t.Name == "" {
 		t.Name = fmt.Sprintf("%+v", t)
 	}
-	if t.Match == "" && len(t.Matches) == 0 {
-		return nil, fmt.Errorf("no matches for trigger %s", t.Name)
-	}
 	if t.Match != "" {
-		re, err := regexp.Compile(t.Match)
-		if err != nil {
-			return nil, err
-		}
-		t.reList = append(t.reList, re)
+		t.Matches = append(t.Matches, t.Match)
+	}
+	if len(t.Matches) == 0 {
+		return nil, fmt.Errorf("no matches for trigger %s", t.Name)
 	}
 	for _, match := range t.Matches {
 		re, err := regexp.Compile(match)
@@ -96,16 +92,12 @@ func (t *Trigger) Run(input string, cfg *Config) (bool, string, []error) {
 			switch t.Type {
 			case "hilite":
 				input, err = t.hiliteString(input, matches)
-				break
 			case "gag":
 				return true, input, []error{}
-				break
 			case "script":
 				input, err = t.runScript(input, matches)
-				break
 			case "macro":
 				input, err = t.runMacro(input, matches, cfg)
-				break
 			}
 			if err != nil {
 				errs = append(errs, err)
@@ -126,8 +118,6 @@ func (t *Trigger) hiliteString(input string, matches [][]int) (string, error) {
 	for _, match := range matches {
 		before, target, after := input[:match[0]-offset], input[match[0]-offset:match[1]-offset], input[match[1]-offset:]
 		offset = match[1]
-		// We need to use ApplyWithReset here because termbox doesn't support
-		// color-off codes
 		target, err := ansi.Apply(t.Attributes, target)
 		if err != nil {
 			log.Warningf("error applying hilites: %v (continuing anyway)", err)
@@ -150,6 +140,7 @@ func (t *Trigger) runScript(input string, matches [][]int) (string, error) {
 	return input, fmt.Errorf("not implemented")
 }
 
+// runMacro runs a macro within the client.
 func (t *Trigger) runMacro(input string, matches [][]int, cfg *Config) (string, error) {
 	log.Tracef("running macro")
 	return input, fmt.Errorf("not implemented")
