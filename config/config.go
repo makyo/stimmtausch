@@ -156,10 +156,7 @@ func (c *Config) FinalizeAndValidate() []error {
 // sources.
 func Load() (*Config, error) {
 	log.Debugf("loading configuration")
-	err := initEnv()
-	if err != nil {
-		return nil, err
-	}
+	InitDirs()
 
 	var wrap wrapper
 	snoot := snuffler.New(&wrap)
