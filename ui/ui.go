@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/juju/loggo"
+	"github.com/juju/loggo/loggocolor"
 	"github.com/makyo/gotui"
-	"github.com/makyo/loggocolor"
 
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"

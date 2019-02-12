@@ -54,11 +54,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a330103bc9731260ee9fa14764e9e3fce46e02de19d6aca3eeba1d425badfbf0"
+  digest = "1:c1359a4966168fe7cae773dbe2d179b2f617e861398afc2a12f929761fa18d97"
   name = "github.com/juju/loggo"
-  packages = ["."]
+  packages = [
+    ".",
+    "loggocolor",
+  ]
   pruneopts = "UT"
-  revision = "584905176618da46b895b176c721b02c476b6993"
+  revision = "d976af380377adda50b2d34279f1dec3507504ac"
 
 [[projects]]
   digest = "1:2dc8db55c5b223e6cd50aa7915e698cfcf56d1ddfa89bbbf65e24729e0a0200a"
@@ -82,15 +85,7 @@
   name = "github.com/makyo/gotui"
   packages = ["."]
   pruneopts = "UT"
-  revision = "898f0801ec62b9f2923acc8ee35ba3b4d7e143fd"
-
-[[projects]]
-  branch = "master"
-  digest = "1:ff89e498f29a3dfe8d25f72c1cce259773e8b4de7e1f089ca94859352449aebd"
-  name = "github.com/makyo/loggocolor"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b55f5f3893e7921b9180a48fa3fd59975abaec38"
+  revision = "354245230689f9482c41f6b73bcd4a5cb2934c32"
 
 [[projects]]
   digest = "1:94892f041853bd09edfbafae5b8e0b98d6f32c23df57a4d6cd0ccbdfce3c81f0"
@@ -193,11 +188,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:969c44c96e9866e912a16e282a362cf045b64202107424983fe8abc3373d1eab"
+  digest = "1:8b466798e96432c23185ca32826702885299f94eb644c9a8dedb79771dff383a"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "41f3e6584952bb034a481797859f6ab34b6803bd"
+  revision = "3b5209105503162ded1863c307ac66fec31120dd"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -212,9 +207,9 @@
   analyzer-version = 1
   input-imports = [
     "github.com/juju/loggo",
+    "github.com/juju/loggo/loggocolor",
     "github.com/makyo/ansigo",
     "github.com/makyo/gotui",
-    "github.com/makyo/loggocolor",
     "github.com/makyo/snuffler",
     "github.com/mitchellh/go-homedir",
     "github.com/smartystreets/goconvey/convey",
