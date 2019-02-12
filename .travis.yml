@@ -2,6 +2,7 @@ language: go
 go:
   - "1.10"
 before_install:
+  - "go get -u -v github.com/golang/dep"
   - "go install github.com/golang/dep"
   - "go get -u -v -t ./..."
   - "dep ensure -v"
