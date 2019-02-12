@@ -27,7 +27,7 @@ func arrowUp(g *gotui.Gui, v *gotui.View) error {
 	if cx == 0 {
 		if cy == 0 {
 			v.Clear()
-			fmt.Fprint(v, sent.back())
+			fmt.Fprint(v, sent.back().text)
 		} else {
 			v.SetCursor(0, 0)
 		}
@@ -54,7 +54,7 @@ func arrowDown(g *gotui.Gui, v *gotui.View) error {
 			v.Clear()
 			v.SetCursor(0, 0)
 			if !sent.onLast() {
-				fmt.Fprint(v, sent.forward())
+				fmt.Fprint(v, sent.forward().text)
 			}
 		} else {
 			if lineCount == 0 {

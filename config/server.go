@@ -24,15 +24,15 @@ type Server struct {
 	Insecure bool
 
 	// The type of server (MUCK, MUSH, etc...) this is.
-	ServerType string
+	ServerType string `yaml:"type" toml:"type"`
 }
 
 // ServerType represents a type of server (MUCK, MUSH, etc...), which mostly
 // boils down to things such as how to connect to it, etc.
 type ServerType struct {
 	Name             string
-	ConnectString    string
-	DisconnectString string
+	ConnectString    string `yaml:"connect_string" toml:"connect_string"`
+	DisconnectString string `yaml:"disconnect_string" toml:"disconnect_string"`
 }
 
 // NewServer returns a new server object for the given values.

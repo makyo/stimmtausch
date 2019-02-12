@@ -1,7 +1,7 @@
 stimmtausch:
   server_types:
     muck:
-      connect_string: "connect $user $password"
+      connect_string: "connect $username $password"
       disconnect_string: "QUIT"
   servers:
     spr:

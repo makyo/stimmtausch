@@ -15,6 +15,7 @@ import (
 	"net/textproto"
 	"os"
 	"path/filepath"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -24,7 +25,11 @@ import (
 	"github.com/makyo/stimmtausch/util"
 )
 
-var log = loggo.GetLogger("stimmtausch.client")
+var (
+	log    = loggo.GetLogger("stimmtausch.client")
+	userRe = regexp.MustCompile("\\$username")
+	passRe = regexp.MustCompile("\\$password")
+)
 
 // Hardcoded client settings.
 const (
@@ -447,6 +452,14 @@ func (c *connection) Open() error {
 	c.disconnected = make(chan bool)
 	go c.readToFile()
 	go c.readToConn()
+
+	st, ok := c.config.ServerTypes[c.server.ServerType]
+	if ok && c.world.Username != "" && c.world.Password != "" {
+		connectStr := st.ConnectString
+		connectStr = userRe.ReplaceAllString(connectStr, c.world.Username)
+		connectStr = passRe.ReplaceAllString(connectStr, c.world.Password)
+		fmt.Fprintln(c, connectStr)
+	}
 
 	return nil
 }
