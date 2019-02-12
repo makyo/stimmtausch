@@ -95,8 +95,16 @@ func keybindings(g *gotui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, func(g *gotui.Gui, v *gotui.View) error {
-		g.Update(func(g *gotui.Gui) error { return nil })
 		log.Debugf("redrawing")
+		v, err := g.View(currView.viewName)
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		fmt.Fprint(v, currView.buffer.String())
+		g.Update(func(gg *gotui.Gui) error {
+			return currView.updateRecvOrigin(currViewIndex, gg)
+		})
 		return nil
 	}); err != nil {
 		return err

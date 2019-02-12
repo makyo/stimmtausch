@@ -66,29 +66,24 @@ func send(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
-// updateRecvSize updates the size of every output gotui.View according to
-// how many lines are in the buffer. This is how we mock having the text
-// scroll up from the bottom before the buffer gets to be larger than the
-// window size, as text is always written from the top of the view down.
-func (v *receivedView) updateRecvSize(index int, g *gotui.Gui) error {
+// updateRecvOrigin updates the origin of every output gotui.View according to
+// how many lines are in the buffer.
+func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui) error {
 	view, err := g.View(v.viewName)
 	if err != nil {
 		return err
 	}
 	lines := len(view.ViewBufferLines())
 	maxX, maxY := g.Size()
-	recvY0 := 3
-	if lines < maxY-7 {
-		recvY0 = maxY - 7 - lines
-	}
 	recvX0 := (maxX * index) - (maxX * currViewIndex)
-	g.Update(func(gg *gotui.Gui) error {
-		if _, err := gg.SetView(v.viewName, recvX0-1, recvY0, recvX0+maxX, maxY-5); err != nil {
-			log.Warningf("unable to create view %+v", err)
-			return err
-		}
-		return nil
-	})
+	if vv, err := g.SetView(v.viewName, recvX0-1, 3, recvX0+maxX, maxY-5); err != nil {
+		return err
+	} else {
+		g.Update(func(gg *gotui.Gui) error {
+			vv.SetOrigin(0, -lines)
+			return nil
+		})
+	}
 	return nil
 }
 
@@ -128,6 +123,12 @@ func connect(connectStr string, g *gotui.Gui) error {
 			current:  true,
 		}
 		views = append(views, currView)
+		inputView, err := g.View("send")
+		if err != nil {
+			log.Warningf("unable to get send view to change title: %v", err)
+		} else {
+			inputView.Title = fmt.Sprintf(" %s ", conn.GetDisplayName())
+		}
 
 		// Set this view's index as the current view index.
 		currViewIndex = len(views) - 1
@@ -136,7 +137,7 @@ func connect(connectStr string, g *gotui.Gui) error {
 		// the received history for the connection.
 		currView.buffer.AddPostWriteHook(func(line *historyLine) error {
 			fmt.Fprint(v, line.text)
-			return currView.updateRecvSize(currViewIndex, g)
+			return currView.updateRecvOrigin(currViewIndex, g)
 		})
 
 		// Add the received history to the connection as an output.
@@ -207,7 +208,7 @@ func layout(g *gotui.Gui) error {
 			return err
 		} else {
 			for i, view := range views {
-				if err := view.updateRecvSize(i, g); err != nil {
+				if err := view.updateRecvOrigin(i, g); err != nil {
 					return err
 				}
 			}
