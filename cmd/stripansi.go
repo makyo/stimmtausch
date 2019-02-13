@@ -18,7 +18,7 @@ var stripansiCmd = &cobra.Command{
 	Short: "Strip ANSI color codes from a file.",
 	Long: `Strip ANSI color codes from a file.
 
-If you have a log file which includees ANSI color codes, which might happen by
+If you have a log file which includes ANSI color codes, which might happen by
 accident when a Stimmtausch session is interrupted, you can run "st strip-ansi
 <input file> <output file>".`,
 	Args: cobra.MinimumNArgs(2),
