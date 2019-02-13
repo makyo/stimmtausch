@@ -7,5 +7,8 @@ deps:
 	dep ensure -v
 
 .PHONY: deb
-deb:
+deb: clean deps
+	# Build binary package for GitHub.
 	gbp buildpackage
+	# Build source package for PPA
+	debuild -S -sa

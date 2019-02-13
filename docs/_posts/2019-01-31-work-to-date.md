@@ -2,6 +2,7 @@
 layout: post
 title:  "Stimmtausch work to date!"
 author: Maddy
+excerpt: In which Maddy rushed into a project without thinking it through very well.
 ---
 
 [![Screenshot of Stimmtausch running](/assets/2019-01-31.1.png)](/assets/2019-01-31.1.png)

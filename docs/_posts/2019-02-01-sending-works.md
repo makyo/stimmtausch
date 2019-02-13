@@ -2,6 +2,7 @@
 layout: post
 title: Sending works!
 author: Maddy
+excerpt: In which Maddy gets really excited about being able to log into a MUCK.
 ---
 
 [![Screenshot of Stimmtausch connected and talking to a MUCK](/assets/2019-02-01.png)](/assets/2019-02-01.png)

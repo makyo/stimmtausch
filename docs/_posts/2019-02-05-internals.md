@@ -2,6 +2,7 @@
 layout: post
 title: Some internals
 author: Maddy
+excerpt: A brief interlude in related libraries.
 ---
 
 [![Stimmtausch, system logs, and htop](/assets/2019-02-05.png)](/assets/2019-02-05.png)
