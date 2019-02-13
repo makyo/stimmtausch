@@ -5,6 +5,8 @@ author: Maddy
 excerpt: In which the very first release of Stimmtausch is announced.
 ---
 
+[![Yay!](/assets/2019-02-13.png)](/assets/2019-02-13.png)
+
 Yay! I did the thing! I finished all of the tasks on the [0.0.1 milestone](https://github.com/makyo/stimmtausch/milestone/1), beat my head against `debuild`, and managed to pull together the first release of Stimmtausch! You can now install it by doing the following:
 
 ```bash
