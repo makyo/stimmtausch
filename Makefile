@@ -5,3 +5,7 @@ clean:
 .PHONY: deps
 deps:
 	dep ensure -v
+
+.PHONY: deb
+deb:
+	gbp buildpackage
