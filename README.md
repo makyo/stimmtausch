@@ -24,7 +24,7 @@ You can find out more on [stimmtausch.com](https://stimmtausch.com).
 
 ## Contributors
 
-* Madison Scott-Clary (@makyo; Maddy on FurryMUCK and Tapestries).  
+* Madison Scott-Clary (@makyo; Maddy on FurryMUCK, SpinDizzy, and Tapestries).
   [![Support me on Patreon](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://patreon.com/makyo)
   [![Buy me a Coffee](https://img.shields.io/badge/patreon-support-%23222222.svg)](https://ko-fi.com/drabmakyo)
   [![Support me on LiberaPay](https://img.shields.io/badge/liberapay-support-%23222222.svg)](https://liberapay.com/makyo)
