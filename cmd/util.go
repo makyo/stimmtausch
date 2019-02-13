@@ -30,7 +30,7 @@ func initLogging(logLevel string) {
 // GenMarkdownDocs generates markdown files for each command, which are used
 // on stimmtausch.com
 func GenMarkdownDocs() {
-	if err := doc.GenMarkdownTree(rootCmd, "./doc/"); err != nil {
+	if err := doc.GenMarkdownTree(rootCmd, "./docs/"); err != nil {
 		log.Criticalf("unable to generate docs: %v", err)
 		os.Exit(2)
 	}
@@ -42,7 +42,7 @@ func GenManPages() {
 		Title:   "STIMMTAUSCH",
 		Section: "1",
 	}
-	if err := doc.GenManTree(rootCmd, header, "./doc/"); err != nil {
+	if err := doc.GenManTree(rootCmd, header, "./docs/"); err != nil {
 		log.Criticalf("unable to generate man pages: %v", err)
 		os.Exit(2)
 	}

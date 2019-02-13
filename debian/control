@@ -1,15 +1,24 @@
 Source: st
-Section: games
+Section: devel
 Priority: optional
-Maintainer: Madiosn Scott-Clary <makyo@drab-makyo.com>
-Build-Depends: debhelper (>= 10)
-Standards-Version: 4.1.2
+Maintainer: Debian Go Packaging Team <pkg-go-maintainers@lists.alioth.debian.org>
+Uploaders: Madiosn Scott-Clary <makyo@drab-makyo.com>
+Build-Depends: debhelper (>= 10),
+               dh-golang,
+               golang-any,
+               golang-github-juju-loggo-dev
+Standards-Version: 4.1.1
 Homepage: https://stimmtausch.com
+Vcs-Browser: https://github.com/makyo/stimmtausch
 Vcs-Git: https://github.com/makyo/stimmtausch.git
+XS-Go-Import-Path: github.com/makyo/stimmtausch
+Testsuite: autopkgtest-pkg-go
 
 Package: st
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Built-Using: ${misc:Built-Using}
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
 Description: Terminal-based MU* client
  Stimmtausch is a terminal-based MU* client for connecting to multi-user online
  roleplaying games such as MUDs, MUSHes, MUCKs, and MOOs.

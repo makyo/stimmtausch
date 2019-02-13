@@ -1,5 +1,5 @@
-st (0.0.0-rc1-1) unstable; urgency=medium
+st (0.0.0) UNRELEASED; urgency=medium
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release
 
- -- Madiosn Scott-Clary <makyo@drab-makyo.com>  Sun, 10 Feb 2019 18:23:42 -0800
+ -- Madiosn Scott-Clary <makyo@drab-makyo.com>  Tue, 12 Feb 2019 17:27:52 -0800

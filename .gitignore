@@ -21,3 +21,10 @@ _site
 
 # Editor stuff
 *.sw[op]
+
+obj-*
+*.debhelper.log
+.debian
+debian/files
+debian/st
+.debhelper
