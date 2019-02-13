@@ -26,5 +26,7 @@ obj-*
 *.debhelper.log
 .debian
 debian/files
-debian/st
+debian/stimmtausch
 .debhelper
+debhelper-build-stamp
+*.substvars
