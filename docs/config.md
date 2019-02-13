@@ -5,6 +5,8 @@ title: Configuration
 
 ## Configuration
 
+*TL;DR:* There are lots of configuration options, and most of them are set for you except for [worlds](#worlds) and [triggers](#triggers), which you'll probably want to put in `~/.strc`.
+
 Stimmtausch is designed to be configurable from the ground up, as much as possible. It relies on configuration files in one of three formats: YAML, TOML, or JSON. These files are read in order from:
 
 * `/etc/stimmtausch/st.yaml`
