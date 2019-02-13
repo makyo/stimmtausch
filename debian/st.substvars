@@ -1,4 +1,0 @@
-shlibs:Depends=libc6 (>= 2.4)
-misc:Built-Using=golang-1.10 (= 1.10.4-2ubuntu1~18.04.1)
-misc:Depends=
-misc:Pre-Depends=

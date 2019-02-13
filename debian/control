@@ -1,8 +1,7 @@
-Source: st
-Section: devel
+Source: stimmtausch
+Section: games
 Priority: optional
-Maintainer: Debian Go Packaging Team <pkg-go-maintainers@lists.alioth.debian.org>
-Uploaders: Madiosn Scott-Clary <makyo@drab-makyo.com>
+Maintainer: Madison Scott-Clary <makyo@drab-makyo.com>
 Build-Depends: debhelper (>= 10),
                dh-golang,
                golang-any,
@@ -14,7 +13,7 @@ Vcs-Git: https://github.com/makyo/stimmtausch.git
 XS-Go-Import-Path: github.com/makyo/stimmtausch
 Testsuite: autopkgtest-pkg-go
 
-Package: st
+Package: stimmtausch
 Architecture: any
 Built-Using: ${misc:Built-Using}
 Depends: ${shlibs:Depends},
