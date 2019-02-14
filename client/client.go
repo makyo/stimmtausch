@@ -17,7 +17,7 @@ import (
 // be worth simplifying that in the future.
 type Client struct {
 	// The current configuration object holding all worlds, servers, etc.
-	config *config.Config
+	Config *config.Config
 
 	// All active connections.
 	connections map[string]*connection
@@ -27,7 +27,7 @@ type Client struct {
 // connection in the client by calling connect on that world.
 func (c *Client) connectToWorld(connectStr string, w config.World) (*connection, error) {
 	log.Tracef("connecting to world %s (%s)", w.Name, connectStr)
-	conn, err := NewConnection(connectStr, w, c.config.Servers[w.Server], c.config)
+	conn, err := NewConnection(connectStr, w, c.Config.Servers[w.Server], c.Config)
 	if err != nil {
 		log.Errorf("error connecting to world %s. %v", w.Name, err)
 		return nil, err
@@ -59,7 +59,7 @@ func (c *Client) Connect(connectStr string) (*connection, error) {
 	log.Tracef("attempting to connect to %s in %v", connectStr, c)
 
 	log.Tracef("checking if it's a world...")
-	w, ok := c.config.Worlds[connectStr]
+	w, ok := c.Config.Worlds[connectStr]
 	if ok {
 		conn, err := c.connectToWorld(connectStr, w)
 		if err != nil {
@@ -70,7 +70,7 @@ func (c *Client) Connect(connectStr string) (*connection, error) {
 	}
 
 	log.Tracef("checking if it's a server...")
-	s, ok := c.config.Servers[connectStr]
+	s, ok := c.Config.Servers[connectStr]
 	if ok {
 		conn, err := c.connectToServer(connectStr, s)
 		if err != nil {
@@ -107,7 +107,7 @@ func (c *Client) CloseAll() {
 func New(cfg *config.Config) (*Client, error) {
 	log.Tracef("creating client")
 	c := &Client{
-		config:      cfg,
+		Config:      cfg,
 		connections: map[string]*connection{},
 	}
 	return c, nil
