@@ -14,8 +14,6 @@ import (
 	ansi "github.com/makyo/ansigo"
 )
 
-var startColorRE = regexp.MustCompile("\x1b\\[(3|4|9|10)[0-8](;\\d+)*m")
-
 type Trigger struct {
 	// The name of the trigger.
 	Name string
@@ -79,7 +77,7 @@ func compileTrigger(t Trigger) (*Trigger, error) {
 	return &t, nil
 }
 
-// Compile returns a pointer to the compiled trigger..
+// Compile returns a pointer to the compiled trigger.
 func (t Trigger) Compile() (*Trigger, error) {
 	return compileTrigger(t)
 }
@@ -120,18 +118,20 @@ func (t *Trigger) Run(input string, cfg *Config) (bool, string, []error) {
 // generated in the process.
 func (t *Trigger) hiliteString(input string, matches [][]int) (string, error) {
 	log.Tracef("hiliting string")
+	original := input
 	var parts []string
 	offset := 0
 	for _, match := range matches {
-		before, target, after := input[:match[0]-offset], input[match[0]-offset:match[1]-offset], input[match[1]-offset:]
-		activeColors := startColorRE.FindAllString(before, -1)
+		start := match[0] - offset
+		end := match[1] - offset
+		before, target, after := input[:start], input[start:end], input[end:]
 		offset = match[1]
 		target, err := ansi.Apply(t.Attributes, target)
 		if err != nil {
 			log.Warningf("error applying hilites: %v (continuing anyway)", err)
 		}
 		parts = append(parts, before, target)
-		input = strings.Join(activeColors, "") + after
+		input = strings.Join(ansi.ANSIAtIndex(original, match[0]), "") + after
 	}
 	parts = append(parts, input)
 	return strings.Join(parts, ""), nil

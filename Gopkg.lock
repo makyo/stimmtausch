@@ -73,11 +73,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3aa8059ec1943b61c1ef925b76358f9eee352c790360d3bb8cee6fc23bba5053"
+  digest = "1:8d48dad847100ec74b94f4cb0c8e4a638b1a9144138558496229bd9bce8a89db"
   name = "github.com/makyo/ansigo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6233c8d7c2e337a84511d3b26378539045903698"
+  revision = "139f75691661fd47b32ef86ac58bcfc3a18148ef"
 
 [[projects]]
   branch = "master"
@@ -188,11 +188,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8b466798e96432c23185ca32826702885299f94eb644c9a8dedb79771dff383a"
+  digest = "1:8207c052fb873f83c61a5aa16f6add5feb9881eda2112b56f69fd3b9e7f55c3f"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "3b5209105503162ded1863c307ac66fec31120dd"
+  revision = "983097b1a8a340cd1cc7df17d735154d89e10b1a"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"

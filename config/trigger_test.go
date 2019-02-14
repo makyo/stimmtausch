@@ -105,6 +105,8 @@ func TestTriggers(t *testing.T) {
 				So(line, ShouldEqual, "\x1b[35mHello, Rose, how're you?\x1b[39m")
 				_, line, errs = hl2.Run(line, c)
 				So(line, ShouldEqual, "\x1b[35mHello, \x1b[36mRose\x1b[39m\x1b[35m, how're you?\x1b[39m")
+				_, line, errs = hl2.Run("\x1b[35mHello\x1b[0m, Rose, how're you?", c)
+				So(line, ShouldEqual, "\x1b[35mHello\x1b[0m, \x1b[36mRose\x1b[39m, how're you?")
 			})
 		})
 
