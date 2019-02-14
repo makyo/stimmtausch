@@ -46,3 +46,6 @@ stimmtausch:
       # Indentation of wrapped lines.
       indent_first: 0
       indent_subsequent: 4
+
+      # Whether or not to support mouse events
+      mouse: false
