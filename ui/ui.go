@@ -15,14 +15,12 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
-	"github.com/makyo/stimmtausch/config"
 )
 
 type tui struct {
 	g             *gotui.Gui
-	cfg           *config.Config
+	client        *client.Client
 	args          []string
-	stClient      *client.Client
 	sent          *History
 	currView      *receivedView
 	currViewIndex int
@@ -36,7 +34,7 @@ var log = loggo.GetLogger("stimmtausch.ui")
 // connection.
 func (t *tui) connect(connectStr string, g *gotui.Gui) error {
 	log.Tracef("creating a connection with connection string %s", connectStr)
-	conn, err := t.stClient.Connect(connectStr)
+	conn, err := t.client.Connect(connectStr)
 	if err != nil {
 		log.Errorf("unable to connect to %s: %v", connectStr, err)
 		return err
@@ -55,14 +53,14 @@ func (t *tui) connect(connectStr string, g *gotui.Gui) error {
 		fmt.Fprintln(v, "\n ")
 		v.Wrap = true
 		v.WordWrap = true
-		v.IndentFirst = t.cfg.Client.UI.IndentFirst
-		v.IndentSubsequent = t.cfg.Client.UI.IndentSubsequent
+		v.IndentFirst = t.client.Config.Client.UI.IndentFirst
+		v.IndentSubsequent = t.client.Config.Client.UI.IndentSubsequent
 		v.Frame = false
 		t.currView = &receivedView{
 			connName: conn.GetConnectionName(),
 			conn:     conn,
 			viewName: viewName,
-			buffer:   NewHistory(t.cfg.Client.UI.Scrollback),
+			buffer:   NewHistory(t.client.Config.Client.UI.Scrollback),
 			current:  true,
 			index:    len(t.views),
 		}
@@ -173,7 +171,7 @@ func (t *tui) Run(done chan bool) {
 	defer t.g.Close()
 
 	t.g.Cursor = true
-	t.g.Mouse = t.cfg.Client.UI.Mouse
+	t.g.Mouse = t.client.Config.Client.UI.Mouse
 
 	t.g.SetManagerFunc(t.layout)
 
@@ -186,16 +184,15 @@ func (t *tui) Run(done chan bool) {
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
 	}
-	t.stClient.CloseAll()
+	t.client.CloseAll()
 	done <- true
 }
 
 // New instantiates a new Stimmtausch UI.
-func New(args []string, cfg *config.Config, stClient *client.Client) *tui {
+func New(args []string, c *client.Client) *tui {
 	return &tui{
-		stClient: stClient,
-		cfg:      cfg,
-		args:     args,
-		sent:     NewHistory(cfg.Client.UI.History),
+		client: c,
+		args:   args,
+		sent:   NewHistory(c.Config.Client.UI.History),
 	}
 }

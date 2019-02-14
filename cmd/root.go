@@ -79,7 +79,7 @@ For more help, see https://stimmtausch.com`,
 			os.Exit(2)
 		}
 		log.Tracef("created client: %+v", stClient)
-		tui := ui.New(args, cfg, stClient)
+		tui := ui.New(args, stClient)
 
 		done := make(chan bool)
 		go tui.Run(done)
