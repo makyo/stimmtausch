@@ -84,6 +84,28 @@ func TestTriggers(t *testing.T) {
 				So(len(errs), ShouldEqual, 0)
 				So(line, ShouldEqual, "-I'm \x1b[1mthe Doctor\x1b[22m -\x1b[1mDoctor\x1b[22m who?")
 			})
+
+			Convey("And leave already hilited strings in place", func() {
+				hl1, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "Hello, Rose, how're you\\?",
+					Attributes: "magenta",
+				}).Compile()
+				So(err, ShouldBeNil)
+				hl2, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "Rose",
+					Attributes: "cyan",
+				}).Compile()
+				So(err, ShouldBeNil)
+				errs := c.FinalizeAndValidate()
+				So(len(errs), ShouldEqual, 0)
+				_, line, errs := hl1.Run("Hello, Rose, how're you?", c)
+				So(len(errs), ShouldEqual, 0)
+				So(line, ShouldEqual, "\x1b[35mHello, Rose, how're you?\x1b[39m")
+				_, line, errs = hl2.Run(line, c)
+				So(line, ShouldEqual, "\x1b[35mHello, \x1b[36mRose\x1b[39m\x1b[35m, how're you?\x1b[39m")
+			})
 		})
 
 		Convey("They can gag (but what to do about that is on the client)", func() {
