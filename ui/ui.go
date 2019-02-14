@@ -244,7 +244,7 @@ func New(_args []string, _cfg *config.Config) {
 	defer g.Close()
 
 	g.Cursor = true
-	g.Mouse = true
+	g.Mouse = cfg.Client.UI.Mouse
 
 	g.SetManagerFunc(layout)
 

@@ -71,6 +71,7 @@ func stubConfig() *config.Config {
 				VimKeybindings:       false,
 				IndentFirst:          0,
 				IndentSubsequent:     4,
+				Mouse:                false,
 			},
 		},
 		HomeDir:    "/home/rose",
