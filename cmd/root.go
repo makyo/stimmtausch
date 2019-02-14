@@ -13,6 +13,7 @@ import (
 	"github.com/juju/loggo"
 	"github.com/spf13/cobra"
 
+	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
 	"github.com/makyo/stimmtausch/ui"
 )
@@ -70,9 +71,22 @@ For more help, see https://stimmtausch.com`,
 		if logLevel == "" {
 			initLogging(cfg.Client.Syslog.LogLevel)
 		}
-		ui.New(args, cfg)
+
+		log.Tracef("creating client")
+		stClient, err := client.New(cfg)
+		if err != nil {
+			log.Criticalf("could not create client: %v", err)
+			os.Exit(2)
+		}
+		log.Tracef("created client: %+v", stClient)
+		tui := ui.New(args, cfg, stClient)
+
+		done := make(chan bool)
+		go tui.Run(done)
+
+		<-done
 	},
-	Version: "0.0.0-pre",
+	Version: "0.0.2",
 }
 
 // Execute executes the specified command via the root command.
