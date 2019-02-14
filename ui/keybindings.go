@@ -8,26 +8,40 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/makyo/gotui"
 )
 
 // quit returns gotui.ErrQuit for when an event (such as the user quitting
 // the programm) says the main loop should stop running.
-func quit(g *gotui.Gui, v *gotui.View) error {
+func (t *tui) quit(g *gotui.Gui, v *gotui.View) error {
 	return gotui.ErrQuit
+}
+
+// send sends whatever line is currently active in the input View to the
+// sent buffer (and thus to the world via a post-write hook).
+func (t *tui) send(g *gotui.Gui, v *gotui.View) error {
+	buf := strings.TrimSpace(v.Buffer())
+	if len(buf) == 0 {
+		return nil
+	}
+	fmt.Fprint(t.sent, buf)
+	v.Clear()
+	v.SetCursor(0, 0)
+	return nil
 }
 
 // arrowUp moves the cursor up in the input View. If there is text for the
 // cursor to move up through, it will do so. If it's on the top line but not
 // at the beginning of the line, it moves there. Otherwise, it attempts to
 // scroll back through the sent history.
-func arrowUp(g *gotui.Gui, v *gotui.View) error {
+func (t *tui) arrowUp(g *gotui.Gui, v *gotui.View) error {
 	cx, cy := v.Cursor()
 	if cx == 0 {
 		if cy == 0 {
 			v.Clear()
-			hl := sent.Back()
+			hl := t.sent.Back()
 			if hl != nil {
 				fmt.Fprint(v, hl.Text)
 			}
@@ -44,7 +58,7 @@ func arrowUp(g *gotui.Gui, v *gotui.View) error {
 // cursor to move down through, it will do so. If it's on the last line but not
 // at the end of the line, it moves there. Otherwise, it attempts to
 // scroll forward through the sent history.
-func arrowDown(g *gotui.Gui, v *gotui.View) error {
+func (t *tui) arrowDown(g *gotui.Gui, v *gotui.View) error {
 	cx, cy := v.Cursor()
 	lines := v.ViewBufferLines()
 	lineCount := len(v.ViewBufferLines()) - 1
@@ -52,12 +66,12 @@ func arrowDown(g *gotui.Gui, v *gotui.View) error {
 		return nil
 	}
 	lastLineLen := len(lines[lineCount])
-	if cx == lastLineLen || (cx == 0 && cy == 0 && !sent.onLast()) {
+	if cx == lastLineLen || (cx == 0 && cy == 0 && !t.sent.onLast()) {
 		if cy == lineCount {
 			v.Clear()
 			v.SetCursor(0, 0)
-			if !sent.onLast() {
-				fmt.Fprint(v, sent.Forward().Text)
+			if !t.sent.onLast() {
+				fmt.Fprint(v, t.sent.Forward().Text)
 			}
 		} else {
 			if lineCount == 0 {
@@ -75,6 +89,7 @@ func arrowDown(g *gotui.Gui, v *gotui.View) error {
 }
 
 // scrollConsole scrolls through text in the logging console.
+// TODO this should be a receivedView rather than Autoscroll
 func scrollConsole(v *gotui.View, delta int) {
 	_, y := v.Origin()
 	v.SetOrigin(0, y+delta)
@@ -82,8 +97,8 @@ func scrollConsole(v *gotui.View, delta int) {
 
 // scrollUp scrolls the output buffer up by one screen. If that would go
 // negative, it only scrolls to zero to prevent an error.
-func scrollUp(g *gotui.Gui, v *gotui.View) error {
-	v, err := g.View(currView.viewName)
+func (t *tui) scrollUp(g *gotui.Gui, v *gotui.View) error {
+	v, err := g.View(t.currView.viewName)
 	if err != nil {
 		return err
 	}
@@ -100,8 +115,8 @@ func scrollUp(g *gotui.Gui, v *gotui.View) error {
 
 // scrollDown scrolls the output buffer down by one screen. If that would go
 // past where the text is written, it scrolls by only that amount.
-func scrollDown(g *gotui.Gui, v *gotui.View) error {
-	v, err := g.View(currView.viewName)
+func (t *tui) scrollDown(g *gotui.Gui, v *gotui.View) error {
+	v, err := g.View(t.currView.viewName)
 	if err != nil {
 		return err
 	}
@@ -121,45 +136,45 @@ func scrollDown(g *gotui.Gui, v *gotui.View) error {
 }
 
 // redraw forces a rerender of the current view in order to ensure that everything is in order
-func redraw(g *gotui.Gui, v *gotui.View) error {
+func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	log.Debugf("redrawing")
-	v, err := g.View(currView.viewName)
+	v, err := g.View(t.currView.viewName)
 	if err != nil {
 		return err
 	}
 	x, y := v.Origin()
 	v.Clear()
-	fmt.Fprint(v, currView.buffer.String())
+	fmt.Fprint(v, t.currView.buffer.String())
 	// XXX This doesn't preserve, and I don't know why. Drat.
 	// https://github.com/makyo/stimmtausch/issues/46
 	v.SetOrigin(x, y)
 	g.Update(func(gg *gotui.Gui) error {
-		return currView.updateRecvOrigin(currViewIndex, gg)
+		return t.currView.updateRecvOrigin(t.currViewIndex, gg)
 	})
 	return nil
 }
 
 // keybindings sets all keybindings used by the UI.
-func keybindings(g *gotui.Gui) error {
-	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, quit); err != nil {
+func (t *tui) keybindings(g *gotui.Gui) error {
+	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, t.quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyPgup, gotui.ModNone, scrollUp); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyPgup, gotui.ModNone, t.scrollUp); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyPgdn, gotui.ModNone, scrollDown); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyPgdn, gotui.ModNone, t.scrollDown); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, redraw); err != nil {
+	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, t.redraw); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, send); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, t.send); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, arrowUp); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, t.arrowUp); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, arrowDown); err != nil {
+	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, t.arrowDown); err != nil {
 		return err
 	}
 	return nil
