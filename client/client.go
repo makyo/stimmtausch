@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/macro"
 )
 
 // Client contains all of the information and objects Stimmtausch knows about.
@@ -19,6 +20,12 @@ type Client struct {
 	// The current configuration object holding all worlds, servers, etc.
 	Config *config.Config
 
+	// The macro macro.
+	Env *macro.Environment
+
+	// The macro listener for the client
+	listener chan macro.MacroResult
+
 	// All active connections.
 	connections map[string]*connection
 }
@@ -27,7 +34,7 @@ type Client struct {
 // connection in the client by calling connect on that world.
 func (c *Client) connectToWorld(connectStr string, w config.World) (*connection, error) {
 	log.Tracef("connecting to world %s (%s)", w.Name, connectStr)
-	conn, err := NewConnection(connectStr, w, c.Config.Servers[w.Server], c.Config)
+	conn, err := NewConnection(connectStr, w, c.Config.Servers[w.Server], c)
 	if err != nil {
 		log.Errorf("error connecting to world %s. %v", w.Name, err)
 		return nil, err
@@ -103,12 +110,25 @@ func (c *Client) CloseAll() {
 	}
 }
 
+// listen listens for events from the macro environment, then does nothing (but
+// does it splendidly)
+func (c *Client) listen() {
+	for {
+		<-c.listener
+	}
+}
+
 // New creates a new Client and populates it using information from the config.
-func New(cfg *config.Config) (*Client, error) {
+func New(cfg *config.Config, env *macro.Environment) (*Client, error) {
 	log.Tracef("creating client")
+	listener := make(chan macro.MacroResult)
+	env.AddListener(listener)
 	c := &Client{
 		Config:      cfg,
+		Env:         env,
+		listener:    listener,
 		connections: map[string]*connection{},
 	}
+	go c.listen()
 	return c, nil
 }
