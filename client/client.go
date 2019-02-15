@@ -20,7 +20,7 @@ type Client struct {
 	// The current configuration object holding all worlds, servers, etc.
 	Config *config.Config
 
-	// The macro macro.
+	// The macro environment.
 	Env *macro.Environment
 
 	// The macro listener for the client
