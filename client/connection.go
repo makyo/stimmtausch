@@ -22,6 +22,7 @@ import (
 	"github.com/juju/loggo"
 
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/macro"
 	"github.com/makyo/stimmtausch/util"
 )
 
@@ -51,7 +52,7 @@ const (
 
 // getTimestamp gets the current time in the format specified above.
 func (c *connection) getTimestamp() string {
-	return time.Now().Format(c.config.Client.Logging.TimeString)
+	return time.Now().Format(c.client.Config.Client.Logging.TimeString)
 }
 
 // output represents a named io.WriteCloser.
@@ -80,8 +81,8 @@ type connection struct {
 	world  config.World
 	server config.Server
 
-	// The app configuration.
-	config *config.Config
+	// The app client.
+	client *Client
 
 	// The TCP address of the server.
 	addr *net.TCPAddr
@@ -100,6 +101,9 @@ type connection struct {
 
 	// A channel signalling that the server has disconnected.
 	disconnected chan bool
+
+	// A channel to listen for macro events.
+	listener chan macro.MacroResult
 
 	// Whether or not the server is connected.
 	connected bool
@@ -122,14 +126,14 @@ func (c *connection) lookupHostname() error {
 // the connection. These live in
 // $HOME/.local/share/stimmtausch/{connname}.
 func (c *connection) getConnectionFile(name string) string {
-	return filepath.Join(c.config.WorkingDir, c.name, name)
+	return filepath.Join(c.client.Config.WorkingDir, c.name, name)
 }
 
 // getLogFile returns a file (or directory) name within the scope of the
 // connection for the sake of logging. These live in
 // $HOME/.local/log/stimmtausch/{worldname}.
 func (c *connection) getLogFile(name string) string {
-	return filepath.Join(c.config.LogDir, c.name, name)
+	return filepath.Join(c.client.Config.LogDir, c.name, name)
 }
 
 // makeFIFO creates the FIFO file for the world, used to manage the information
@@ -280,8 +284,8 @@ func (c *connection) readToFile() {
 		log.Tracef("running triggers against line")
 		var errs, triggerErrs []error
 		var applies, gag, logAnyway bool
-		for _, trigger := range c.config.CompiledTriggers {
-			applies, line, triggerErrs = trigger.Run(line, c.config)
+		for _, trigger := range c.client.Config.CompiledTriggers {
+			applies, line, triggerErrs = trigger.Run(line, c.client.Config)
 			if len(triggerErrs) != 0 {
 				errs = append(errs, triggerErrs...)
 			}
@@ -416,6 +420,14 @@ func (c *connection) Close() error {
 	return nil
 }
 
+// listen listens for events from the macro environment, then does nothing (but
+// does it splendidly)
+func (c *connection) listen() {
+	for {
+		<-c.listener
+	}
+}
+
 // Open opens the connection and all output files.
 func (c *connection) Open() error {
 	log.Tracef("connecting to %s", c.name)
@@ -448,12 +460,16 @@ func (c *connection) Open() error {
 	}
 	log.Infof("connected to %s at %s", c.name, c.getTimestamp())
 
+	c.listener = make(chan macro.MacroResult)
+	c.client.Env.AddListener(c.listener)
+	go c.listen()
+
 	c.disconnect = make(chan bool)
 	c.disconnected = make(chan bool)
 	go c.readToFile()
 	go c.readToConn()
 
-	st, ok := c.config.ServerTypes[c.server.ServerType]
+	st, ok := c.client.Config.ServerTypes[c.server.ServerType]
 	if ok && c.world.Username != "" && c.world.Password != "" {
 		connectStr := st.ConnectString
 		connectStr = userRe.ReplaceAllString(connectStr, c.world.Username)
@@ -490,13 +506,13 @@ func (c *connection) AddOutput(name string, w io.WriteCloser, supportsANSI bool)
 // NewConnection creates a new conneciton with the given world. One can
 // also specify whether or not to use SSL, allow insecure SSL certs, and
 // whether to log all output by default.
-func NewConnection(name string, w config.World, s config.Server, cfg *config.Config) (*connection, error) {
+func NewConnection(name string, w config.World, s config.Server, cl *Client) (*connection, error) {
 	log.Tracef("creating a new connection %s for world %s", name, w.Name)
 	c := &connection{
 		name:      name,
 		world:     w,
 		server:    s,
-		config:    cfg,
+		client:    cl,
 		connected: false,
 	}
 

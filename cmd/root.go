@@ -15,6 +15,7 @@ import (
 
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/macro"
 	"github.com/makyo/stimmtausch/ui"
 )
 
@@ -63,17 +64,21 @@ For more help, see https://stimmtausch.com`,
 		} else {
 			initLogging(logLevel)
 		}
+
 		cfg, err := config.Load()
 		if err != nil {
 			log.Criticalf("unable to read config: %v", err)
 			os.Exit(1)
 		}
+
 		if logLevel == "" {
 			initLogging(cfg.Client.Syslog.LogLevel)
 		}
 
+		env := macro.New()
+
 		log.Tracef("creating client")
-		stClient, err := client.New(cfg)
+		stClient, err := client.New(cfg, env)
 		if err != nil {
 			log.Criticalf("could not create client: %v", err)
 			os.Exit(2)

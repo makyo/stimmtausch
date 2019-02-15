@@ -15,6 +15,7 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
+	"github.com/makyo/stimmtausch/macro"
 )
 
 type tui struct {
@@ -25,6 +26,7 @@ type tui struct {
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
+	listener      chan macro.MacroResult
 }
 
 var log = loggo.GetLogger("stimmtausch.ui")
@@ -160,6 +162,14 @@ func (t *tui) layout(g *gotui.Gui) error {
 	return nil
 }
 
+// listen listens for events from the macro environment, then does nothing (but
+// does it splendidly)
+func (t *tui) listen() {
+	for {
+		<-t.listener
+	}
+}
+
 func (t *tui) Run(done chan bool) {
 	log.Tracef("creating UI")
 	var err error
@@ -180,6 +190,12 @@ func (t *tui) Run(done chan bool) {
 		log.Criticalf("ui couldn't create keybindings: %v", err)
 		os.Exit(2)
 	}
+
+	log.Tracef("listening for macros")
+	t.listener = make(chan macro.MacroResult)
+	t.client.Env.AddListener(t.listener)
+	go t.listen()
+
 	log.Tracef("running UI...")
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		log.Criticalf("ui unexpectedly quit: %v", err)
