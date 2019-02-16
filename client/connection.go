@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 
@@ -192,6 +193,24 @@ func (c *connection) makeLogfile(out *output) error {
 func (c *connection) connect() error {
 	log.Tracef("creating TCP connection for %s", c.name)
 	var err error
+	var conn *net.TCPConn
+
+	log.Tracef("creating regular TCP connection")
+	if conn, err = net.DialTCP("tcp", nil, c.addr); err != nil {
+		log.Errorf("unable to dial %v for %s! %v", c.addr, c.name, err)
+		return err
+	}
+
+	log.Tracef("attempting to set a keepalive for %s", c.name)
+	if err = conn.SetKeepAlive(true); err != nil {
+		log.Warningf("unable to set keep alive for %s - you may get booted. %v", c.name, err)
+	}
+	if err = conn.SetKeepAlivePeriod(keepalive); err != nil {
+		log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.name, err)
+	}
+	c.connection = conn
+	log.Debugf("connected to server for %s", c.name)
+
 	if c.server.SSL {
 		log.Tracef("creating SSL connection")
 		var conf *tls.Config
@@ -200,28 +219,10 @@ func (c *connection) connect() error {
 		} else {
 			conf = &tls.Config{ServerName: c.server.Host}
 		}
-		if c.connection, err = tls.Dial("tcp", c.addr.String(), conf); err != nil {
-			log.Errorf("unable to dial %v over SSL for %s! %v", c.addr, c.name, err)
-			return err
-		}
+		c.connection = tls.Client(conn, conf)
 		log.Debugf("connected to server over SSL for %s", c.name)
-	} else {
-		log.Tracef("creating regular TCP connection")
-		if c.connection, err = net.DialTCP("tcp", nil, c.addr); err != nil {
-			log.Errorf("unable to dial %v for %s! %v", c.addr, c.name, err)
-			return err
-		}
-		log.Debugf("connected to server for %s", c.name)
 	}
-	//
-	//		// XXX This doesn't work with SSL connections, need to find an alternative...
-	//		log.Tracef("attempting to set a keepalive for %s", c.name)
-	//		if err = c.connection.SetKeepAlive(true); err != nil {
-	//			log.Warningf("unable to set keep alive for %s - you may get booted. %v", c.name, err)
-	//		}
-	//		if err = c.connection.SetKeepAlivePeriod(keepalive); err != nil {
-	//			log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.name, err)
-	//		}
+
 	c.connected = true
 	return nil
 }
@@ -241,19 +242,21 @@ func (c *connection) readToConn() {
 			// and 100% cpu usage when idle. Also without this you will get excessive
 			// "read %v: resource temporarily unavailable" errors on some OSes.
 			time.Sleep(fifoReadDelay)
-			buf := make([]byte, bufferSize)
-			bytesIn, err := c.fifo.Read(buf)
-			if err != nil && err.Error() != "EOF" && err.Error() != tmpError {
-				log.Errorf("FIFO broke??¿? Connection %s. %v", c.name, err)
-			} else if bytesIn == 0 {
+			scanner := bufio.NewScanner(c.fifo)
+			if !scanner.Scan() {
 				continue
 			}
-			log.Tracef("%d bytes read from FIFO", bytesIn)
-			bytesOut, err := c.connection.Write(buf[:bytesIn])
-			if err != nil {
-				log.Errorf("FIFO broke??¿? connection %s. %v", c.name, err)
+			text := scanner.Text()
+			if text[0] == '/' {
+				s := strings.SplitN(text[1:], " ", 2)
+				go c.client.Env.Dispatch(s[0], s[1])
+				continue
 			}
-			log.Tracef("%d bytes written to connection", bytesOut)
+			if err := scanner.Err(); err != nil && err.Error() != tmpError {
+				log.Errorf("FIFO broke??¿? connection %s. %v", c.name, err)
+				continue
+			}
+			fmt.Fprintln(c.connection, text)
 		}
 	}
 }

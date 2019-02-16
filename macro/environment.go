@@ -3,11 +3,16 @@ package macro
 import (
 	"fmt"
 	"regexp"
+	"strings"
+
+	"github.com/juju/loggo"
 )
 
 var (
 	wsRE        = regexp.MustCompile("\\s+")
 	macroNameRE = regexp.MustCompile("[[:alpha:]][[:word:]]*")
+
+	log = loggo.GetLogger("stimmtausch.macro")
 )
 
 type Environment struct {
@@ -16,12 +21,13 @@ type Environment struct {
 	listeners []chan MacroResult
 
 	// macros is a map from macro name to function.
-	macros map[string]func([]string) ([]string, error)
+	macros map[string]func(string) ([]string, error)
 }
 
-func (e *Environment) Dispatch(name, argString string) {
-	args := wsRE.Split(argString, -1)
+func (e *Environment) Dispatch(name, args string) {
 	var result MacroResult
+	args = strings.TrimSpace(args)
+	name = strings.TrimSpace(name)
 	if m, ok := e.macros[name]; ok {
 		results, err := m(args)
 		result = MacroResult{
@@ -32,7 +38,7 @@ func (e *Environment) Dispatch(name, argString string) {
 	} else {
 		result = MacroResult{
 			Name:    name,
-			Results: args,
+			Results: []string{args},
 			Err:     fmt.Errorf("unknown macro %s", name),
 		}
 	}
@@ -41,7 +47,7 @@ func (e *Environment) Dispatch(name, argString string) {
 	}
 }
 
-func (e *Environment) RegisterMacro(name string, m func([]string) ([]string, error)) error {
+func (e *Environment) RegisterMacro(name string, m func(string) ([]string, error)) error {
 	if _, ok := e.macros[name]; ok {
 		return fmt.Errorf("macro with name %s already exists", name)
 	}

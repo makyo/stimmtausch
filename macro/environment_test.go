@@ -28,7 +28,7 @@ func TestEnvironment(t *testing.T) {
 			m2 := <-l2
 			So(m1, ShouldResemble, m2)
 			So(m1.Name, ShouldEqual, "_")
-			So(m1.Results, ShouldResemble, []string{"rose", "tyler"})
+			So(m1.Results, ShouldResemble, []string{"rose tyler"})
 			So(m1.Err, ShouldBeNil)
 
 			Convey("With an error if the macro doesn't exist", func() {

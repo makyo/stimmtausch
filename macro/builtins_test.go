@@ -21,7 +21,7 @@ func TestBuiltins(t *testing.T) {
 				go e.Dispatch(m, "rose tyler")
 				result := <-listener
 				So(result.Name, ShouldEqual, m)
-				So(result.Results, ShouldResemble, []string{"rose", "tyler"})
+				So(result.Results, ShouldResemble, []string{"rose tyler"})
 				So(result.Err, ShouldBeNil)
 			}
 		})
@@ -44,12 +44,6 @@ func TestBuiltins(t *testing.T) {
 			So(result.Name, ShouldEqual, "fg")
 			So(result.Results, ShouldResemble, []string{"switch", "rose_tyler"})
 			So(result.Err, ShouldBeNil)
-
-			go e.Dispatch("fg", "bad wolf")
-			result = <-listener
-			So(result.Name, ShouldEqual, "fg")
-			So(result.Results, ShouldResemble, []string{})
-			So(result.Err.Error(), ShouldEqual, `received wrong number of args, wanted 1, got 2 (["bad" "wolf"])`)
 		})
 	})
 }
