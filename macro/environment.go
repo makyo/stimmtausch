@@ -42,6 +42,10 @@ func (e *Environment) Dispatch(name, args string) {
 			Err:     fmt.Errorf("unknown macro %s", name),
 		}
 	}
+	e.DirectDispatch(result)
+}
+
+func (e *Environment) DirectDispatch(result MacroResult) {
 	for _, listener := range e.listeners {
 		listener <- result
 	}

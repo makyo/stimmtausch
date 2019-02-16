@@ -35,11 +35,11 @@ var log = loggo.GetLogger("stimmtausch.ui")
 // connect tells the client to connect to the provided connection string, If
 // successful, it will construct a receivedView to represent and hold that
 // connection.
-func (t *tui) connect(connectStr string, g *gotui.Gui) error {
+func (t *tui) connect(name string, g *gotui.Gui) error {
 	log.Tracef("creating a connection with connection string %s", connectStr)
-	conn, err := t.client.Connect(connectStr)
-	if err != nil {
-		log.Errorf("unable to connect to %s: %v", connectStr, err)
+	conn, ok := t.client.Conn(name)
+	if !ok {
+		log.Errorf("unable to find connection %s", connectStr)
 		return err
 	}
 
@@ -174,14 +174,35 @@ func (t *tui) layout(g *gotui.Gui) error {
 // does it splendidly)
 func (t *tui) listen() {
 	for {
-		<-t.listener
+		res := <-t.listener
+		switch res.Name {
+		case "fg":
+			// Switch to active view or error if not found.
+			break
+		case "connect":
+			// Maybe create receivedView here á là TF's trying to connect
+			// screen? Maybe not.
+			break
+		case "_client:connected":
+			// Attach receivedView to conn.
+			err := t.connect(res.Results[0], t.g)
+			if err != nil {
+				log.Errorf("error setting up connection in ui: %v", err)
+			}
+		case "_client:disconnected":
+			// Grey out tab in send title, grey out text in receivedView.
+			break
+		case "_client:allDisconnected":
+			// do we really need to do anything?
+			break
+		}
 	}
 }
 
 func (t *tui) Run(done, ready chan bool) {
-	log.Tracef("creating UI")
 	t.ready = ready
 
+	log.Tracef("creating UI")
 	var err error
 	t.g, err = gotui.NewGui(gotui.Output256)
 	if err != nil {

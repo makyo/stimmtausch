@@ -14,7 +14,10 @@ var builtins = map[string]func(string) ([]string, error){
 	"syslog":     syslog,
 
 	// Internals
-	"_": passthrough,
+	"_":                       passthrough,
+	"_client:connected":       passthrough,
+	"_client:disconnected":    passthrough,
+	"_client:allDisconnected": passthrough,
 }
 
 func fg(args string) ([]string, error) {
