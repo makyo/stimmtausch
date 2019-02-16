@@ -23,7 +23,7 @@ var log = loggo.GetLogger("stimmtausch.cmd")
 
 // rootCmd runs Stimmtausch with the GUI and connects to the specified world.
 var rootCmd = &cobra.Command{
-	Use:   "st [flags] world-or-server [world-or-server...]",
+	Use:   "st [flags] [world-or-server...]",
 	Short: "Run Stimmtausch.",
 	Long: `Run Stimmtausch.
 	
@@ -57,7 +57,7 @@ you could connect to bot worlds, plus a new server, with:
     st fm_fox spr_rudder mu.example.org:8889
 	
 For more help, see https://stimmtausch.com`,
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if logLevel == "" {
 			initLogging("INFO")
@@ -84,10 +84,17 @@ For more help, see https://stimmtausch.com`,
 			os.Exit(2)
 		}
 		log.Tracef("created client: %+v", stClient)
-		tui := ui.New(args, stClient)
 
 		done := make(chan bool)
-		go tui.Run(done)
+		ready := make(chan bool)
+		tui := ui.New(stClient)
+		go tui.Run(done, ready)
+
+		<-ready
+
+		for _, arg := range args {
+			go env.Dispatch("connect", arg)
+		}
 
 		<-done
 	},

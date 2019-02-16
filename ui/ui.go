@@ -9,6 +9,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
@@ -21,12 +22,12 @@ import (
 type tui struct {
 	g             *gotui.Gui
 	client        *client.Client
-	args          []string
 	sent          *History
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
 	listener      chan macro.MacroResult
+	ready         chan bool
 }
 
 var log = loggo.GetLogger("stimmtausch.ui")
@@ -112,6 +113,18 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
+		if t.currView == nil {
+			// The only case in which the UI dispatches is if there's no client
+			// to do so. We want the client to do it usually this UI may not be
+			// the only one.
+			if line.Text[0] == '/' {
+				s := strings.SplitN(line.Text[1:], " ", 2)
+				go t.client.Env.Dispatch(s[0], s[1])
+				return nil
+			}
+			log.Warningf("no current connection!")
+			return nil
+		}
 		_, err := fmt.Fprintln(t.currView.conn, line.Text)
 		if err != nil {
 			log.Warningf("error writing to connection")
@@ -120,13 +133,8 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 		return nil
 	})
 
-	// This is the real reason for this method. Connecting before everything
-	// is set up means that some of the output from the worlds gets eaten by
-	// the UI getting built.
-	log.Tracef("attempting to connect with connection strings %v", t.args)
-	for _, arg := range t.args {
-		t.connect(arg, g)
-	}
+	t.ready <- true
+
 	return nil
 }
 
@@ -170,8 +178,10 @@ func (t *tui) listen() {
 	}
 }
 
-func (t *tui) Run(done chan bool) {
+func (t *tui) Run(done, ready chan bool) {
 	log.Tracef("creating UI")
+	t.ready = ready
+
 	var err error
 	t.g, err = gotui.NewGui(gotui.Output256)
 	if err != nil {
@@ -205,10 +215,9 @@ func (t *tui) Run(done chan bool) {
 }
 
 // New instantiates a new Stimmtausch UI.
-func New(args []string, c *client.Client) *tui {
+func New(c *client.Client) *tui {
 	return &tui{
 		client: c,
-		args:   args,
 		sent:   NewHistory(c.Config.Client.UI.History),
 	}
 }
