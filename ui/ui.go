@@ -36,11 +36,11 @@ var log = loggo.GetLogger("stimmtausch.ui")
 // successful, it will construct a receivedView to represent and hold that
 // connection.
 func (t *tui) connect(name string, g *gotui.Gui) error {
-	log.Tracef("creating a connection with connection string %s", connectStr)
+	log.Tracef("creating a connection with connection string %s", name)
 	conn, ok := t.client.Conn(name)
 	if !ok {
-		log.Errorf("unable to find connection %s", connectStr)
-		return err
+		log.Errorf("unable to find connection %s", name)
+		return nil
 	}
 
 	viewName := fmt.Sprintf("recv%d", len(t.views))
@@ -91,10 +91,10 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		// Add the received history to the connection as an output.
 		conn.AddOutput(viewName, t.currView.buffer, true)
 
-		log.Tracef("opening connection for %s", connectStr)
+		log.Tracef("opening connection for %s", name)
 		err = conn.Open()
 		if err != nil {
-			log.Errorf("unable to open connection for %s: %v", connectStr, err)
+			log.Errorf("unable to open connection for %s: %v", name, err)
 			return err
 		}
 	}
@@ -178,23 +178,26 @@ func (t *tui) listen() {
 		switch res.Name {
 		case "fg":
 			// Switch to active view or error if not found.
-			break
+			continue
 		case "connect":
 			// Maybe create receivedView here á là TF's trying to connect
 			// screen? Maybe not.
-			break
-		case "_client:connected":
+			continue
+		case "_client:connect":
 			// Attach receivedView to conn.
 			err := t.connect(res.Results[0], t.g)
 			if err != nil {
 				log.Errorf("error setting up connection in ui: %v", err)
 			}
-		case "_client:disconnected":
+		case "_client:disconnect":
 			// Grey out tab in send title, grey out text in receivedView.
-			break
-		case "_client:allDisconnected":
+			continue
+		case "_client:allDisconnect":
 			// do we really need to do anything?
-			break
+			continue
+		default:
+			log.Debugf("got unknown macro result %v", res)
+			continue
 		}
 	}
 }
@@ -224,8 +227,8 @@ func (t *tui) Run(done, ready chan bool) {
 
 	log.Tracef("listening for macros")
 	t.listener = make(chan macro.MacroResult)
-	t.client.Env.AddListener(t.listener)
 	go t.listen()
+	t.client.Env.AddListener("ui", t.listener)
 
 	log.Tracef("running UI...")
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {

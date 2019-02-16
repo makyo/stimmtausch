@@ -97,7 +97,8 @@ func (c *Client) Connect(connectStr string) (*connection, error) {
 }
 
 func (c *Client) Conn(name string) (*connection, bool) {
-	return c.connections[name]
+	conn, ok := c.connections[name]
+	return conn, ok
 }
 
 // Close will close a connection with the given name (usually the connectStr).
@@ -128,8 +129,9 @@ func (c *Client) listen() {
 		case "disconnect":
 			res.Name = "_client:disconnect"
 			c.Close(res.Results[0])
-			go c.Env.DirectDispatch(result)
+			go c.Env.DirectDispatch(res)
 		default:
+			log.Debugf("got unknown macro result %v", res)
 			continue
 		}
 	}
@@ -139,13 +141,14 @@ func (c *Client) listen() {
 func New(cfg *config.Config, env *macro.Environment) (*Client, error) {
 	log.Tracef("creating client")
 	listener := make(chan macro.MacroResult)
-	env.AddListener(listener)
 	c := &Client{
 		Config:      cfg,
 		Env:         env,
 		listener:    listener,
 		connections: map[string]*connection{},
 	}
+	log.Tracef("listening for macros")
 	go c.listen()
+	env.AddListener("client", c.listener)
 	return c, nil
 }

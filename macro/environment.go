@@ -18,7 +18,7 @@ var (
 type Environment struct {
 	// listeners is a list of channels to which send results from macros
 	// running.
-	listeners []chan MacroResult
+	listeners map[string]chan MacroResult
 
 	// macros is a map from macro name to function.
 	macros map[string]func(string) ([]string, error)
@@ -46,8 +46,10 @@ func (e *Environment) Dispatch(name, args string) {
 }
 
 func (e *Environment) DirectDispatch(result MacroResult) {
-	for _, listener := range e.listeners {
-		listener <- result
+	log.Tracef("dispatching %+v to %d listeners", result, len(e.listeners))
+	for whence, listener := range e.listeners {
+		log.Tracef("dispatching to %s", whence)
+		go func() { listener <- result }()
 	}
 }
 
@@ -62,12 +64,13 @@ func (e *Environment) RegisterMacro(name string, m func(string) ([]string, error
 	return nil
 }
 
-func (e *Environment) AddListener(listener chan MacroResult) {
-	e.listeners = append(e.listeners, listener)
+func (e *Environment) AddListener(whence string, listener chan MacroResult) {
+	e.listeners[whence] = listener
 }
 
 func New() *Environment {
 	return &Environment{
-		macros: builtins,
+		macros:    builtins,
+		listeners: map[string]chan MacroResult{},
 	}
 }
