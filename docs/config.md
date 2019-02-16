@@ -165,7 +165,7 @@ stimmtausch:
 About
 :   `triggers` holds information about automatic behaviors for the client to take.
 
-    Expects a list of triggers.
+    Expects a list of triggers. 
 
 Values
 :  
@@ -196,6 +196,9 @@ Values
     * `script` (*string* required for scripts) - the path of a script/executable to run (*not implemented*)
 
     * `macro` (*string* required for macros) - the name of a macro to run (*not implemented*)
+
+Notes
+:   As a note, for the time being due to a [bug](https://github.com/makyo/stimmtausch/issues/62), list more specific (e.g: names, single words) hilite triggers after more general triggers that hilite the whole line, or hiliting may stop partway through.
 
 **Example**
 
