@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/juju/loggo"
 )
 
 var (
 	wsRE        = regexp.MustCompile("\\s+")
 	macroNameRE = regexp.MustCompile("[[:alpha:]][[:word:]]*")
+
+	log = loggo.GetLogger("stimmtausch.macro")
 )
 
 type Environment struct {

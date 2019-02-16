@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"syscall"
 	"time"
 
@@ -241,19 +242,21 @@ func (c *connection) readToConn() {
 			// and 100% cpu usage when idle. Also without this you will get excessive
 			// "read %v: resource temporarily unavailable" errors on some OSes.
 			time.Sleep(fifoReadDelay)
-			buf := make([]byte, bufferSize)
-			bytesIn, err := c.fifo.Read(buf)
-			if err != nil && err.Error() != "EOF" && err.Error() != tmpError {
-				log.Errorf("FIFO broke??¿? Connection %s. %v", c.name, err)
-			} else if bytesIn == 0 {
+			scanner := bufio.NewScanner(c.fifo)
+			if !scanner.Scan() {
 				continue
 			}
-			log.Tracef("%d bytes read from FIFO", bytesIn)
-			bytesOut, err := c.connection.Write(buf[:bytesIn])
-			if err != nil {
-				log.Errorf("FIFO broke??¿? connection %s. %v", c.name, err)
+			text := scanner.Text()
+			if text[0] == '/' {
+				s := strings.SplitN(text[1:], " ", 2)
+				go c.client.Env.Dispatch(s[0], s[1])
+				continue
 			}
-			log.Tracef("%d bytes written to connection", bytesOut)
+			if err := scanner.Err(); err != nil && err.Error() != tmpError {
+				log.Errorf("FIFO broke??¿? connection %s. %v", c.name, err)
+				continue
+			}
+			fmt.Fprintln(c.connection, text)
 		}
 	}
 }
