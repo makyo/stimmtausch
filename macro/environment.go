@@ -18,7 +18,7 @@ var (
 type Environment struct {
 	// listeners is a list of channels to which send results from macros
 	// running.
-	listeners []chan MacroResult
+	listeners map[string]chan MacroResult
 
 	// macros is a map from macro name to function.
 	macros map[string]func(string) ([]string, error)
@@ -42,8 +42,14 @@ func (e *Environment) Dispatch(name, args string) {
 			Err:     fmt.Errorf("unknown macro %s", name),
 		}
 	}
-	for _, listener := range e.listeners {
-		listener <- result
+	e.DirectDispatch(result)
+}
+
+func (e *Environment) DirectDispatch(result MacroResult) {
+	log.Tracef("dispatching %+v to %d listeners", result, len(e.listeners))
+	for whence, listener := range e.listeners {
+		go func(l chan MacroResult) { l <- result }(listener)
+		log.Tracef("dispatched to %s", whence)
 	}
 }
 
@@ -52,18 +58,19 @@ func (e *Environment) RegisterMacro(name string, m func(string) ([]string, error
 		return fmt.Errorf("macro with name %s already exists", name)
 	}
 	if !macroNameRE.MatchString(name) {
-		return fmt.Errorf("macro name must contain only letters, numbers, and underscores and start with a letter")
+		return fmt.Errorf("macro name must contain only letters, numbers, and underscores, and must start with a letter")
 	}
 	e.macros[name] = m
 	return nil
 }
 
-func (e *Environment) AddListener(listener chan MacroResult) {
-	e.listeners = append(e.listeners, listener)
+func (e *Environment) AddListener(whence string, listener chan MacroResult) {
+	e.listeners[whence] = listener
 }
 
 func New() *Environment {
 	return &Environment{
-		macros: builtins,
+		macros:    builtins,
+		listeners: map[string]chan MacroResult{},
 	}
 }

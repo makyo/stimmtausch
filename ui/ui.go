@@ -9,6 +9,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
@@ -21,12 +22,12 @@ import (
 type tui struct {
 	g             *gotui.Gui
 	client        *client.Client
-	args          []string
 	sent          *History
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
 	listener      chan macro.MacroResult
+	ready         chan bool
 }
 
 var log = loggo.GetLogger("stimmtausch.ui")
@@ -34,12 +35,12 @@ var log = loggo.GetLogger("stimmtausch.ui")
 // connect tells the client to connect to the provided connection string, If
 // successful, it will construct a receivedView to represent and hold that
 // connection.
-func (t *tui) connect(connectStr string, g *gotui.Gui) error {
-	log.Tracef("creating a connection with connection string %s", connectStr)
-	conn, err := t.client.Connect(connectStr)
-	if err != nil {
-		log.Errorf("unable to connect to %s: %v", connectStr, err)
-		return err
+func (t *tui) connect(name string, g *gotui.Gui) error {
+	log.Tracef("creating a connection with connection string %s", name)
+	conn, ok := t.client.Conn(name)
+	if !ok {
+		log.Errorf("unable to find connection %s", name)
+		return nil
 	}
 
 	viewName := fmt.Sprintf("recv%d", len(t.views))
@@ -90,10 +91,10 @@ func (t *tui) connect(connectStr string, g *gotui.Gui) error {
 		// Add the received history to the connection as an output.
 		conn.AddOutput(viewName, t.currView.buffer, true)
 
-		log.Tracef("opening connection for %s", connectStr)
+		log.Tracef("opening connection for %s", name)
 		err = conn.Open()
 		if err != nil {
-			log.Errorf("unable to open connection for %s: %v", connectStr, err)
+			log.Errorf("unable to open connection for %s: %v", name, err)
 			return err
 		}
 	}
@@ -112,6 +113,18 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
+		if t.currView == nil {
+			// The only case in which the UI dispatches is if there's no client
+			// to do so. We want the client to do it usually this UI may not be
+			// the only one.
+			if line.Text[0] == '/' {
+				s := strings.SplitN(line.Text[1:], " ", 2)
+				go t.client.Env.Dispatch(s[0], s[1])
+				return nil
+			}
+			log.Warningf("no current connection!")
+			return nil
+		}
 		_, err := fmt.Fprintln(t.currView.conn, line.Text)
 		if err != nil {
 			log.Warningf("error writing to connection")
@@ -120,13 +133,8 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 		return nil
 	})
 
-	// This is the real reason for this method. Connecting before everything
-	// is set up means that some of the output from the worlds gets eaten by
-	// the UI getting built.
-	log.Tracef("attempting to connect with connection strings %v", t.args)
-	for _, arg := range t.args {
-		t.connect(arg, g)
-	}
+	t.ready <- true
+
 	return nil
 }
 
@@ -166,11 +174,37 @@ func (t *tui) layout(g *gotui.Gui) error {
 // does it splendidly)
 func (t *tui) listen() {
 	for {
-		<-t.listener
+		res := <-t.listener
+		switch res.Name {
+		case "fg":
+			// Switch to active view or error if not found.
+			continue
+		case "connect":
+			// Maybe create receivedView here á là TF's trying to connect
+			// screen? Maybe not.
+			continue
+		case "_client:connect":
+			// Attach receivedView to conn.
+			err := t.connect(res.Results[0], t.g)
+			if err != nil {
+				log.Errorf("error setting up connection in ui: %v", err)
+			}
+		case "_client:disconnect":
+			// Grey out tab in send title, grey out text in receivedView.
+			continue
+		case "_client:allDisconnect":
+			// do we really need to do anything?
+			continue
+		default:
+			log.Debugf("got unknown macro result %v", res)
+			continue
+		}
 	}
 }
 
-func (t *tui) Run(done chan bool) {
+func (t *tui) Run(done, ready chan bool) {
+	t.ready = ready
+
 	log.Tracef("creating UI")
 	var err error
 	t.g, err = gotui.NewGui(gotui.Output256)
@@ -193,8 +227,8 @@ func (t *tui) Run(done chan bool) {
 
 	log.Tracef("listening for macros")
 	t.listener = make(chan macro.MacroResult)
-	t.client.Env.AddListener(t.listener)
 	go t.listen()
+	t.client.Env.AddListener("ui", t.listener)
 
 	log.Tracef("running UI...")
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {
@@ -205,10 +239,9 @@ func (t *tui) Run(done chan bool) {
 }
 
 // New instantiates a new Stimmtausch UI.
-func New(args []string, c *client.Client) *tui {
+func New(c *client.Client) *tui {
 	return &tui{
 		client: c,
-		args:   args,
 		sent:   NewHistory(c.Config.Client.UI.History),
 	}
 }

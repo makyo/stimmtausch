@@ -13,7 +13,7 @@ func TestBuiltins(t *testing.T) {
 	Convey("Environment builtins", t, func() {
 		e := macro.New()
 		listener := make(chan macro.MacroResult)
-		e.AddListener(listener)
+		e.AddListener("l", listener)
 
 		Convey("There are passthrough builtins", func() {
 			passthroughTests := []string{"_", "connect", "disconnect"}

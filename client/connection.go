@@ -463,9 +463,10 @@ func (c *connection) Open() error {
 	}
 	log.Infof("connected to %s at %s", c.name, c.getTimestamp())
 
+	log.Tracef("listening for macros")
 	c.listener = make(chan macro.MacroResult)
-	c.client.Env.AddListener(c.listener)
 	go c.listen()
+	c.client.Env.AddListener("connection", c.listener)
 
 	c.disconnect = make(chan bool)
 	c.disconnected = make(chan bool)
