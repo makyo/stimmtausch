@@ -23,7 +23,7 @@ import (
 	"github.com/juju/loggo"
 
 	"github.com/makyo/stimmtausch/config"
-	"github.com/makyo/stimmtausch/macro"
+	"github.com/makyo/stimmtausch/signal"
 	"github.com/makyo/stimmtausch/util"
 )
 
@@ -103,8 +103,8 @@ type connection struct {
 	// A channel signalling that the server has disconnected.
 	disconnected chan bool
 
-	// A channel to listen for macro events.
-	listener chan macro.MacroResult
+	// A channel to listen for signal events.
+	listener chan signal.Signal
 
 	// Whether or not the server is connected.
 	connected bool
@@ -423,7 +423,7 @@ func (c *connection) Close() error {
 	return nil
 }
 
-// listen listens for events from the macro environment, then does nothing (but
+// listen listens for events from the signal environment, then does nothing (but
 // does it splendidly)
 func (c *connection) listen() {
 	for {
@@ -463,8 +463,8 @@ func (c *connection) Open() error {
 	}
 	log.Infof("connected to %s at %s", c.name, c.getTimestamp())
 
-	log.Tracef("listening for macros")
-	c.listener = make(chan macro.MacroResult)
+	log.Tracef("listening for signals")
+	c.listener = make(chan signal.Signal)
 	go c.listen()
 	c.client.Env.AddListener("connection", c.listener)
 

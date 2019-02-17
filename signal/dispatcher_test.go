@@ -1,26 +1,26 @@
-package macro_test
+package signal_test
 
 import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/makyo/stimmtausch/macro"
+	"github.com/makyo/stimmtausch/signal"
 )
 
 func TestEnvironment(t *testing.T) {
 
-	Convey("When working with an macro", t, func() {
+	Convey("When working with an signal", t, func() {
 
 		Convey("One can create a new one", func() {
-			e := macro.New()
+			e := signal.NewDispatcher()
 			So(e, ShouldNotBeNil)
 		})
 
 		Convey("One can dispatch and listen for results", func() {
-			e := macro.New()
-			l1 := make(chan macro.MacroResult)
-			l2 := make(chan macro.MacroResult)
+			e := signal.NewDispatcher()
+			l1 := make(chan signal.Signal)
+			l2 := make(chan signal.Signal)
 			e.AddListener("l1", l1)
 			e.AddListener("12", l2)
 			go e.Dispatch("_", "rose tyler")
@@ -28,10 +28,10 @@ func TestEnvironment(t *testing.T) {
 			m2 := <-l2
 			So(m1, ShouldResemble, m2)
 			So(m1.Name, ShouldEqual, "_")
-			So(m1.Results, ShouldResemble, []string{"rose tyler"})
+			So(m1.Payload, ShouldResemble, []string{"rose tyler"})
 			So(m1.Err, ShouldBeNil)
 
-			Convey("With an error if the macro doesn't exist", func() {
+			Convey("With an error if the signal doesn't exist", func() {
 				go e.Dispatch("bad-wolf", "nonesuch")
 				m1 := <-l1
 				m2 := <-l2

@@ -15,7 +15,7 @@ import (
 
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
-	"github.com/makyo/stimmtausch/macro"
+	"github.com/makyo/stimmtausch/signal"
 	"github.com/makyo/stimmtausch/ui"
 )
 
@@ -75,7 +75,7 @@ For more help, see https://stimmtausch.com`,
 			initLogging(cfg.Client.Syslog.LogLevel)
 		}
 
-		env := macro.New()
+		env := signal.NewDispatcher()
 
 		log.Tracef("creating client")
 		stClient, err := client.New(cfg, env)

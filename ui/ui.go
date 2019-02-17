@@ -16,7 +16,7 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
-	"github.com/makyo/stimmtausch/macro"
+	"github.com/makyo/stimmtausch/signal"
 )
 
 type tui struct {
@@ -26,7 +26,7 @@ type tui struct {
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
-	listener      chan macro.MacroResult
+	listener      chan signal.Signal
 	ready         chan bool
 }
 
@@ -170,7 +170,7 @@ func (t *tui) layout(g *gotui.Gui) error {
 	return nil
 }
 
-// listen listens for events from the macro environment, then does nothing (but
+// listen listens for events from the signal environment, then does nothing (but
 // does it splendidly)
 func (t *tui) listen() {
 	for {
@@ -185,7 +185,7 @@ func (t *tui) listen() {
 			continue
 		case "_client:connect":
 			// Attach receivedView to conn.
-			err := t.connect(res.Results[0], t.g)
+			err := t.connect(res.Payload[0], t.g)
 			if err != nil {
 				log.Errorf("error setting up connection in ui: %v", err)
 			}
@@ -196,7 +196,7 @@ func (t *tui) listen() {
 			// do we really need to do anything?
 			continue
 		default:
-			log.Debugf("got unknown macro result %v", res)
+			log.Debugf("got unknown signal result %v", res)
 			continue
 		}
 	}
@@ -225,8 +225,8 @@ func (t *tui) Run(done, ready chan bool) {
 		os.Exit(2)
 	}
 
-	log.Tracef("listening for macros")
-	t.listener = make(chan macro.MacroResult)
+	log.Tracef("listening for signals")
+	t.listener = make(chan signal.Signal)
 	go t.listen()
 	t.client.Env.AddListener("ui", t.listener)
 
