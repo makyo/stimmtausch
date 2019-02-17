@@ -1,4 +1,4 @@
-package macro
+package signal
 
 import (
 	"fmt"

@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/makyo/stimmtausch/config"
-	"github.com/makyo/stimmtausch/macro"
+	"github.com/makyo/stimmtausch/signal"
 )
 
 // Client contains all of the information and objects Stimmtausch knows about.
@@ -20,11 +20,11 @@ type Client struct {
 	// The current configuration object holding all worlds, servers, etc.
 	Config *config.Config
 
-	// The macro environment.
-	Env *macro.Environment
+	// The signal environment.
+	Env *signal.Dispatcher
 
-	// The macro listener for the client
-	listener chan macro.MacroResult
+	// The signal listener for the client
+	listener chan signal.Signal
 
 	// All active connections.
 	connections map[string]*connection
@@ -115,7 +115,7 @@ func (c *Client) CloseAll() {
 	}
 }
 
-// listen listens for events from the macro environment, then does nothing (but
+// listen listens for events from the signal environment, then does nothing (but
 // does it splendidly)
 func (c *Client) listen() {
 	for {
@@ -123,31 +123,31 @@ func (c *Client) listen() {
 		switch res.Name {
 		case "connect":
 			res.Name = "_client:connect"
-			_, err := c.Connect(res.Results[0])
+			_, err := c.Connect(res.Payload[0])
 			res.Err = err
 			c.Env.DirectDispatch(res)
 		case "disconnect":
 			res.Name = "_client:disconnect"
-			c.Close(res.Results[0])
+			c.Close(res.Payload[0])
 			go c.Env.DirectDispatch(res)
 		default:
-			log.Debugf("got unknown macro result %v", res)
+			log.Debugf("got unknown signal result %v", res)
 			continue
 		}
 	}
 }
 
 // New creates a new Client and populates it using information from the config.
-func New(cfg *config.Config, env *macro.Environment) (*Client, error) {
+func New(cfg *config.Config, env *signal.Dispatcher) (*Client, error) {
 	log.Tracef("creating client")
-	listener := make(chan macro.MacroResult)
+	listener := make(chan signal.Signal)
 	c := &Client{
 		Config:      cfg,
 		Env:         env,
 		listener:    listener,
 		connections: map[string]*connection{},
 	}
-	log.Tracef("listening for macros")
+	log.Tracef("listening for signals")
 	go c.listen()
 	env.AddListener("client", c.listener)
 	return c, nil
