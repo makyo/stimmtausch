@@ -21,8 +21,8 @@ func TestEnvironment(t *testing.T) {
 			e := macro.New()
 			l1 := make(chan macro.MacroResult)
 			l2 := make(chan macro.MacroResult)
-			e.AddListener(l1)
-			e.AddListener(l2)
+			e.AddListener("l1", l1)
+			e.AddListener("12", l2)
 			go e.Dispatch("_", "rose tyler")
 			m1 := <-l1
 			m2 := <-l2

@@ -48,8 +48,8 @@ func (e *Environment) Dispatch(name, args string) {
 func (e *Environment) DirectDispatch(result MacroResult) {
 	log.Tracef("dispatching %+v to %d listeners", result, len(e.listeners))
 	for whence, listener := range e.listeners {
-		log.Tracef("dispatching to %s", whence)
-		go func() { listener <- result }()
+		go func(l chan MacroResult) { l <- result }(listener)
+		log.Tracef("dispatched to %s", whence)
 	}
 }
 
@@ -58,7 +58,7 @@ func (e *Environment) RegisterMacro(name string, m func(string) ([]string, error
 		return fmt.Errorf("macro with name %s already exists", name)
 	}
 	if !macroNameRE.MatchString(name) {
-		return fmt.Errorf("macro name must contain only letters, numbers, and underscores and start with a letter")
+		return fmt.Errorf("macro name must contain only letters, numbers, and underscores, and must start with a letter")
 	}
 	e.macros[name] = m
 	return nil
