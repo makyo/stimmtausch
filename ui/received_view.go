@@ -12,6 +12,9 @@ type receivedView struct {
 	// The name of the connection
 	connName string
 
+	// The display name to show in the UI
+	displayName string
+
 	// The name of the gotui View
 	viewName string
 

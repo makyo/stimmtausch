@@ -36,6 +36,7 @@ func (e *Dispatcher) Dispatch(name, args string) {
 			Err:     err,
 		}
 	} else {
+		// TODO here is where we'll fall back to trying macros.
 		result = Signal{
 			Name:    name,
 			Payload: []string{args},
