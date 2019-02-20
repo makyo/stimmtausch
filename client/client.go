@@ -104,7 +104,12 @@ func (c *Client) Conn(name string) (*connection, bool) {
 // Close will close a connection with the given name (usually the connectStr).
 func (c *Client) Close(name string) {
 	log.Tracef("closing connection %s", name)
-	c.connections[name].Close()
+	conn, ok := c.connections[name]
+	if ok {
+		conn.Close()
+	} else {
+		log.Warningf("asked to close connection %s, but could not find it", name)
+	}
 }
 
 // CloseAll will attempt to close all open connections.
@@ -121,17 +126,20 @@ func (c *Client) listen() {
 	for {
 		res := <-c.listener
 		switch res.Name {
-		case "connect":
+		case "connect", "c":
 			res.Name = "_client:connect"
 			_, err := c.Connect(res.Payload[0])
 			res.Err = err
-			c.Env.DirectDispatch(res)
-		case "disconnect":
+			go c.Env.DirectDispatch(res)
+		case "disconnect", "dc":
+			if len(res.Payload) == 0 {
+				continue
+			}
 			res.Name = "_client:disconnect"
 			c.Close(res.Payload[0])
 			go c.Env.DirectDispatch(res)
 		default:
-			log.Debugf("got unknown signal result %v", res)
+			log.Tracef("client got unknown signal result %v", res)
 			continue
 		}
 	}

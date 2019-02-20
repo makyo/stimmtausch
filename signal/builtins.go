@@ -8,8 +8,12 @@ import (
 
 var builtins = map[string]func(string) ([]string, error){
 	"fg":         fg,
+	">":          func(_ string) ([]string, error) { return fg(">") },
+	"<":          func(_ string) ([]string, error) { return fg("<") },
 	"connect":    passthrough,
+	"c":          passthrough,
 	"disconnect": passthrough,
+	"dc":         passthrough,
 	"quit":       passthrough,
 	"syslog":     syslog,
 
@@ -43,5 +47,9 @@ func syslog(args string) ([]string, error) {
 }
 
 func passthrough(args string) ([]string, error) {
-	return []string{args}, nil
+	result := []string{}
+	if len(args) > 0 {
+		result = []string{args}
+	}
+	return result, nil
 }
