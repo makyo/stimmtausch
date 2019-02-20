@@ -107,7 +107,7 @@ type connection struct {
 	listener chan signal.Signal
 
 	// Whether or not the server is connected.
-	connected bool
+	Connected bool
 }
 
 // lookupHostname gets the TCP address for the world's hostname.
@@ -223,7 +223,7 @@ func (c *connection) connect() error {
 		log.Debugf("connected to server over SSL for %s", c.name)
 	}
 
-	c.connected = true
+	c.Connected = true
 	return nil
 }
 
@@ -249,6 +249,9 @@ func (c *connection) readToConn() {
 			text := scanner.Text()
 			if text[0] == '/' {
 				s := strings.SplitN(text[1:], " ", 2)
+				if len(s) == 1 {
+					s = append(s, "")
+				}
 				go c.client.Env.Dispatch(s[0], s[1])
 				continue
 			}
@@ -269,7 +272,7 @@ func (c *connection) readToFile() {
 	for {
 		line, err := tp.ReadLine()
 		if err != nil {
-			if !c.connected {
+			if !c.Connected {
 				return
 			}
 			log.Warningf("server disconnected with %v", err)
@@ -320,7 +323,7 @@ func (c *connection) readToFile() {
 
 // closeConnection closes the world's TCP connection.
 func (c *connection) closeConnection() {
-	if !c.connected {
+	if !c.Connected {
 		log.Debugf("%s already closed", c.name)
 		return
 	}
@@ -328,7 +331,7 @@ func (c *connection) closeConnection() {
 	if err := c.connection.Close(); err != nil {
 		log.Warningf("error closing connection. %v", err)
 	}
-	c.connected = false
+	c.Connected = false
 	log.Debugf("connection closed for %s", c.name)
 }
 
@@ -408,7 +411,7 @@ func (c *connection) Write(in []byte) (int, error) {
 
 // Close closes the connection and all open files.
 func (c *connection) Close() error {
-	if !c.connected {
+	if !c.Connected {
 		log.Debugf("%s already closed", c.name)
 		return nil
 	}
@@ -517,7 +520,7 @@ func NewConnection(name string, w config.World, s config.Server, cl *Client) (*c
 		world:     w,
 		server:    s,
 		client:    cl,
-		connected: false,
+		Connected: false,
 	}
 
 	log.Tracef("ensuring connection working directory")

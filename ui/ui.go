@@ -46,6 +46,25 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		log.Errorf("unable to find connection %s", name)
 		return nil
 	}
+	connName := conn.GetConnectionName()
+
+	for _, v := range t.views {
+		if connName == v.connName {
+			v.conn = conn
+			conn.AddOutput(v.viewName, v.buffer, true)
+			log.Tracef("opening connection for %s", name)
+			err := conn.Open()
+			if err != nil {
+				log.Errorf("unable to open connection for %s: %v", name, err)
+				return err
+			}
+			t.currView = v
+			t.currViewIndex = v.index
+			t.currView.connected = conn.Connected
+			t.updateSendTitle()
+			return nil
+		}
+	}
 
 	viewName := fmt.Sprintf("recv%d", len(t.views))
 	log.Tracef("building received view %s", viewName)
@@ -64,7 +83,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		v.IndentSubsequent = t.client.Config.Client.UI.IndentSubsequent
 		v.Frame = false
 		t.currView = &receivedView{
-			connName:    conn.GetConnectionName(),
+			connName:    connName,
 			displayName: conn.GetDisplayName(),
 			conn:        conn,
 			viewName:    viewName,
@@ -100,6 +119,8 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			log.Errorf("unable to open connection for %s: %v", name, err)
 			return err
 		}
+		t.currView.connected = conn.Connected
+		t.updateSendTitle()
 	}
 	return nil
 }
@@ -116,7 +137,7 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
-		if t.currView == nil {
+		if t.currView == nil || !t.currView.connected {
 			// The only case in which the UI dispatches is if there's no client
 			// to do so. We want the client to do it usually this UI may not be
 			// the only one.
@@ -126,6 +147,9 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 				return nil
 			}
 			log.Warningf("no current connection!")
+			return nil
+		}
+		if !t.currView.connected {
 			return nil
 		}
 		_, err := fmt.Fprintln(t.currView.conn, line.Text)
@@ -189,10 +213,24 @@ func (t *tui) updateSendTitle() {
 	t.titleLen = 0 - len(sep) + 2
 	for i, v := range t.views {
 		t.titleLen += len(v.displayName) + len(sep)
+		c, ok := t.client.Conn(v.connName)
+		if !ok {
+			continue
+		}
+		connected := c.Connected
+		v.connected = connected
 		if v.current {
-			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
+			if connected {
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
+			} else {
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, v.displayName)
+			}
 		} else {
-			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
+			if connected {
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
+			} else {
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, v.displayName)
+			}
 		}
 	}
 	t.title = strings.Join(conns, sep)
@@ -267,15 +305,24 @@ func (t *tui) listen() {
 	for {
 		res := <-t.listener
 		switch res.Name {
-		case "fg":
+		case "fg", ">", "<":
 			// Switch to active view or error if not found.
 			if err := t.switchConn(res.Payload[0], res.Payload[1]); err != nil {
 				log.Warningf("error switching connections: %v", err)
 			}
-		case "connect":
+		case "connect", "c":
 			// Maybe create receivedView here á là TF's trying to connect
 			// screen? Maybe not.
 			continue
+		case "disconnect", "dc":
+			// If it's a disconnect without a payload, redispatch with the
+			// current connection's name.
+			if len(res.Payload) != 0 {
+				continue
+			}
+			res.Payload = []string{t.currView.connName}
+			log.Tracef("disconnecting current world %+v", res)
+			go t.client.Env.DirectDispatch(res)
 		case "_client:connect":
 			// Attach receivedView to conn.
 			err := t.connect(res.Payload[0], t.g)
@@ -284,12 +331,12 @@ func (t *tui) listen() {
 			}
 		case "_client:disconnect":
 			// Grey out tab in send title, grey out text in receivedView.
-			continue
+			t.updateSendTitle()
 		case "_client:allDisconnect":
 			// do we really need to do anything?
-			continue
+			t.updateSendTitle()
 		default:
-			log.Debugf("got unknown signal result %v", res)
+			log.Tracef("got unknown signal result %v", res)
 			continue
 		}
 	}

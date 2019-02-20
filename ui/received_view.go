@@ -21,6 +21,9 @@ type receivedView struct {
 	// The connection object itself in the form of an io.WriteCloser.
 	conn io.WriteCloser
 
+	// Whether or not the connection is connected.
+	connected bool
+
 	// The connection's output buffer
 	buffer *History
 
