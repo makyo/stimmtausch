@@ -180,6 +180,8 @@ func (t *tui) layout(g *gotui.Gui) error {
 	return nil
 }
 
+// updateSendTitle updates the title of the input buffer frame to show the
+// world list with the active world and inactive worlds specified differently.
 func (t *tui) updateSendTitle() {
 	_, maxY := t.g.Size()
 	conns := make([]string, len(t.views))
@@ -188,9 +190,9 @@ func (t *tui) updateSendTitle() {
 	for i, v := range t.views {
 		t.titleLen += len(v.displayName) + len(sep)
 		if v.current {
-			conns[i] = ansi.Underline.ApplyWithReset(v.displayName)
+			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
 		} else {
-			conns[i] = v.displayName
+			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
 		}
 	}
 	t.title = strings.Join(conns, sep)
@@ -219,7 +221,7 @@ func (t *tui) switchConn(action, conn string) error {
 		t.currViewIndex += i
 		if t.currViewIndex < 0 {
 			t.currViewIndex = len(t.views) + t.currViewIndex
-		} else if t.currViewIndex >= len(t.views) {
+		} else if t.currViewIndex >= len(t.views) && t.currViewIndex != 0 {
 			t.currViewIndex %= len(t.views) - 1
 		}
 		t.views[t.currViewIndex].current = true
@@ -289,6 +291,7 @@ func (t *tui) listen() {
 	}
 }
 
+// Run creates the UI and starts the mainloop.
 func (t *tui) Run(done, ready chan bool) {
 	t.ready = ready
 

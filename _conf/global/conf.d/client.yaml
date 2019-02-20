@@ -49,3 +49,21 @@ stimmtausch:
 
       # Whether or not to support mouse events
       mouse: false
+
+      # Colors in the UI
+      colors:
+        send_title:
+          # Focused world
+          active: "bold+white"
+          # Focused world, scrolled up with new activity
+          active_more: "bold+green"
+          # Non-focused world
+          inactive: "steelblue"
+          # Non-focused world with new activity
+          inactive_more: "steelblue+bold"
+          # Disconnected world (non-focused)
+          disconnected: "mediumvioletred"
+          # Disconnected world with new activity
+          disconnected_more: "mediumvioletred+bold"
+          # Disconnected world (non-focused) with unread lines
+          disconnected_active: "deeppink3"
