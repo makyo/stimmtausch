@@ -58,4 +58,18 @@ type UI struct {
 	// Whether or not to support mouse events
 	// TODO
 	Mouse bool
+
+	// Colors in the UI
+	Colors struct {
+		// The colors for the input buffer titles in ansigo specifications.
+		SendTitle struct {
+			Active             string
+			ActiveMore         string `yaml:"active_more" toml:"active_more"` // TODO
+			Inactive           string
+			InactiveMore       string `yaml:"inactive_more" toml:"inactive_more"` // TODO
+			Disconnected       string
+			DisconnectedMore   string `yaml:"disconnected_more" toml:"disconnected_more"`     // TODO
+			DisconnectedActive string `yaml:"disconnected_active" toml:"disconnected_active"` // TODO
+		} `yaml:"send_title" toml:"send_title"`
+	}
 }

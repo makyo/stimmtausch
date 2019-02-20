@@ -9,10 +9,12 @@ package ui
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
+	ansi "github.com/makyo/ansigo"
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
@@ -28,6 +30,8 @@ type tui struct {
 	views         []*receivedView
 	listener      chan signal.Signal
 	ready         chan bool
+	title         string
+	titleLen      int
 }
 
 var log = loggo.GetLogger("stimmtausch.ui")
@@ -60,20 +64,19 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		v.IndentSubsequent = t.client.Config.Client.UI.IndentSubsequent
 		v.Frame = false
 		t.currView = &receivedView{
-			connName: conn.GetConnectionName(),
-			conn:     conn,
-			viewName: viewName,
-			buffer:   NewHistory(t.client.Config.Client.UI.Scrollback),
-			current:  true,
-			index:    len(t.views),
+			connName:    conn.GetConnectionName(),
+			displayName: conn.GetDisplayName(),
+			conn:        conn,
+			viewName:    viewName,
+			buffer:      NewHistory(t.client.Config.Client.UI.Scrollback),
+			current:     true,
+			index:       len(t.views),
+		}
+		for _, v := range t.views {
+			v.current = false
 		}
 		t.views = append(t.views, t.currView)
-		inputView, err := g.View("send")
-		if err != nil {
-			log.Warningf("unable to get send view to change title: %v", err)
-		} else {
-			inputView.Title = fmt.Sprintf(" %s ", conn.GetDisplayName())
-		}
+		t.updateSendTitle()
 
 		// Set this view's index as the current view index.
 		t.currViewIndex = t.currView.index
@@ -162,11 +165,99 @@ func (t *tui) layout(g *gotui.Gui) error {
 		}
 		v.Editable = true
 		v.Wrap = true
-		v.Title = "No world"
 		if _, err := g.SetCurrentView("send"); err != nil {
 			return err
 		}
 	}
+	if v, err := g.SetView("title", 2, maxY-6, t.titleLen+3, maxY-4); err != nil {
+		if err != gotui.ErrUnknownView {
+			log.Warningf("unable to create view %+v", err)
+			return err
+		}
+		v.Frame = false
+		fmt.Fprint(v, " No world ")
+	}
+	return nil
+}
+
+// updateSendTitle updates the title of the input buffer frame to show the
+// world list with the active world and inactive worlds specified differently.
+func (t *tui) updateSendTitle() {
+	_, maxY := t.g.Size()
+	conns := make([]string, len(t.views))
+	sep := " | "
+	t.titleLen = 0 - len(sep) + 2
+	for i, v := range t.views {
+		t.titleLen += len(v.displayName) + len(sep)
+		if v.current {
+			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
+		} else {
+			conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
+		}
+	}
+	t.title = strings.Join(conns, sep)
+	log.Tracef("setting title to %s", t.title)
+	if v, err := t.g.SetView("title", 1, maxY-6, t.titleLen+3, maxY-4); err == nil {
+		t.g.Update(func(_ *gotui.Gui) error {
+			v.Clear()
+			fmt.Fprintf(v, " %s ", t.title)
+			return nil
+		})
+	} else {
+		log.Errorf("error setting title %v", err)
+	}
+}
+
+// switchConn switches to a different connection, either by rotating the
+// stack of connections or by switching to the given name.
+func (t *tui) switchConn(action, conn string) error {
+	if action == "rotate" {
+		i, err := strconv.Atoi(conn)
+		if err != nil {
+			return err
+		}
+		log.Tracef("rotating conns %d", i)
+		t.views[t.currViewIndex].current = false
+		t.currViewIndex += i
+		if t.currViewIndex < 0 {
+			t.currViewIndex = len(t.views) + t.currViewIndex
+		} else if t.currViewIndex >= len(t.views) {
+			if len(t.views) > 1 {
+				t.currViewIndex %= len(t.views) - 1
+			} else {
+				t.currViewIndex = 0
+			}
+		}
+		t.views[t.currViewIndex].current = true
+	} else if action == "switch" {
+		if conn == "" {
+			// TODO switch to the next active connection
+		}
+		found := false
+		for i, v := range t.views {
+			if v.connName == conn {
+				log.Tracef("switchign to %s", conn)
+				t.currViewIndex = i
+				v.current = true
+				found = true
+				break
+			}
+		}
+		if found {
+			t.views[t.currViewIndex].current = false
+		} else {
+			return fmt.Errorf("connection %s not found", conn)
+		}
+	} else {
+		return fmt.Errorf("received unexpected action %s", action)
+	}
+	t.currView = t.views[t.currViewIndex]
+	for _, v := range t.views {
+		if err := v.updateRecvOrigin(t.currViewIndex, t.g); err != nil {
+			return err
+		}
+	}
+	t.updateSendTitle()
 	return nil
 }
 
@@ -178,7 +269,9 @@ func (t *tui) listen() {
 		switch res.Name {
 		case "fg":
 			// Switch to active view or error if not found.
-			continue
+			if err := t.switchConn(res.Payload[0], res.Payload[1]); err != nil {
+				log.Warningf("error switching connections: %v", err)
+			}
 		case "connect":
 			// Maybe create receivedView here á là TF's trying to connect
 			// screen? Maybe not.
@@ -202,6 +295,7 @@ func (t *tui) listen() {
 	}
 }
 
+// Run creates the UI and starts the mainloop.
 func (t *tui) Run(done, ready chan bool) {
 	t.ready = ready
 
@@ -241,7 +335,9 @@ func (t *tui) Run(done, ready chan bool) {
 // New instantiates a new Stimmtausch UI.
 func New(c *client.Client) *tui {
 	return &tui{
-		client: c,
-		sent:   NewHistory(c.Config.Client.UI.History),
+		client:   c,
+		sent:     NewHistory(c.Config.Client.UI.History),
+		title:    " No world ",
+		titleLen: 10,
 	}
 }
