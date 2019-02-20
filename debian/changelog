@@ -1,3 +1,14 @@
+stimmtausch (0.0.2) bionic; urgency=medium
+
+  * Adds ability to connect to multiple worlds at once, switch between
+    them, and disconnect from one without disconnecting from others.
+  * Fixes bug preventing TCP Keep Alive from working with TLS
+    connections. (#65)
+  * Fixes bug where nested hilites turned off colors too early. (#50)
+  * Fixes bug where st eats mouse input. (#51)
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Wed, 20 Feb 2019 14:39:42 -0800
+
 stimmtausch (0.0.1) bionic; urgency=medium
 
   * Initial release

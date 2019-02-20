@@ -3,11 +3,11 @@ Upstream-Name: st
 Source: https://stimmtausch.com
 
 Files: *
-Copyright: 2019 Madiosn Scott-Clary <makyo@drab-makyo.com>
+Copyright: 2019 Madison Scott-Clary <makyo@drab-makyo.com>
 License: MIT
 
 Files: debian/*
-Copyright: 2019 Madiosn Scott-Clary <makyo@drab-makyo.com>
+Copyright: 2019 Madison Scott-Clary <makyo@drab-makyo.com>
 License: MIT
 
 License: MIT
