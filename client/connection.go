@@ -524,13 +524,13 @@ func NewConnection(name string, w config.World, s config.Server, cl *Client) (*c
 	}
 
 	log.Tracef("ensuring connection working directory")
-	if err := os.MkdirAll(c.getConnectionFile(""), 0755); err != nil {
+	if err := util.EnsureDir(c.getConnectionFile("")); err != nil {
 		log.Errorf("unable to ensure connection directory! %v", err)
 		return nil, err
 	}
 
 	log.Tracef("ensuring world log directory")
-	if err := os.MkdirAll(c.getLogFile(""), 0755); err != nil {
+	if err := util.EnsureDir(c.getLogFile("")); err != nil {
 		log.Errorf("unable to ensure log directory! %v", err)
 		return nil, err
 	}

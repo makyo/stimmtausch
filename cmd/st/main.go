@@ -9,6 +9,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -16,10 +17,14 @@ import (
 
 	"github.com/makyo/stimmtausch/cmd"
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/util"
 )
 
 func main() {
 	config.InitDirs()
+	if err := util.EnsureDir(config.LogDir); err != nil {
+		panic(err)
+	}
 	f, err := os.Create(filepath.Join(config.LogDir, "stimmtausch.log"))
 	if err != nil {
 		panic(err)
@@ -28,4 +33,5 @@ func main() {
 	loggo.ReplaceDefaultWriter(loggo.NewSimpleWriter(f, loggo.DefaultFormatter))
 
 	cmd.Execute()
+	fmt.Fprint(os.Stderr, "\n")
 }
