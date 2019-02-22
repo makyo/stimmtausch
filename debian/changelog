@@ -1,3 +1,9 @@
+stimmtausch (0.0.2ubuntu1) bionic cosmic; urgency=medium
+
+  * Expanding distrobutions for PPA. 
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Thu, 21 Feb 2019 09:42:00 -0800
+
 stimmtausch (0.0.2) bionic; urgency=medium
 
   * Adds ability to connect to multiple worlds at once, switch between
