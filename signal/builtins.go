@@ -7,23 +7,31 @@ import (
 )
 
 var builtins = map[string]func(string) ([]string, error){
-	"fg":         fg,
-	">":          func(_ string) ([]string, error) { return fg(">") },
-	"<":          func(_ string) ([]string, error) { return fg("<") },
+	// World switching
+	"fg": fg,
+	">":  func(_ string) ([]string, error) { return fg(">") },
+	"<":  func(_ string) ([]string, error) { return fg("<") },
+
+	// Connections
 	"connect":    passthrough,
 	"c":          passthrough,
 	"disconnect": passthrough,
 	"dc":         passthrough,
 	"quit":       passthrough,
-	"syslog":     syslog,
+
+	// Logging
+	"log": partsPassthrough,
 
 	// Internals
+	"syslog":                  syslog,
 	"_":                       passthrough,
 	"_client:connected":       passthrough,
 	"_client:disconnected":    passthrough,
 	"_client:allDisconnected": passthrough,
 }
 
+// fg handles the special case for the builtin `fg`, which sends a different
+// response depending on whether switching or rotating connections.
 func fg(args string) ([]string, error) {
 	args = wsRE.Split(args, -1)[0]
 	switch args {
@@ -36,6 +44,8 @@ func fg(args string) ([]string, error) {
 	}
 }
 
+// syslog logs the given message at the given level. It's largely for
+// debugging.
 func syslog(args string) ([]string, error) {
 	parts := wsRE.Split(args, 2)
 	if len(parts) != 2 {
@@ -46,10 +56,18 @@ func syslog(args string) ([]string, error) {
 	return parts, nil
 }
 
+// passthrough simply passes on the given args to the listeners without taking
+// any action on them.
 func passthrough(args string) ([]string, error) {
 	result := []string{}
 	if len(args) > 0 {
 		result = []string{args}
 	}
 	return result, nil
+}
+
+// partsPassthrough passes on the given args to the listeners, splitting them
+// on whitespace to provide the string slice.
+func partsPassthrough(args string) ([]string, error) {
+	return wsRE.Split(args, -1), nil
 }
