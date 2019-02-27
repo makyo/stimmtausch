@@ -23,4 +23,6 @@ So I've been doing some digging. There are a few big culprits right away. Regula
 
 Another large number comes from [`gotui`](https://github.com/makyo/gotui), which draws the terminal interface, taking up 740KB, however only 112KB of that belongs to [`termbox-go`](https://github.com/nsf/termbox-go), which handles the actual drawing portion, as opposed to the views, which is what `gotui` is for. Of note is the 88KB spent on the `wordWrap` function that I added to `gotui`. I should probably rethink some of the logic there; it uses some regular expressions where it maybe could avoid them. Ah well.
 
-Anyway, hmm. I need to do some digging here!
+Another suspected culprit with `gotui` is the output buffer. Rather than maintain a certain size, it contains all lines written to it, while the internal history buffer only contains 10,000 (or whatever you set it to in config). This could get big. An easy test for this is to redraw the output buffer with `^L`, which clears it of all lines and then redraws from the history buffer (meaning it gets at most 10,000 lines). Let me do that now...nope. Huh!
+
+Anyway, I'm just thinking out loud, at this point. I have a few more potential problem spots (e.g: reading from the FIFO), but I need to do some digging here!
