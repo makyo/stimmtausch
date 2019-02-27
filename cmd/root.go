@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/juju/loggo"
+	"github.com/pkg/profile"
 	"github.com/spf13/cobra"
 
 	"github.com/makyo/stimmtausch/client"
@@ -69,6 +70,12 @@ For more help, see https://stimmtausch.com`,
 		if err != nil {
 			log.Criticalf("unable to read config: %v", err)
 			os.Exit(1)
+		}
+
+		if cfg.Client.Profile.CPU {
+			defer profile.Start().Stop()
+		} else if cfg.Client.Profile.Mem {
+			defer profile.Start(profile.MemProfile).Stop()
 		}
 
 		if logLevel == "" {

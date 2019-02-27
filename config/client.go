@@ -3,6 +3,7 @@ package config
 // Client holds information regarding how Stimmtausch runs.
 type Client struct {
 	Syslog  Syslog
+	Profile Profile
 	Logging Logging
 	UI      UI
 }
@@ -17,6 +18,16 @@ type Syslog struct {
 	// Lowest log level to show by default. Options are:
 	// TRACE, DEBUG, INFO (default), WARNING, ERROR, CRITICAL
 	LogLevel string `yaml:"log_level" toml:"log_level"`
+}
+
+// Profile holds information regarding profiling resources in development.
+type Profile struct {
+
+	// Whether or not to profile memory usage.
+	Mem bool
+
+	// Whether or not to profile CPU usage.
+	CPU bool `yaml:"cpu" toml:"cpu"`
 }
 
 // Logging holds information regarding logging from connections.
