@@ -28,3 +28,9 @@ Another large number comes from [`gotui`](https://github.com/makyo/gotui), which
 Another suspected culprit with `gotui` is the output buffer. Rather than maintain a certain size, it contains all lines written to it, while the internal history buffer only contains 10,000 (or whatever you set it to in config). This could get big. An easy test for this is to redraw the output buffer with `^L`, which clears it of all lines and then redraws from the history buffer (meaning it gets at most 10,000 lines). Let me do that now...nope. Huh!
 
 Anyway, I'm just thinking out loud, at this point. I have a few more potential problem spots (e.g: reading from the FIFO), but I need to do some digging here!
+
+**_Update!_**
+
+Turns out it is the regular expressions being run (as opposed to compiled) that's using memory; you can see here that it's `Trigger.Run()` that's calling the `reset()` mentioned above.
+
+[![A portion of the profile](/assets/2019-02-27.5.png)](/assets/2019-02-27.5.png)
