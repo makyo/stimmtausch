@@ -1,3 +1,9 @@
+// Stimmtausch - a MU* client - https://stimmtausch.com
+//
+// https://github.com/makyo/stimmtausch
+// Copyright © 2019 the Stimmtausch authors
+// Released under the MIT license.
+
 package connection
 
 import (
@@ -13,8 +19,11 @@ type output struct {
 	// A name used for logging and referencing down the line.
 	name string
 
-	// Whether or not- this is the global output.
+	// Whether or not this is the global output.
 	global bool
+
+	// Whether or not the user created this output.
+	userCreated bool
 
 	// The io.Writecloser itself.
 	output io.WriteCloser

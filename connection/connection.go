@@ -255,6 +255,7 @@ func (c *Connection) readToFile() {
 		log.Tracef("running triggers against line")
 		var errs, triggerErrs []error
 		var applies, gag, logAnyway bool
+		orig := line
 		for _, trigger := range c.config.CompiledTriggers {
 			applies, line, triggerErrs = trigger.Run(line, c.config)
 			if len(triggerErrs) != 0 {
@@ -273,9 +274,9 @@ func (c *Connection) readToFile() {
 			if gag && !(logAnyway && out.global) {
 				continue
 			}
-			toWrite := line
-			if !out.supportsANSI {
-				toWrite = util.StripANSI.ReplaceAllString(line, "")
+			toWrite := orig
+			if out.supportsANSI {
+				toWrite = line
 			}
 			bytesOut, err := fmt.Fprintln(out.output, toWrite)
 			if err != nil {
@@ -372,15 +373,13 @@ func (c *Connection) listen() {
 		res := <-c.listener
 		switch res.Name {
 		case "log":
-			c.parseLogSignal(res.Payload)
+			if err := c.parseLogSignal(res.Payload); err != nil {
+				log.Errorf("error executing log command: %v", err)
+			}
 		default:
 			continue
 		}
 	}
-}
-
-func (c *Connection) parseLogSignal(args []string) error {
-	return nil
 }
 
 // Open opens the connection and all output files.

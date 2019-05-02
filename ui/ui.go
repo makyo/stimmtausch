@@ -18,6 +18,7 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
+	"github.com/makyo/stimmtausch/help"
 	"github.com/makyo/stimmtausch/signal"
 )
 
@@ -323,6 +324,16 @@ func (t *tui) listen() {
 			res.Payload = []string{t.currView.connName}
 			log.Tracef("disconnecting current world %+v", res)
 			go t.client.Env.DirectDispatch(res)
+		case "help":
+			// get the command text and tell the system to display it in a modal
+			cmd := res.Payload[0]
+			h, ok := help.HelpMessages[cmd]
+			if !ok {
+				log.Warningf("no help available for /%s", cmd)
+				continue
+			}
+			helpText := help.RenderText(h)
+			go t.client.Env.Dispatch("_client:showModal", fmt.Sprintf("Help: %s::\n%s", cmd, helpText))
 		case "_client:connect":
 			// Attach receivedView to conn.
 			err := t.connect(res.Payload[0], t.g)
@@ -335,6 +346,11 @@ func (t *tui) listen() {
 		case "_client:allDisconnect":
 			// do we really need to do anything?
 			t.updateSendTitle()
+		case "_client:showModal":
+			res.Name = "_tui:showModal"
+			go t.client.Env.DirectDispatch(res)
+		case "_tui:showModal":
+			fmt.Fprintf(t.currView.buffer, "~~~~~ %s\n%s\n~~~~~\n", res.Payload[0], res.Payload[1])
 		default:
 			log.Tracef("got unknown signal result %v", res)
 			continue

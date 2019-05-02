@@ -1,7 +1,14 @@
+// Stimmtausch - a MU* client - https://stimmtausch.com
+//
+// https://github.com/makyo/stimmtausch
+// Copyright © 2019 the Stimmtausch authors
+// Released under the MIT license.
+
 package signal
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/juju/loggo"
 )
@@ -22,12 +29,17 @@ var builtins = map[string]func(string) ([]string, error){
 	// Logging
 	"log": partsPassthrough,
 
+	// Help
+	"help": passthrough,
+
 	// Internals
 	"syslog":                  syslog,
 	"_":                       passthrough,
+	"_util:split":             split,
 	"_client:connected":       passthrough,
 	"_client:disconnected":    passthrough,
 	"_client:allDisconnected": passthrough,
+	"_client:showModal":       titleSplit,
 }
 
 // fg handles the special case for the builtin `fg`, which sends a different
@@ -37,7 +49,7 @@ func fg(args string) ([]string, error) {
 	switch args {
 	case "<":
 		return []string{"rotate", "-1"}, nil
-	case ">":
+	case ">", "":
 		return []string{"rotate", "1"}, nil
 	default:
 		return []string{"switch", args}, nil
@@ -56,6 +68,12 @@ func syslog(args string) ([]string, error) {
 	return parts, nil
 }
 
+// titleSplit passes on the given args after splitting on the title separator,
+// "::\n".
+func titleSplit(args string) ([]string, error) {
+	return strings.Split(args, "::\n"), nil
+}
+
 // passthrough simply passes on the given args to the listeners without taking
 // any action on them.
 func passthrough(args string) ([]string, error) {
@@ -70,4 +88,11 @@ func passthrough(args string) ([]string, error) {
 // on whitespace to provide the string slice.
 func partsPassthrough(args string) ([]string, error) {
 	return wsRE.Split(args, -1), nil
+}
+
+// split passes on the given args to the listeners, splitting them on the first
+// character in the string (which is not included in the result).
+func split(args string) ([]string, error) {
+	sep, args := args[0:1], args[1:]
+	return strings.Split(args, sep), nil
 }

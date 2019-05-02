@@ -41,10 +41,10 @@ stimmtausch:
     # Settings pertaining to the user interface
     ui:
       # How many lines received from the connection to keep in memory.
-      scrollback: 10000
+      scrollback: 1000
 
       # How many lines sent to the connection to keep in memory.
-      history: 10000
+      history: 1000
 
       # Whether or not to keep a separate history buffer for each connection
       # or to have one history boffer for all connections.
