@@ -40,7 +40,7 @@ func (h *History) add(line string) {
 	}
 	h.lines = append(h.lines, l)
 	if len(h.lines) > h.max {
-		h.lines = h.lines[:h.max]
+		h.lines = h.lines[1 : h.max+1]
 	}
 	h.curr = len(h.lines) - 1
 }

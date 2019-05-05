@@ -25,11 +25,10 @@ var textTemplate = template.Must(template.New("text").Funcs(textFuncs).Parse(`{{
 {{"\x1b[1m"}}SYNOPSIS{{"\x1b[0m"}}
 
     {{synopsis .Name .Synopsis}}
-	
+
 {{"\x1b[1m"}}DESCRIPTION{{"\x1b[0m"}}
 
-    {{.Description}}
-{{seeAlso .SeeAlso}}`))
+    {{.Description}}{{seeAlso .SeeAlso}}`))
 
 func textSynopsis(name string, synMap map[string]string) string {
 	lines := []string{}
@@ -45,7 +44,7 @@ func textSynopsis(name string, synMap map[string]string) string {
 
 func textSeeAlso(seeAlso string) string {
 	if len(seeAlso) != 0 {
-		return fmt.Sprintf("%s\n    %s", ansi.MaybeApplyOneWithReset("bold", "SEE ALSO"), seeAlso)
+		return fmt.Sprintf("\n\n%s\n\n    %s", ansi.MaybeApplyOneWithReset("bold", "SEE ALSO"), seeAlso)
 	}
 	return ""
 }
