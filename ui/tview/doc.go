@@ -4,5 +4,5 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-// Package tui provides the gotui user interface for Stimmtausch.
-package tui
+// Package tview provides the tview user interface for Stimmtausch.
+package tview
