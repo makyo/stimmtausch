@@ -144,6 +144,9 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 			// the only one.
 			if line.Text[0] == '/' {
 				s := strings.SplitN(line.Text[1:], " ", 2)
+				if len(s) == 1 {
+					s = append(s, "")
+				}
 				go t.client.Env.Dispatch(s[0], s[1])
 				return nil
 			}
