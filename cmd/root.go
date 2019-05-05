@@ -17,7 +17,7 @@ import (
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
 	"github.com/makyo/stimmtausch/signal"
-	"github.com/makyo/stimmtausch/ui"
+	ui "github.com/makyo/stimmtausch/ui/tui"
 )
 
 var log = loggo.GetLogger("stimmtausch.cmd")

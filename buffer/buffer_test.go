@@ -1,4 +1,4 @@
-package ui_test
+package buffer_test
 
 import (
 	"fmt"
@@ -6,26 +6,26 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/makyo/stimmtausch/ui"
+	"github.com/makyo/stimmtausch/buffer"
 )
 
-func TestHistory(t *testing.T) {
+func TestBuffer(t *testing.T) {
 	Convey("One can create a new empty buffer", t, func() {
-		h := ui.NewHistory(100)
+		h := buffer.NewBuffer(100)
 		So(h, ShouldNotBeNil)
 		So(h.Size(), ShouldEqual, 0)
 	})
 
-	Convey("When using a history buffer", t, func() {
+	Convey("When using a buffer", t, func() {
 
 		Convey("One can write to it", func() {
-			h := ui.NewHistory(100)
+			h := buffer.NewBuffer(100)
 			l, err := fmt.Fprint(h, "rose")
 			So(l, ShouldEqual, 4)
 			So(err, ShouldBeNil)
 
 			Convey("And writing beyond the max causes lines to scroll past the end.", func() {
-				h = ui.NewHistory(10)
+				h = buffer.NewBuffer(10)
 				for i := 0; i < 15; i++ {
 					_, err := fmt.Fprint(h, i%10)
 					So(err, ShouldBeNil)
@@ -35,7 +35,7 @@ func TestHistory(t *testing.T) {
 		})
 
 		Convey("One can get its size", func() {
-			h := ui.NewHistory(100)
+			h := buffer.NewBuffer(100)
 			So(h.Size(), ShouldEqual, 0)
 
 			Convey("Which increases as you write to it", func() {
@@ -45,7 +45,7 @@ func TestHistory(t *testing.T) {
 		})
 
 		Convey("One can read from it", func() {
-			h := ui.NewHistory(100)
+			h := buffer.NewBuffer(100)
 			fmt.Fprint(h, "Rose Tyler")
 			fmt.Fprint(h, "Mickey Smith")
 			fmt.Fprint(h, "Donna Noble")
@@ -80,7 +80,7 @@ func TestHistory(t *testing.T) {
 		})
 
 		Convey("It collects date stamps", func() {
-			h := ui.NewHistory(100)
+			h := buffer.NewBuffer(100)
 			fmt.Fprint(h, "Rose Tyler")
 			rt := h.Current()
 			fmt.Fprint(h, "Mickey Smith")

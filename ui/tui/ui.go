@@ -4,7 +4,7 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package ui
+package tui
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ import (
 	ansi "github.com/makyo/ansigo"
 	"github.com/makyo/gotui"
 
+	"github.com/makyo/stimmtausch/buffer"
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/help"
 	"github.com/makyo/stimmtausch/signal"
@@ -25,7 +26,7 @@ import (
 type tui struct {
 	g             *gotui.Gui
 	client        *client.Client
-	sent          *History
+	sent          *buffer.Buffer
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
@@ -88,7 +89,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			displayName: conn.GetDisplayName(),
 			conn:        conn,
 			viewName:    viewName,
-			buffer:      NewHistory(t.client.Config.Client.UI.Scrollback),
+			buffer:      buffer.NewBuffer(t.client.Config.Client.UI.Scrollback),
 			current:     true,
 			index:       len(t.views),
 		}
@@ -103,7 +104,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
-		t.currView.buffer.AddPostWriteHook(func(line *HistoryLine) error {
+		t.currView.buffer.AddPostWriteHook(func(line *buffer.BufferLine) error {
 			fmt.Fprint(v, line.Text)
 			g.Update(func(gg *gotui.Gui) error {
 				return t.currView.updateRecvOrigin(t.currViewIndex, gg)
@@ -137,7 +138,7 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 	loggo.RegisterWriter("console", loggocolor.NewColorWriter(console))
 
 	log.Tracef("setting up sent buffer to write to active connection")
-	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
+	t.sent.AddPostWriteHook(func(line *buffer.BufferLine) error {
 		if t.currView == nil || !t.currView.connected {
 			// The only case in which the UI dispatches is if there's no client
 			// to do so. We want the client to do it usually this UI may not be
@@ -417,7 +418,7 @@ func (t *tui) Run(done, ready chan bool) {
 func New(c *client.Client) *tui {
 	return &tui{
 		client:   c,
-		sent:     NewHistory(c.Config.Client.UI.History),
+		sent:     buffer.NewBuffer(c.Config.Client.UI.History),
 		title:    " No world ",
 		titleLen: 10,
 	}

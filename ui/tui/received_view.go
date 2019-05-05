@@ -1,9 +1,17 @@
-package ui
+// Stimmtausch - a MU* client - https://stimmtausch.com
+//
+// https://github.com/makyo/stimmtausch
+// Copyright © 2019 the Stimmtausch authors
+// Released under the MIT license.
+
+package tui
 
 import (
 	"io"
 
 	"github.com/makyo/gotui"
+
+	"github.com/makyo/stimmtausch/buffer"
 )
 
 // recievedView represents the gotui view which holds text received from the
@@ -25,7 +33,7 @@ type receivedView struct {
 	connected bool
 
 	// The connection's output buffer
-	buffer *History
+	buffer *buffer.Buffer
 
 	// Whether or not the world is currently active.
 	current bool

@@ -4,7 +4,7 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package ui
+package tui
 
 import (
 	"fmt"
@@ -66,11 +66,11 @@ func (t *tui) arrowDown(g *gotui.Gui, v *gotui.View) error {
 		return nil
 	}
 	lastLineLen := len(lines[lineCount])
-	if cx == lastLineLen || (cx == 0 && cy == 0 && !t.sent.onLast()) {
+	if cx == lastLineLen || (cx == 0 && cy == 0 && !t.sent.OnLast()) {
 		if cy == lineCount {
 			v.Clear()
 			v.SetCursor(0, 0)
-			if !t.sent.onLast() {
+			if !t.sent.OnLast() {
 				fmt.Fprint(v, t.sent.Forward().Text)
 			}
 		} else {
