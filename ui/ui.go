@@ -205,6 +205,20 @@ func (t *tui) layout(g *gotui.Gui) error {
 	return nil
 }
 
+// onResize performs operations that need to be accomplished when the window is
+// resized. For now, it is very simple and just redraws the whole screen, but
+// should, in the future, perform more expensive wrapping functions.
+func (t *tui) onResize(g *gotui.Gui, x, y int) error {
+	if t.currView == nil {
+		return nil
+	}
+	v, err := g.View(t.currView.viewName)
+	if err != nil {
+		return err
+	}
+	return t.redraw(g, v)
+}
+
 // updateSendTitle updates the title of the input buffer frame to show the
 // world list with the active world and inactive worlds specified differently.
 func (t *tui) updateSendTitle() {
@@ -375,6 +389,7 @@ func (t *tui) Run(done, ready chan bool) {
 	t.g.Mouse = t.client.Config.Client.UI.Mouse
 
 	t.g.SetManagerFunc(t.layout)
+	t.g.SetResizeFunc(t.onResize)
 
 	log.Tracef("adding keybindings")
 	if err := t.keybindings(t.g); err != nil {
