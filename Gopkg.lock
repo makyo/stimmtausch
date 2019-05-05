@@ -81,11 +81,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:70e0812b29ff5ac1d17dacf8e499ce39f4aec79fbb0601840d4d0b3af26d751d"
+  digest = "1:3d617f0d2483bd933b915187f3454cbc45797993288e44ba0ad057a8b39bb452"
   name = "github.com/makyo/gotui"
   packages = ["."]
   pruneopts = "UT"
-  revision = "83a2464f18f3f3a2d4ef94a17d0347d7aa3c4593"
+  revision = "a4090cb1c35a9f9c2f42f0fe910bb2f31bdb5c95"
 
 [[projects]]
   digest = "1:94892f041853bd09edfbafae5b8e0b98d6f32c23df57a4d6cd0ccbdfce3c81f0"
@@ -96,20 +96,20 @@
   version = "1.0"
 
 [[projects]]
-  digest = "1:0f96ec4151a24d7bfd4298fc13cc320a000e31b4e5431cf88e3ffc961db846fd"
+  digest = "1:2fa7b0155cd54479a755c629de26f888a918e13f8857a2c442205d825368e084"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   pruneopts = "UT"
-  revision = "efa589957cd060542a26d2dd7832fd6a6c6c3ade"
-  version = "v0.1.0"
+  revision = "3a70a971f94a22f2fa562ffcc7a0eb45f5daf045"
+  version = "v0.1.1"
 
 [[projects]]
-  digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
+  digest = "1:3bb9c8451d199650bfd303e0068d86f135952fead374ad87c09a9b8a2cc4bd7c"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
-  version = "v0.0.4"
+  revision = "369ecd8cea9851e459abb67eb171853e3986591e"
+  version = "v0.0.6"
 
 [[projects]]
   digest = "1:0356f3312c9bd1cbeda81505b7fd437501d8e778ab66998ef69f00d7f9b3a0d7"
@@ -134,6 +134,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "02980233997d87bbda048393d47b4d453f7a398d"
+
+[[projects]]
+  digest = "1:cfa0d7741863a0e1d30e0ccdd4b48a96a471cdb47892303de8b92c3713af3e77"
+  name = "github.com/pkg/profile"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5b67d428864e92711fcbd2f8629456121a56d91f"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:b36a0ede02c4c2aef7df7f91cbbb7bb88a98b5d253509d4f997dda526e50c88c"
@@ -188,11 +196,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8207c052fb873f83c61a5aa16f6add5feb9881eda2112b56f69fd3b9e7f55c3f"
+  digest = "1:d0e9a312c4610a508569ab25e54d34600b1a96d19b1866ece104ffdf1c1b9d2c"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "d0b11bdaac8adb652bff00e49bcacf992835621a"
+  revision = "775f8194d0f9e65c46913c7be783d3d95a29333c"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -212,6 +220,7 @@
     "github.com/makyo/gotui",
     "github.com/makyo/snuffler",
     "github.com/mitchellh/go-homedir",
+    "github.com/pkg/profile",
     "github.com/smartystreets/goconvey/convey",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",

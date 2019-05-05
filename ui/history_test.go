@@ -23,6 +23,15 @@ func TestHistory(t *testing.T) {
 			l, err := fmt.Fprint(h, "rose")
 			So(l, ShouldEqual, 4)
 			So(err, ShouldBeNil)
+
+			Convey("And writing beyond the max causes lines to scroll past the end.", func() {
+				h = ui.NewHistory(10)
+				for i := 0; i < 15; i++ {
+					_, err := fmt.Fprint(h, i%10)
+					So(err, ShouldBeNil)
+				}
+				So(h.String(), ShouldEqual, "5678901234")
+			})
 		})
 
 		Convey("One can get its size", func() {

@@ -18,6 +18,7 @@ import (
 	"github.com/makyo/gotui"
 
 	"github.com/makyo/stimmtausch/client"
+	"github.com/makyo/stimmtausch/help"
 	"github.com/makyo/stimmtausch/signal"
 )
 
@@ -204,6 +205,20 @@ func (t *tui) layout(g *gotui.Gui) error {
 	return nil
 }
 
+// onResize performs operations that need to be accomplished when the window is
+// resized. For now, it is very simple and just redraws the whole screen, but
+// should, in the future, perform more expensive wrapping functions.
+func (t *tui) onResize(g *gotui.Gui, x, y int) error {
+	if t.currView == nil {
+		return nil
+	}
+	v, err := g.View(t.currView.viewName)
+	if err != nil {
+		return err
+	}
+	return t.redraw(g, v)
+}
+
 // updateSendTitle updates the title of the input buffer frame to show the
 // world list with the active world and inactive worlds specified differently.
 func (t *tui) updateSendTitle() {
@@ -323,6 +338,16 @@ func (t *tui) listen() {
 			res.Payload = []string{t.currView.connName}
 			log.Tracef("disconnecting current world %+v", res)
 			go t.client.Env.DirectDispatch(res)
+		case "help":
+			// get the command text and tell the system to display it in a modal
+			cmd := res.Payload[0]
+			h, ok := help.HelpMessages[cmd]
+			if !ok {
+				log.Warningf("no help available for /%s", cmd)
+				continue
+			}
+			helpText := help.RenderText(h)
+			go t.client.Env.Dispatch("_client:showModal", fmt.Sprintf("Help: %s::\n%s", cmd, helpText))
 		case "_client:connect":
 			// Attach receivedView to conn.
 			err := t.connect(res.Payload[0], t.g)
@@ -335,6 +360,11 @@ func (t *tui) listen() {
 		case "_client:allDisconnect":
 			// do we really need to do anything?
 			t.updateSendTitle()
+		case "_client:showModal":
+			res.Name = "_tui:showModal"
+			go t.client.Env.DirectDispatch(res)
+		case "_tui:showModal":
+			fmt.Fprintf(t.currView.buffer, "~~~~~ %s\n%s\n~~~~~\n", res.Payload[0], res.Payload[1])
 		default:
 			log.Tracef("got unknown signal result %v", res)
 			continue
@@ -359,6 +389,7 @@ func (t *tui) Run(done, ready chan bool) {
 	t.g.Mouse = t.client.Config.Client.UI.Mouse
 
 	t.g.SetManagerFunc(t.layout)
+	t.g.SetResizeFunc(t.onResize)
 
 	log.Tracef("adding keybindings")
 	if err := t.keybindings(t.g); err != nil {

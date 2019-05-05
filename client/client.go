@@ -9,9 +9,14 @@ package client
 import (
 	"fmt"
 
+	"github.com/juju/loggo"
+
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/connection"
 	"github.com/makyo/stimmtausch/signal"
 )
+
+var log = loggo.GetLogger("stimmtausch.client")
 
 // Client contains all of the information and objects Stimmtausch knows about.
 // This pretty efficiently maps to information in the config file, and it may
@@ -27,14 +32,14 @@ type Client struct {
 	listener chan signal.Signal
 
 	// All active connections.
-	connections map[string]*connection
+	connections map[string]*connection.Connection
 }
 
 // connectToWorld takes a given world and a connection name and creates a new
 // connection in the client by calling connect on that world.
-func (c *Client) connectToWorld(connectStr string, w config.World) (*connection, error) {
+func (c *Client) connectToWorld(connectStr string, w config.World) (*connection.Connection, error) {
 	log.Tracef("connecting to world %s (%s)", w.Name, connectStr)
-	conn, err := NewConnection(connectStr, w, c.Config.Servers[w.Server], c)
+	conn, err := connection.NewConnection(connectStr, w, c.Config.Servers[w.Server], c.Config, c.Env)
 	if err != nil {
 		log.Errorf("error connecting to world %s. %v", w.Name, err)
 		return nil, err
@@ -46,13 +51,13 @@ func (c *Client) connectToWorld(connectStr string, w config.World) (*connection,
 
 // connectToServer will connect to a server with a new world created on the spot
 // for that purpose.
-func (c *Client) connectToServer(connectStr string, s config.Server) (*connection, error) {
+func (c *Client) connectToServer(connectStr string, s config.Server) (*connection.Connection, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // connectToRaw will attempt to connect to a host:port string, building a
 // server and world for the purpose.
-func (c *Client) connectToRaw(connectStr string) (*connection, error) {
+func (c *Client) connectToRaw(connectStr string) (*connection.Connection, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -62,7 +67,7 @@ func (c *Client) connectToRaw(connectStr string) (*connection, error) {
 //   world created for that purpose; otherwise
 // * It will try to connect to that string as if it were a host:port; finally
 // * It will fail.
-func (c *Client) Connect(connectStr string) (*connection, error) {
+func (c *Client) Connect(connectStr string) (*connection.Connection, error) {
 	log.Tracef("attempting to connect to %s in %v", connectStr, c)
 
 	log.Tracef("checking if it's a world...")
@@ -96,7 +101,7 @@ func (c *Client) Connect(connectStr string) (*connection, error) {
 	return conn, nil
 }
 
-func (c *Client) Conn(name string) (*connection, bool) {
+func (c *Client) Conn(name string) (*connection.Connection, bool) {
 	conn, ok := c.connections[name]
 	return conn, ok
 }
@@ -153,7 +158,7 @@ func New(cfg *config.Config, env *signal.Dispatcher) (*Client, error) {
 		Config:      cfg,
 		Env:         env,
 		listener:    listener,
-		connections: map[string]*connection{},
+		connections: map[string]*connection.Connection{},
 	}
 	log.Tracef("listening for signals")
 	go c.listen()

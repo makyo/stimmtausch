@@ -11,6 +11,16 @@ stimmtausch:
       # Minimum log level to output (TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)
       log_level: INFO
 
+    # Settings pertaining to resource profiling in development. Note that only
+    # one of these can be used at a time. If you set more than one to `true`,
+    # only the first will be used.
+    profile:
+      # Whether or not to profile memory usage.
+      mem: false
+
+      # Whether or not to profile CPU usage.
+      cpu: false
+
     # Settings pertaining to connectiong logging.
     logging:
       # Date/time format to use. The numbers matter, weirdly enough. The date
@@ -31,10 +41,10 @@ stimmtausch:
     # Settings pertaining to the user interface
     ui:
       # How many lines received from the connection to keep in memory.
-      scrollback: 10000
+      scrollback: 5000
 
       # How many lines sent to the connection to keep in memory.
-      history: 10000
+      history: 500
 
       # Whether or not to keep a separate history buffer for each connection
       # or to have one history boffer for all connections.

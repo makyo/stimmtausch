@@ -4,13 +4,12 @@
 // Copyright © 2019 the Stimmtausch authors
 // Released under the MIT license.
 
-package client
+package connection
 
 import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
-	"io"
 	"net"
 	"net/textproto"
 	"os"
@@ -28,7 +27,7 @@ import (
 )
 
 var (
-	log    = loggo.GetLogger("stimmtausch.client")
+	log    = loggo.GetLogger("stimmtausch.connection")
 	userRe = regexp.MustCompile("\\$username")
 	passRe = regexp.MustCompile("\\$password")
 )
@@ -52,27 +51,12 @@ const (
 )
 
 // getTimestamp gets the current time in the format specified above.
-func (c *connection) getTimestamp() string {
-	return time.Now().Format(c.client.Config.Client.Logging.TimeString)
-}
-
-// output represents a named io.WriteCloser.
-type output struct {
-	// A name used for logging and referencing down the line.
-	name string
-
-	// Whether or not- this is the global output.
-	global bool
-
-	// The io.Writecloser itself.
-	output io.WriteCloser
-
-	// Whether or not the output supports ANSI escape codes.
-	supportsANSI bool
+func (c *Connection) getTimestamp() string {
+	return time.Now().Format(c.config.Client.Logging.TimeString)
 }
 
 // conn stores all connection settings
-type connection struct {
+type Connection struct {
 	// The name (usually connectStr) of the connection.
 	name string
 
@@ -82,8 +66,11 @@ type connection struct {
 	world  config.World
 	server config.Server
 
-	// The app client.
-	client *Client
+	// The app config.
+	config *config.Config
+
+	// The signal dispatcher.
+	env *signal.Dispatcher
 
 	// The TCP address of the server.
 	addr *net.TCPAddr
@@ -111,7 +98,7 @@ type connection struct {
 }
 
 // lookupHostname gets the TCP address for the world's hostname.
-func (c *connection) lookupHostname() error {
+func (c *Connection) lookupHostname() error {
 	log.Tracef("attempting to resolve %s:%d", c.server.Host, c.server.Port)
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.server.Host, c.server.Port))
 	if err != nil {
@@ -126,20 +113,20 @@ func (c *connection) lookupHostname() error {
 // getConnectionFile returns a file (or directory) name within the scope of
 // the connection. These live in
 // $HOME/.local/share/stimmtausch/{connname}.
-func (c *connection) getConnectionFile(name string) string {
-	return filepath.Join(c.client.Config.WorkingDir, c.name, name)
+func (c *Connection) getConnectionFile(name string) string {
+	return filepath.Join(c.config.WorkingDir, c.name, name)
 }
 
 // getLogFile returns a file (or directory) name within the scope of the
 // connection for the sake of logging. These live in
 // $HOME/.local/log/stimmtausch/{worldname}.
-func (c *connection) getLogFile(name string) string {
-	return filepath.Join(c.client.Config.LogDir, c.name, name)
+func (c *Connection) getLogFile(name string) string {
+	return filepath.Join(c.config.LogDir, c.name, name)
 }
 
 // makeFIFO creates the FIFO file for the world, used to manage the information
 // sent to and recieved from the connection.
-func (c *connection) makeFIFO() error {
+func (c *Connection) makeFIFO() error {
 	log.Tracef("creating FIFO file for %s", c.name)
 	file := c.getConnectionFile(inFile)
 	var err error
@@ -166,31 +153,9 @@ func (c *connection) makeFIFO() error {
 	return nil
 }
 
-// makeLogfile creates a logfile from a given name.
-func (c *connection) makeLogfile(out *output) error {
-	log.Tracef("creating a log file for %s", c.name)
-
-	log.Tracef("checking if %s exists", out.name)
-	_, err := os.Stat(out.name)
-	if err == nil {
-		fmt.Printf("Warning: %v already exists; appending.\n", out.name)
-	}
-
-	log.Tracef("opening %s for logging", c.name)
-	f, err := os.OpenFile(out.name, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Warningf("could not open logfile %s for %s, not logging. %v", out.name, c.name, err)
-		return err
-	}
-
-	out.output = f
-	log.Debugf("logfile created as %s", out.name)
-	return nil
-}
-
 // connect creates a TCP connection to the world's TCP address. It connects
 // over SSL if available and, if requested, will use insecure certs.
-func (c *connection) connect() error {
+func (c *Connection) connect() error {
 	log.Tracef("creating TCP connection for %s", c.name)
 	var err error
 	var conn *net.TCPConn
@@ -228,7 +193,7 @@ func (c *connection) connect() error {
 }
 
 // readToConn reads from the FIFO and sends to the connection.
-func (c *connection) readToConn() {
+func (c *Connection) readToConn() {
 	log.Tracef("reading from FIFO to connection %s", c.name)
 	tmpError := fmt.Sprintf("read %v: resource temporarily unavailable", c.fifo.Name())
 	for {
@@ -252,7 +217,7 @@ func (c *connection) readToConn() {
 				if len(s) == 1 {
 					s = append(s, "")
 				}
-				go c.client.Env.Dispatch(s[0], s[1])
+				go c.env.Dispatch(s[0], s[1])
 				continue
 			}
 			if err := scanner.Err(); err != nil && err.Error() != tmpError {
@@ -265,7 +230,7 @@ func (c *connection) readToConn() {
 }
 
 // readToFile reads from the connection and writes to outfiles.
-func (c *connection) readToFile() {
+func (c *Connection) readToFile() {
 	log.Tracef("reading from connection %s to file", c.name)
 	reader := bufio.NewReader(c.connection)
 	tp := textproto.NewReader(reader)
@@ -290,8 +255,9 @@ func (c *connection) readToFile() {
 		log.Tracef("running triggers against line")
 		var errs, triggerErrs []error
 		var applies, gag, logAnyway bool
-		for _, trigger := range c.client.Config.CompiledTriggers {
-			applies, line, triggerErrs = trigger.Run(line, c.client.Config)
+		orig := line
+		for _, trigger := range c.config.CompiledTriggers {
+			applies, line, triggerErrs = trigger.Run(line, c.config)
 			if len(triggerErrs) != 0 {
 				errs = append(errs, triggerErrs...)
 			}
@@ -308,9 +274,9 @@ func (c *connection) readToFile() {
 			if gag && !(logAnyway && out.global) {
 				continue
 			}
-			toWrite := line
-			if !out.supportsANSI {
-				toWrite = util.StripANSI.ReplaceAllString(line, "")
+			toWrite := orig
+			if out.supportsANSI {
+				toWrite = line
 			}
 			bytesOut, err := fmt.Fprintln(out.output, toWrite)
 			if err != nil {
@@ -322,7 +288,7 @@ func (c *connection) readToFile() {
 }
 
 // closeConnection closes the world's TCP connection.
-func (c *connection) closeConnection() {
+func (c *Connection) closeConnection() {
 	if !c.Connected {
 		log.Debugf("%s already closed", c.name)
 		return
@@ -336,7 +302,7 @@ func (c *connection) closeConnection() {
 }
 
 // closeFIFO closes the FIFO for the world.
-func (c *connection) closeFIFO() {
+func (c *Connection) closeFIFO() {
 	name := c.fifo.Name()
 	log.Tracef("closing and deleting FIFO %s", name)
 	if err := c.fifo.Close(); err != nil {
@@ -348,35 +314,9 @@ func (c *connection) closeFIFO() {
 	log.Debugf("FIFO %s closed and deleted for %s", name, c.name)
 }
 
-// closeOutputs closes open outfiles.
-func (c *connection) closeOutputs() {
-	log.Tracef("closing all outputs for %s", c.name)
-	for _, out := range c.outputs {
-		log.Tracef("closing output file %s for %s", out.name, c.name)
-		if err := out.output.Close(); err != nil {
-			log.Warningf("error closing output %s for %s. %v", out.name, c.name, err)
-		}
-		log.Debugf("output file %s for %s closed", out.name, c.name)
-		if !out.global {
-			continue
-		}
-		if c.world.Log {
-			rotateTo := c.getLogFile(fmt.Sprintf("%s.log", c.getTimestamp()))
-			if err := util.StripANSIFromFile(out.name, rotateTo); err != nil {
-				log.Warningf("unable to clean and rotate log file %s, you'll need to do that on your own. %v", out.name, err)
-				continue
-			}
-		}
-		log.Debugf("output file for %s rotated", c.name)
-		if err := os.Remove(out.name); err != nil {
-			log.Warningf("unable to remove outfile %s", out.name)
-		}
-	}
-}
-
 // removeWorkingDir removes the (hopefully empty) working directory for the
 // connection.
-func (c *connection) removeWorkingDir() {
+func (c *Connection) removeWorkingDir() {
 	workingDir := c.getConnectionFile("")
 	log.Tracef("removing working directory %s", workingDir)
 	if err := os.Remove(workingDir); err != nil {
@@ -386,7 +326,7 @@ func (c *connection) removeWorkingDir() {
 }
 
 // cleanup cleans up the connection's environment on disk.
-func (c *connection) cleanup() {
+func (c *Connection) cleanup() {
 	log.Tracef("cleaning up connection's environment on disk for %s", c.name)
 	c.closeFIFO()
 	c.closeOutputs()
@@ -394,7 +334,7 @@ func (c *connection) cleanup() {
 }
 
 // Write sends data to the connection via the FIFO file
-func (c *connection) Write(in []byte) (int, error) {
+func (c *Connection) Write(in []byte) (int, error) {
 	fname := c.getConnectionFile(inFile)
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND, os.ModeNamedPipe)
 	if err != nil {
@@ -410,7 +350,7 @@ func (c *connection) Write(in []byte) (int, error) {
 }
 
 // Close closes the connection and all open files.
-func (c *connection) Close() error {
+func (c *Connection) Close() error {
 	if !c.Connected {
 		log.Debugf("%s already closed", c.name)
 		return nil
@@ -428,14 +368,22 @@ func (c *connection) Close() error {
 
 // listen listens for events from the signal environment, then does nothing (but
 // does it splendidly)
-func (c *connection) listen() {
+func (c *Connection) listen() {
 	for {
-		<-c.listener
+		res := <-c.listener
+		switch res.Name {
+		case "log":
+			if err := c.parseLogSignal(res.Payload); err != nil {
+				log.Errorf("error executing log command: %v", err)
+			}
+		default:
+			continue
+		}
 	}
 }
 
 // Open opens the connection and all output files.
-func (c *connection) Open() error {
+func (c *Connection) Open() error {
 	log.Tracef("connecting to %s", c.name)
 	var err error
 
@@ -469,14 +417,14 @@ func (c *connection) Open() error {
 	log.Tracef("listening for signals")
 	c.listener = make(chan signal.Signal)
 	go c.listen()
-	c.client.Env.AddListener("connection", c.listener)
+	c.env.AddListener("connection", c.listener)
 
 	c.disconnect = make(chan bool)
 	c.disconnected = make(chan bool)
 	go c.readToFile()
 	go c.readToConn()
 
-	st, ok := c.client.Config.ServerTypes[c.server.ServerType]
+	st, ok := c.config.ServerTypes[c.server.ServerType]
 	if ok && c.world.Username != "" && c.world.Password != "" {
 		connectStr := st.ConnectString
 		connectStr = userRe.ReplaceAllString(connectStr, c.world.Username)
@@ -488,38 +436,26 @@ func (c *connection) Open() error {
 }
 
 // GetConnectionName gets the name of the connection (the connectStr, usually).
-func (c *connection) GetConnectionName() string {
+func (c *Connection) GetConnectionName() string {
 	return c.name
 }
 
 // GetDisplayName gets the world's display name.
-func (c *connection) GetDisplayName() string {
+func (c *Connection) GetDisplayName() string {
 	return c.world.DisplayName
-}
-
-// AddOutput creates an output struct with the given io.WriteCloser. This can
-// be a file, of course, but many other things as well, including the buffer
-// that the UI uses.
-func (c *connection) AddOutput(name string, w io.WriteCloser, supportsANSI bool) {
-	log.Tracef("creating output %s for %s", name, c.name)
-	c.outputs = append(c.outputs, &output{
-		name:         name,
-		global:       false,
-		output:       w,
-		supportsANSI: supportsANSI,
-	})
 }
 
 // NewConnection creates a new conneciton with the given world. One can
 // also specify whether or not to use SSL, allow insecure SSL certs, and
 // whether to log all output by default.
-func NewConnection(name string, w config.World, s config.Server, cl *Client) (*connection, error) {
+func NewConnection(name string, w config.World, s config.Server, cfg *config.Config, env *signal.Dispatcher) (*Connection, error) {
 	log.Tracef("creating a new connection %s for world %s", name, w.Name)
-	c := &connection{
+	c := &Connection{
 		name:      name,
 		world:     w,
 		server:    s,
-		client:    cl,
+		config:    cfg,
+		env:       env,
 		Connected: false,
 	}
 
