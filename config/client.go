@@ -1,5 +1,9 @@
 package config
 
+import (
+	"fmt"
+)
+
 // Client holds information regarding how Stimmtausch runs.
 type Client struct {
 	Syslog  Syslog
@@ -81,75 +85,13 @@ type Colors struct {
 	ComputedTheme Theme
 }
 
-func (c Colors) GetTheme() Theme {
+func (c Colors) GetTheme() (Theme, error) {
 	for _, theme := range c.Themes {
 		if theme.Name == c.Theme {
-			theme.Inherits = "default_dark"
-		}
-		if theme.Inherits != "" {
-			c.Theme = theme.Inherits
-			parent := c.GetTheme()
-			if theme.PrimitiveBackgroundColor == "" {
-				theme.PrimitiveBackgroundColor = parent.PrimitiveBackgroundColor
-			}
-			if theme.ContrastBackgroundColor == "" {
-				theme.ContrastBackgroundColor = parent.ContrastBackgroundColor
-			}
-			if theme.MoreContrastBackgroundColor == "" {
-				theme.MoreContrastBackgroundColor = parent.PrimitiveBackgroundColor
-			}
-			if theme.BorderColor == "" {
-				theme.BorderColor = parent.BorderColor
-			}
-			if theme.TitleColor == "" {
-				theme.TitleColor = parent.TitleColor
-			}
-			if theme.GraphicsColor == "" {
-				theme.GraphicsColor = parent.GraphicsColor
-			}
-			if theme.PrimaryTextColor == "" {
-				theme.PrimaryTextColor = parent.PrimaryTextColor
-			}
-			if theme.SecondaryTextColor == "" {
-				theme.SecondaryTextColor = parent.SecondaryTextColor
-			}
-			if theme.TertiaryTextColor == "" {
-				theme.TertiaryTextColor = parent.TertiaryTextColor
-			}
-			if theme.InverseTextColor == "" {
-				theme.InverseTextColor = parent.InverseTextColor
-			}
-			if theme.ContrastSecondaryTextColor == "" {
-				theme.ContrastSecondaryTextColor = parent.ContrastSecondaryTextColor
-			}
-			st := theme.SendTitle
-			if st.Active == "" {
-				st.Active = parent.SendTitle.Active
-			}
-			if st.ActiveMore == "" {
-				st.ActiveMore = parent.SendTitle.Active
-			}
-			if st.Inactive == "" {
-				st.Inactive = parent.SendTitle.Inactive
-			}
-			if st.InactiveMore == "" {
-				st.InactiveMore = parent.SendTitle.InactiveMore
-			}
-			if st.Disconnected == "" {
-				st.Disconnected = parent.SendTitle.Disconnected
-			}
-			if st.DisconnectedMore == "" {
-				st.DisconnectedMore = parent.SendTitle.DisconnectedMore
-			}
-			if st.DisconnectedActive == "" {
-				st.DisconnectedActive = parent.SendTitle.DisconnectedActive
-			}
-			theme.SendTitle = st
-			return theme
+			return theme, nil
 		}
 	}
-	c.Theme = "default_dark"
-	return c.GetTheme()
+	return Theme{}, fmt.Errorf("theme %s not found", c.Theme)
 }
 
 type Theme struct {

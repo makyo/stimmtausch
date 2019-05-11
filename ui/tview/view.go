@@ -1,6 +1,7 @@
 package tview
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/rivo/tview"
@@ -18,7 +19,7 @@ type view struct {
 	view        *tview.TextView
 	buffer      *buffer.Buffer
 	current     bool
-	application *tview.Application
+	app         *tview.Application
 
 	// Mark whether the view is scrolled up. If so, add a marker where new
 	// content starts.
@@ -38,12 +39,11 @@ func NewView(application *tview.Application, name string, bufSize int) *view {
 		return err
 	})
 	v := &view{
-		name:        name,
-		displayName: displayName,
-		writer:      w,
-		view:        tv,
-		buffer:      buf,
-		application: application,
+		name:   name,
+		writer: w,
+		view:   tv,
+		buffer: buf,
+		app:    application,
 	}
 	v.view.SetChangedFunc(v.maybeScrollToBottom)
 	return v
@@ -56,7 +56,7 @@ func (v *view) Write(p []byte) (int, error) {
 
 func (v *view) maybeScrollToBottom() {
 	if v.current && !v.scrolled {
-		go v.application.QueueUpdateDraw(func() {
+		go v.app.QueueUpdateDraw(func() {
 			v.view.ScrollToEnd()
 		})
 	} else {
@@ -99,21 +99,21 @@ func NewViewSet() *viewSet {
 }
 
 // add adds a view to the viewSet and brings it to the foreground.
-func (vs *viewSet) add(name string, v *view) {
-	vs.views[name] = v
-	vs.order = append(vs.order, name)
-	vs.pages.AddPage(name, v.view, false, true)
-	vs.fg(name)
+func (vs *viewSet) add(v *view) {
+	vs.views[v.name] = v
+	vs.order = append(vs.order, v.name)
+	vs.pages.AddPage(v.name, v.view, false, true)
+	vs.fg(v.name)
 }
 
 // remove removes a view from the viewSet and attempts to cycle to the next
 // available view.
 func (vs *viewSet) remove(name string) error {
-	if v, ok = vs[name]; ok {
-		delete(vs, name)
+	if v, ok := vs.views[name]; ok {
+		delete(vs.views, name)
 		for i, n := range vs.order {
 			if n == name {
-				vs.order = append(vs.order[:i], vs.order[i+1:])
+				vs.order = append(vs.order[:i], vs.order[i+1:]...)
 				break
 			}
 		}
@@ -137,6 +137,7 @@ func (vs *viewSet) cycle(amount int) {
 // by that name, it returns an error.
 func (vs *viewSet) fg(name string) error {
 	if v, ok := vs.views[name]; ok {
+		v.current = true
 		vs.currView = vs.views[name]
 		for i, n := range vs.order {
 			if n == name {
@@ -144,6 +145,7 @@ func (vs *viewSet) fg(name string) error {
 				vs.pages.ShowPage(name)
 			} else {
 				vs.pages.HidePage(n)
+				vs.views[n].current = false
 			}
 		}
 		vs.pages.SendToFront(name)

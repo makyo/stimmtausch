@@ -89,7 +89,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			displayName: conn.GetDisplayName(),
 			conn:        conn,
 			viewName:    viewName,
-			buffer:      buffer.NewBuffer(t.client.Config.Client.UI.Scrollback),
+			buffer:      buffer.New(t.client.Config.Client.UI.Scrollback),
 			current:     true,
 			index:       len(t.views),
 		}
@@ -240,15 +240,15 @@ func (t *tui) updateSendTitle() {
 		v.connected = connected
 		if v.current {
 			if connected {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ComputedTheme.SendTitle.Active, v.displayName)
 			} else {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, v.displayName)
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ComputedTheme.SendTitle.DisconnectedActive, v.displayName)
 			}
 		} else {
 			if connected {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ComputedTheme.SendTitle.Inactive, v.displayName)
 			} else {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, v.displayName)
+				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ComputedTheme.SendTitle.Disconnected, v.displayName)
 			}
 		}
 	}
@@ -418,7 +418,7 @@ func (t *tui) Run(done, ready chan bool) {
 func New(c *client.Client) *tui {
 	return &tui{
 		client:   c,
-		sent:     buffer.NewBuffer(c.Config.Client.UI.History),
+		sent:     buffer.New(c.Config.Client.UI.History),
 		title:    " No world ",
 		titleLen: 10,
 	}

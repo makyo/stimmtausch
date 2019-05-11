@@ -89,8 +89,14 @@ func (c *Config) FinalizeAndValidate() []error {
 		c.CompiledTriggers = append(c.CompiledTriggers, triggerRef)
 	}
 
-	log.Tracef("finalizing and validating colors")
-	c.Colors.ComputedTheme = c.Colors.GetTheme()
+	if c.Client.UI.Colors.Theme != "" {
+		log.Tracef("finalizing and validating colors")
+		theme, err := c.Client.UI.Colors.GetTheme()
+		if err != nil {
+			errs = append(errs, err)
+		}
+		c.Client.UI.Colors.ComputedTheme = theme
+	}
 
 	c.HomeDir = HomeDir
 	c.ConfigDir = ConfigDir

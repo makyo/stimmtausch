@@ -38,9 +38,14 @@ type ui struct {
 	listener chan signal.Signal
 }
 
-func (t *ui) Update() {
+func (t *ui) update() {
 	// update current view
 	// update send title
+}
+
+func (t *ui) connect(name string) error {
+	// attach connection to view
+	return nil
 }
 
 // Run creates the UI and starts the mainloop.
@@ -64,7 +69,7 @@ func (t *ui) Run(done chan bool) {
 func New(c *client.Client) *ui {
 	return &ui{
 		client:   c,
-		sent:     buffer.NewBuffer(c.Config.Client.UI.History),
+		sent:     buffer.New(c.Config.Client.UI.History),
 		views:    &viewSet{},
 		title:    " No World ",
 		titleLen: 10,

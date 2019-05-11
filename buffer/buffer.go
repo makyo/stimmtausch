@@ -134,8 +134,8 @@ func (b *Buffer) AddPostWriteHook(f func(*BufferLine) error) {
 	b.postWriteHooks = append(b.postWriteHooks, f)
 }
 
-// NewBuffer returns a new buffer.
-func NewBuffer(max int) *Buffer {
+// New returns a new buffer.
+func New(max int) *Buffer {
 	return &Buffer{
 		curr:  0,
 		max:   max,

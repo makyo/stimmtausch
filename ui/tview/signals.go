@@ -1,6 +1,8 @@
 package tview
 
 import (
+	"fmt"
+
 	"github.com/makyo/stimmtausch/help"
 )
 
@@ -27,7 +29,7 @@ func (t *ui) listen() {
 			if len(res.Payload) != 1 {
 				if t.views.currView != nil {
 					if !t.views.currView.connected {
-						res.Payload = []string{t.currView.name}
+						res.Payload = []string{t.views.currView.name}
 						go t.client.Env.DirectDispatch(res)
 					} else {
 						log.Warningf("already connected!")
@@ -37,16 +39,16 @@ func (t *ui) listen() {
 				}
 				continue
 			}
-			v := view.New(res.Payload[1], t.client.Config.Client.UI.Scrollback)
+			v := NewView(t.app, res.Payload[1], t.client.Config.Client.UI.Scrollback)
 			t.views.add(v)
-			fmt.Fprintf("~ Connecting to %s...", res.Payload[1])
+			fmt.Fprintf(v, "~ Connecting to %s...", res.Payload[1])
 		case "disconnect", "dc":
 			// If it's a disconnect without a payload, redispatch with the
 			// current connection's name.
 			if len(res.Payload) != 0 {
 				continue
 			}
-			res.Payload = []string{t.currView.connName}
+			res.Payload = []string{t.views.currView.name}
 			log.Tracef("disconnecting current world %+v", res)
 			go t.client.Env.DirectDispatch(res)
 		case "help":
@@ -61,21 +63,32 @@ func (t *ui) listen() {
 			go t.client.Env.Dispatch("_client:showModal", fmt.Sprintf("Help: %s::\n%s", cmd, helpText))
 		case "_client:connect":
 			// Attach receivedView to conn.
-			err := t.connect(res.Payload[0])
+			conn, ok := t.client.Conn(res.Payload[0])
+			if !ok {
+				log.Errorf("unable to find connection %s", res.Payload[0])
+			}
+			t.views.fg(res.Payload[0])
+			cv := t.views.currView
+			cv.conn = conn
+			cv.displayName = conn.GetDisplayName()
+			conn.AddOutput(fmt.Sprintf("tview-%d", t.views.currIndex), cv.buffer, true)
+			err := conn.Open()
 			if err != nil {
 				log.Errorf("error setting up connection in ui: %v", err)
 			}
+			cv.connected = conn.Connected
+			t.update()
 		case "_client:disconnect":
 			// Grey out tab in send title, grey out text in receivedView.
 			t.update()
 		case "_client:allDisconnect":
 			// do we really need to do anything?
-			t.updateSendTitle()
+			t.update()
 		case "_client:showModal":
 			res.Name = "_tui:showModal"
 			go t.client.Env.DirectDispatch(res)
 		case "_tview:showModal":
-			fmt.Fprintf(t.currView.buffer, "~~~~~ %s\n%s\n~~~~~\n", res.Payload[0], res.Payload[1])
+			fmt.Fprintf(t.views.currView.buffer, "~~~~~ %s\n%s\n~~~~~\n", res.Payload[0], res.Payload[1])
 		default:
 			log.Tracef("got unknown signal result %v", res)
 			continue
