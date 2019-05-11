@@ -36,7 +36,7 @@ type tui struct {
 	titleLen      int
 }
 
-var log = loggo.GetLogger("stimmtausch.ui")
+var log = loggo.GetLogger("stimmtausch.ui.tui")
 
 // connect tells the client to connect to the provided connection string, If
 // successful, it will construct a receivedView to represent and hold that

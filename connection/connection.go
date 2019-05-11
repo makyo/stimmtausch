@@ -360,6 +360,7 @@ func (c *Connection) Close() error {
 	if <-c.disconnected {
 		c.closeConnection()
 		c.cleanup()
+		go c.env.Dispatch("_client:disconnect", c.name)
 
 		log.Infof("quit %s at %s", c.name, c.getTimestamp())
 	}

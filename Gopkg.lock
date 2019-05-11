@@ -18,6 +18,25 @@
   version = "v1.0.8"
 
 [[projects]]
+  digest = "1:0e16b03c72bd42739ca68d055c10369e60d17838428f512f3b29ae115ba788e0"
+  name = "github.com/gdamore/encoding"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6289cdc94c00ac4aa177771c5fce7af2f96b626d"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:937011a37a09b93be68052dfb3195fcfbff33b9472b37401b54027e9954906fb"
+  name = "github.com/gdamore/tcell"
+  packages = [
+    ".",
+    "terminfo",
+  ]
+  pruneopts = "UT"
+  revision = "aaadc574a6ed8dc3abe56036ca130dcee1ee6b6e"
+  version = "v1.1.1"
+
+[[projects]]
   branch = "master"
   digest = "1:f14d1b50e0075fb00177f12a96dd7addf93d1e2883c25befd17285b779549795"
   name = "github.com/gopherjs/gopherjs"
@@ -62,6 +81,14 @@
   ]
   pruneopts = "UT"
   revision = "d976af380377adda50b2d34279f1dec3507504ac"
+
+[[projects]]
+  digest = "1:39de67207027b7374272d5ec9b1bf85457714150ba1263e8d236316629dad570"
+  name = "github.com/lucasb-eyer/go-colorful"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "30298f24079860c4dee452fdef6519b362a4a026"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:2dc8db55c5b223e6cd50aa7915e698cfcf56d1ddfa89bbbf65e24729e0a0200a"
@@ -144,6 +171,22 @@
   version = "v1.2.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:65d59a5b6a44b52bc2449479cc40de6da03398ef9c6323ea868c9ac752b9d441"
+  name = "github.com/rivo/tview"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "90b4da1bd64ceee13d2e7d782b315b819190f7bf"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ab2d8dae71aefc7057f8da6a765968d46cb4190aee8ba247c46afc129d45a3bf"
+  name = "github.com/rivo/uniseg"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f699dde9c340bcc39b69a4c67369832af73ec72e"
+
+[[projects]]
   digest = "1:b36a0ede02c4c2aef7df7f91cbbb7bb88a98b5d253509d4f997dda526e50c88c"
   name = "github.com/russross/blackfriday"
   packages = ["."]
@@ -203,6 +246,20 @@
   revision = "775f8194d0f9e65c46913c7be783d3d95a29333c"
 
 [[projects]]
+  digest = "1:cc38c2209a6c1f94debdfd96934865a258eac2f905a8d3f8fd56e7d0cfb85edd"
+  name = "golang.org/x/text"
+  packages = [
+    "encoding",
+    "encoding/internal/identifier",
+    "internal/gen",
+    "transform",
+    "unicode/cldr",
+  ]
+  pruneopts = "UT"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
+
+[[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -221,6 +278,7 @@
     "github.com/makyo/snuffler",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/profile",
+    "github.com/rivo/tview",
     "github.com/smartystreets/goconvey/convey",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",

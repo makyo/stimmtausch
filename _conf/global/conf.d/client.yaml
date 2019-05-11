@@ -62,18 +62,65 @@ stimmtausch:
 
       # Colors in the UI
       colors:
-        send_title:
-          # Focused world
-          active: "bold+white"
-          # Focused world, scrolled up with new activity
-          active_more: "bold+green"
-          # Non-focused world
-          inactive: "steelblue"
-          # Non-focused world with new activity
-          inactive_more: "steelblue+bold"
-          # Disconnected world (non-focused)
-          disconnected: "mediumvioletred"
-          # Disconnected world with new activity
-          disconnected_more: "mediumvioletred+bold"
-          # Disconnected world (non-focused) with unread lines
-          disconnected_active: "deeppink3"
+        theme: "default_dark"
+        themes:
+          - name: "default_dark"
+            background: "default"
+            contrast_background: "blue"
+            more_contrast_background: "green"
+            border: "white"
+            title: "white"
+            graphics: "white"
+            primary_text: "white"
+            secondary_text: "yellow"
+            tertiary_text: "green"
+            inverse_text: "blue"
+            contrast_secondary_text: "darkcyan"
+            send_title:
+              # Focused world
+              active: "bold+white"
+              # Focused world, scrolled up with new activity
+              active_more: "bold+green"
+              # Non-focused world
+              inactive: "steelblue"
+              # Non-focused world with new activity
+              inactive_more: "steelblue+bold"
+              # Disconnected world (non-focused)
+              disconnected: "mediumvioletred"
+              # Disconnected world with new activity
+              disconnected_more: "mediumvioletred+bold"
+              # Disconnected world (non-focused) with unread lines
+              disconnected_active: "deeppink3"
+          - name: "opaque_dark"
+            inherits: "default_dark"
+            background: "black"
+          - name: "default_light"
+            background: "default"
+            contrast_background: "blue"
+            more_contrast_background: "green"
+            border: "black"
+            title: "black"
+            graphics: "black"
+            primary_text: "black"
+            secondary_text: "yellow"
+            tertiary_text: "green"
+            inverse_text: "blue"
+            contrast_secondary_text: "darkcyan"
+            send_title:
+              # Focused world
+              active: "bold+black"
+              # Focused world, scrolled up with new activity
+              active_more: "bold+green"
+              # Non-focused world
+              inactive: "steelblue"
+              # Non-focused world with new activity
+              inactive_more: "steelblue+bold"
+              # Disconnected world (non-focused)
+              disconnected: "mediumvioletred"
+              # Disconnected world with new activity
+              disconnected_more: "mediumvioletred+bold"
+              # Disconnected world (non-focused) with unread lines
+              disconnected_active: "deeppink3"
+          - name: "opaque_light"
+            inherits: "default_light"
+            background: "white"

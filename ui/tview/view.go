@@ -1,0 +1,153 @@
+package tview
+
+import (
+	"io"
+
+	"github.com/rivo/tview"
+
+	"github.com/makyo/stimmtausch/buffer"
+)
+
+// view wraps a tview View and its corresponding buffer and connection.
+type view struct {
+	name        string
+	displayName string
+	conn        io.WriteCloser
+	connected   bool
+	writer      io.Writer
+	view        *tview.TextView
+	buffer      *buffer.Buffer
+	current     bool
+	application *tview.Application
+
+	// Mark whether the view is scrolled up. If so, add a marker where new
+	// content starts.
+	scrolled                 bool
+	shouldAddScrollIndicator bool
+}
+
+// New creates a new view instance for the given connection, including its
+// buffer and writer.
+func NewView(application *tview.Application, name string, bufSize int) *view {
+	tv := tview.NewTextView().SetWordWrap(true).SetScrollable(true)
+	w := tview.ANSIWriter(tv)
+
+	buf := buffer.New(bufSize)
+	buf.AddPostWriteHook(func(line *buffer.BufferLine) error {
+		_, err := fmt.Fprint(w, line.Text)
+		return err
+	})
+	v := &view{
+		name:        name,
+		displayName: displayName,
+		writer:      w,
+		view:        tv,
+		buffer:      buf,
+		application: application,
+	}
+	v.view.SetChangedFunc(v.maybeScrollToBottom)
+	return v
+}
+
+// Write writes to the connection by way of the
+func (v *view) Write(p []byte) (int, error) {
+	return v.writer.Write(p)
+}
+
+func (v *view) maybeScrollToBottom() {
+	if v.current && !v.scrolled {
+		go v.application.QueueUpdateDraw(func() {
+			v.view.ScrollToEnd()
+		})
+	} else {
+		if v.shouldAddScrollIndicator {
+			fmt.Fprint(v, "[-:-:bd]=====[-:-:-]")
+			v.shouldAddScrollIndicator = false
+		}
+	}
+}
+
+func (v *view) scroll(amount int, byPage bool) {
+	// Attempt to scroll by lines/page as requested in the given direction
+	// (positive for down, negative for up).
+	// If we're scrolling up and scrolled is false, set scrolled and
+	// shouldAddScrollIndicator to true.
+	// If we can't scroll down anymore, set scrolled to false.
+}
+
+// viewSet contains the collection of views associated with connections,
+// whether active or inactive.
+type viewSet struct {
+	// the tview page set which controls what's visible and not.
+	pages *tview.Pages
+
+	// The collection of views and their order.
+	views map[string]*view
+	order []string
+
+	// The current view and its index in the order.
+	currView  *view
+	currIndex int
+}
+
+func NewViewSet() *viewSet {
+	return &viewSet{
+		pages: tview.NewPages(),
+		views: map[string]*view{},
+		order: []string{},
+	}
+}
+
+// add adds a view to the viewSet and brings it to the foreground.
+func (vs *viewSet) add(name string, v *view) {
+	vs.views[name] = v
+	vs.order = append(vs.order, name)
+	vs.pages.AddPage(name, v.view, false, true)
+	vs.fg(name)
+}
+
+// remove removes a view from the viewSet and attempts to cycle to the next
+// available view.
+func (vs *viewSet) remove(name string) error {
+	if v, ok = vs[name]; ok {
+		delete(vs, name)
+		for i, n := range vs.order {
+			if n == name {
+				vs.order = append(vs.order[:i], vs.order[i+1:])
+				break
+			}
+		}
+		if vs.currView == v {
+			vs.cycle(1)
+		}
+		vs.pages.RemovePage(name)
+		return nil
+	}
+	return fmt.Errorf("no view named %s", name)
+}
+
+// cycle attemtps to cycle the requested amount of views - to the right for a
+// positive number, and to the left for a negative one.
+func (vs *viewSet) cycle(amount int) {
+	vs.currIndex = amount % (len(vs.order) - 1)
+	vs.fg(vs.order[vs.currIndex])
+}
+
+// fg attempts to bring the named view to the foreground. If there is no view
+// by that name, it returns an error.
+func (vs *viewSet) fg(name string) error {
+	if v, ok := vs.views[name]; ok {
+		vs.currView = vs.views[name]
+		for i, n := range vs.order {
+			if n == name {
+				vs.currIndex = i
+				vs.pages.ShowPage(name)
+			} else {
+				vs.pages.HidePage(n)
+			}
+		}
+		vs.pages.SendToFront(name)
+		return nil
+	}
+	return fmt.Errorf("no view named %s", name)
+}

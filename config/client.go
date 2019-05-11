@@ -71,16 +71,109 @@ type UI struct {
 	Mouse bool
 
 	// Colors in the UI
-	Colors struct {
-		// The colors for the input buffer titles in ansigo specifications.
-		SendTitle struct {
-			Active             string
-			ActiveMore         string `yaml:"active_more" toml:"active_more"` // TODO
-			Inactive           string
-			InactiveMore       string `yaml:"inactive_more" toml:"inactive_more"` // TODO
-			Disconnected       string
-			DisconnectedMore   string `yaml:"disconnected_more" toml:"disconnected_more"`     // TODO
-			DisconnectedActive string `yaml:"disconnected_active" toml:"disconnected_active"` // TODO
-		} `yaml:"send_title" toml:"send_title"`
+	Colors Colors
+}
+
+// Colors in the UI
+type Colors struct {
+	Theme         string
+	Themes        []Theme
+	ComputedTheme Theme
+}
+
+func (c Colors) GetTheme() Theme {
+	for _, theme := range c.Themes {
+		if theme.Name == c.Theme {
+			theme.Inherits = "default_dark"
+		}
+		if theme.Inherits != "" {
+			c.Theme = theme.Inherits
+			parent := c.GetTheme()
+			if theme.PrimitiveBackgroundColor == "" {
+				theme.PrimitiveBackgroundColor = parent.PrimitiveBackgroundColor
+			}
+			if theme.ContrastBackgroundColor == "" {
+				theme.ContrastBackgroundColor = parent.ContrastBackgroundColor
+			}
+			if theme.MoreContrastBackgroundColor == "" {
+				theme.MoreContrastBackgroundColor = parent.PrimitiveBackgroundColor
+			}
+			if theme.BorderColor == "" {
+				theme.BorderColor = parent.BorderColor
+			}
+			if theme.TitleColor == "" {
+				theme.TitleColor = parent.TitleColor
+			}
+			if theme.GraphicsColor == "" {
+				theme.GraphicsColor = parent.GraphicsColor
+			}
+			if theme.PrimaryTextColor == "" {
+				theme.PrimaryTextColor = parent.PrimaryTextColor
+			}
+			if theme.SecondaryTextColor == "" {
+				theme.SecondaryTextColor = parent.SecondaryTextColor
+			}
+			if theme.TertiaryTextColor == "" {
+				theme.TertiaryTextColor = parent.TertiaryTextColor
+			}
+			if theme.InverseTextColor == "" {
+				theme.InverseTextColor = parent.InverseTextColor
+			}
+			if theme.ContrastSecondaryTextColor == "" {
+				theme.ContrastSecondaryTextColor = parent.ContrastSecondaryTextColor
+			}
+			st := theme.SendTitle
+			if st.Active == "" {
+				st.Active = parent.SendTitle.Active
+			}
+			if st.ActiveMore == "" {
+				st.ActiveMore = parent.SendTitle.Active
+			}
+			if st.Inactive == "" {
+				st.Inactive = parent.SendTitle.Inactive
+			}
+			if st.InactiveMore == "" {
+				st.InactiveMore = parent.SendTitle.InactiveMore
+			}
+			if st.Disconnected == "" {
+				st.Disconnected = parent.SendTitle.Disconnected
+			}
+			if st.DisconnectedMore == "" {
+				st.DisconnectedMore = parent.SendTitle.DisconnectedMore
+			}
+			if st.DisconnectedActive == "" {
+				st.DisconnectedActive = parent.SendTitle.DisconnectedActive
+			}
+			theme.SendTitle = st
+			return theme
+		}
 	}
+	c.Theme = "default_dark"
+	return c.GetTheme()
+}
+
+type Theme struct {
+	Name                        string
+	Inherits                    string
+	PrimitiveBackgroundColor    string
+	ContrastBackgroundColor     string `yaml:"contrast_background" toml:"contrast_background"`
+	MoreContrastBackgroundColor string `yaml:"more_contrast_background" toml:"more_contrast_background"`
+	BorderColor                 string
+	TitleColor                  string
+	GraphicsColor               string
+	PrimaryTextColor            string `yaml:"primary_text" toml:"primary_text"`
+	SecondaryTextColor          string `yaml:"secondary_text" toml:"secondary_text"`
+	TertiaryTextColor           string `yaml:"tertiary_text" toml:"tertiary_text"`
+	InverseTextColor            string `yaml:"inverse_text" toml:"inverse_text"`
+	ContrastSecondaryTextColor  string `yaml:"contrast_secondary_text" toml:"contrast_secondary_text"`
+	// The colors for the input buffer titles in ansigo specifications.
+	SendTitle struct {
+		Active             string
+		ActiveMore         string `yaml:"active_more" toml:"active_more"` // TODO
+		Inactive           string
+		InactiveMore       string `yaml:"inactive_more" toml:"inactive_more"` // TODO
+		Disconnected       string
+		DisconnectedMore   string `yaml:"disconnected_more" toml:"disconnected_more"`     // TODO
+		DisconnectedActive string `yaml:"disconnected_active" toml:"disconnected_active"` // TODO
+	} `yaml:"send_title" toml:"send_title"`
 }
