@@ -16,7 +16,7 @@ import (
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/config"
 	"github.com/makyo/stimmtausch/signal"
-	ui "github.com/makyo/stimmtausch/ui/tui"
+	ui "github.com/makyo/stimmtausch/ui/tview"
 )
 
 // rootCmd runs Stimmtausch with the GUI and connects to the specified world.
@@ -90,11 +90,12 @@ For more help, see https://stimmtausch.com`,
 		log.Tracef("created client: %+v", stClient)
 
 		done := make(chan bool)
-		ready := make(chan bool)
-		tui := ui.New(stClient)
-		go tui.Run(done, ready)
-
-		<-ready
+		tview, err := ui.New(stClient)
+		if err != nil {
+			log.Criticalf("could not create UI: %v", err)
+			os.Exit(2)
+		}
+		go tview.Run(done)
 
 		for _, arg := range args {
 			go env.Dispatch("connect", arg)

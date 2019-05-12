@@ -14,16 +14,16 @@ func (t *ui) listen() {
 		switch res.Name {
 		case ">":
 			t.views.cycle(1)
-			t.update()
+			go t.app.QueueUpdateDraw(t.update)
 		case "<":
 			t.views.cycle(-1)
-			t.update()
+			go t.app.QueueUpdateDraw(t.update)
 		case "fg":
 			// Switch to active view or error if not found.
 			if err := t.views.fg(res.Payload[1]); err != nil {
 				log.Warningf("error switching connections: %v", err)
 			} else {
-				t.update()
+				go t.app.QueueUpdateDraw(t.update)
 			}
 		case "connect", "c":
 			if len(res.Payload) != 1 {
@@ -39,9 +39,6 @@ func (t *ui) listen() {
 				}
 				continue
 			}
-			v := NewView(t.app, res.Payload[1], t.client.Config.Client.UI.Scrollback)
-			t.views.add(v)
-			fmt.Fprintf(v, "~ Connecting to %s...", res.Payload[1])
 		case "disconnect", "dc":
 			// If it's a disconnect without a payload, redispatch with the
 			// current connection's name.
@@ -66,24 +63,26 @@ func (t *ui) listen() {
 			conn, ok := t.client.Conn(res.Payload[0])
 			if !ok {
 				log.Errorf("unable to find connection %s", res.Payload[0])
+				continue
 			}
-			t.views.fg(res.Payload[0])
-			cv := t.views.currView
-			cv.conn = conn
-			cv.displayName = conn.GetDisplayName()
-			conn.AddOutput(fmt.Sprintf("tview-%d", t.views.currIndex), cv.buffer, true)
+			v := NewView(t.app, res.Payload[0], t.client.Config.Client.UI.Scrollback)
+			t.views.add(v)
+			fmt.Fprintf(v, "[-:-:d]~ Connecting to %s...[-:-:-]\n\n", res.Payload[0])
+			v.conn = conn
+			v.displayName = conn.GetDisplayName()
+			conn.AddOutput(fmt.Sprintf("tview-%d", t.views.currIndex), v.buffer, true)
 			err := conn.Open()
 			if err != nil {
 				log.Errorf("error setting up connection in ui: %v", err)
 			}
-			cv.connected = conn.Connected
-			t.update()
+			v.connected = conn.Connected
+			go t.app.QueueUpdateDraw(t.update)
 		case "_client:disconnect":
 			// Grey out tab in send title, grey out text in receivedView.
-			t.update()
+			go t.app.QueueUpdateDraw(t.update)
 		case "_client:allDisconnect":
 			// do we really need to do anything?
-			t.update()
+			go t.app.QueueUpdateDraw(t.update)
 		case "_client:showModal":
 			res.Name = "_tui:showModal"
 			go t.client.Env.DirectDispatch(res)

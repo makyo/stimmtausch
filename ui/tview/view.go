@@ -30,13 +30,16 @@ type view struct {
 // New creates a new view instance for the given connection, including its
 // buffer and writer.
 func NewView(application *tview.Application, name string, bufSize int) *view {
-	tv := tview.NewTextView().SetWordWrap(true).SetScrollable(true)
+	tv := tview.NewTextView().
+		SetWordWrap(true).
+		SetScrollable(true).
+		SetDynamicColors(true)
 	w := tview.ANSIWriter(tv)
 
 	buf := buffer.New(bufSize)
 	buf.AddPostWriteHook(func(line *buffer.BufferLine) error {
-		_, err := fmt.Fprint(w, line.Text)
-		return err
+		fmt.Fprint(w, line.Text)
+		return nil
 	})
 	v := &view{
 		name:   name,
@@ -75,12 +78,16 @@ func (v *view) scroll(amount int, byPage bool) {
 	// If we can't scroll down anymore, set scrolled to false.
 }
 
+func (v *view) redraw() {
+	go v.app.QueueUpdateDraw(func() {
+		v.view.Clear()
+		go fmt.Fprint(v, v.buffer.String())
+	})
+}
+
 // viewSet contains the collection of views associated with connections,
 // whether active or inactive.
 type viewSet struct {
-	// the tview page set which controls what's visible and not.
-	pages *tview.Pages
-
 	// The collection of views and their order.
 	views map[string]*view
 	order []string
@@ -92,7 +99,6 @@ type viewSet struct {
 
 func NewViewSet() *viewSet {
 	return &viewSet{
-		pages: tview.NewPages(),
 		views: map[string]*view{},
 		order: []string{},
 	}
@@ -102,7 +108,6 @@ func NewViewSet() *viewSet {
 func (vs *viewSet) add(v *view) {
 	vs.views[v.name] = v
 	vs.order = append(vs.order, v.name)
-	vs.pages.AddPage(v.name, v.view, false, true)
 	vs.fg(v.name)
 }
 
@@ -120,7 +125,6 @@ func (vs *viewSet) remove(name string) error {
 		if vs.currView == v {
 			vs.cycle(1)
 		}
-		vs.pages.RemovePage(name)
 		return nil
 	}
 	return fmt.Errorf("no view named %s", name)
@@ -139,16 +143,11 @@ func (vs *viewSet) fg(name string) error {
 	if v, ok := vs.views[name]; ok {
 		v.current = true
 		vs.currView = vs.views[name]
-		for i, n := range vs.order {
-			if n == name {
-				vs.currIndex = i
-				vs.pages.ShowPage(name)
-			} else {
-				vs.pages.HidePage(n)
+		for _, n := range vs.order {
+			if n != name {
 				vs.views[n].current = false
 			}
 		}
-		vs.pages.SendToFront(name)
 		return nil
 	}
 	return fmt.Errorf("no view named %s", name)
