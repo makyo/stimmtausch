@@ -37,7 +37,7 @@ type ui struct {
 
 	// The sent buffer and view.
 	sent     *buffer.Buffer
-	sentView *tview.Box
+	sentView *editor
 
 	// The client and listener used for interacting with the rest of the application.
 	client   *client.Client
@@ -50,10 +50,10 @@ func (t *ui) update() {
 	t.layout.Clear().
 		AddItem(tview.Primitive(t.views.currView.view), 0, 0, 1, 1, 0, 0, false).
 		AddItem(tview.Primitive(t.titleBar), 1, 0, 1, 1, 0, 0, false).
-		AddItem(tview.Primitive(t.sentView), 2, 0, 1, 1, 0, 0, false)
+		AddItem(t.sentView.GetPrimitive(), 2, 0, 1, 1, 0, 0, false)
 	// update send title
 	_, _, width, _ := t.titleBar.GetInnerRect()
-	t.titleBar.SetText(fmt.Sprintf("%s %s %s", string(tview.BoxDrawingsLightHorizontal), t.title, strings.Repeat(string(tview.BoxDrawingsLightHorizontal), width)))
+	t.titleBar.SetText(fmt.Sprintf("%s %s %s", string(tview.BoxDrawingsLightHorizontal)+string(tview.BoxDrawingsLightHorizontal), t.title, strings.Repeat(string(tview.BoxDrawingsLightHorizontal), width)))
 }
 
 func (t *ui) connect(name string) error {
@@ -69,13 +69,12 @@ func (t *ui) Run(done chan bool) {
 
 	t.app = tview.NewApplication().
 		SetScreen(t.screen)
-	t.app.SetInputCapture(t.keybinding)
 	t.layout = tview.NewGrid().
 		SetRows(0, 1, 3).
 		SetColumns(0).
 		AddItem(tview.Primitive(t.titleBar), 1, 0, 1, 1, 0, 0, false).
-		AddItem(tview.Primitive(t.sentView), 2, 0, 1, 1, 0, 0, false)
-
+		AddItem(t.sentView.GetPrimitive(), 2, 0, 1, 1, 0, 0, false)
+	t.app.SetFocus(t.sentView.GetPrimitive())
 	log.Tracef("running UI...")
 	if err := t.app.SetRoot(t.layout, true).Run(); err != nil {
 		log.Criticalf("ui quit unexpectedly: %v", err)
@@ -98,7 +97,7 @@ func New(c *client.Client) (*ui, error) {
 		client:   c,
 		screen:   screen,
 		sent:     buffer.New(c.Config.Client.UI.History),
-		sentView: tview.NewBox(),
+		sentView: NewEditor(),
 		views:    NewViewSet(),
 		titleBar: tview.NewTextView().SetDynamicColors(true).SetRegions(true),
 		title:    "No World",

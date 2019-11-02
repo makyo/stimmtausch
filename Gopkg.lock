@@ -10,6 +10,14 @@
   version = "v0.3.1"
 
 [[projects]]
+  digest = "1:323ef1c999160d12fafa4074b5a5706511baf1cd91a935ae62494791c94abaf4"
+  name = "github.com/atotto/clipboard"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "579379fa8ff8a6d3fa979cec107f8f6d7f8fde90"
+  version = "v0.1.2"
+
+[[projects]]
   digest = "1:7cb4fdca4c251b3ef8027c90ea35f70c7b661a593b9eeae34753c65499098bb1"
   name = "github.com/cpuguy83/go-md2man"
   packages = ["md2man"]
@@ -271,6 +279,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/atotto/clipboard",
+    "github.com/gdamore/tcell",
     "github.com/juju/loggo",
     "github.com/juju/loggo/loggocolor",
     "github.com/makyo/ansigo",
