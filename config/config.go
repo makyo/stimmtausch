@@ -43,6 +43,9 @@ type Config struct {
 	// A list of triggers to match on input.
 	Triggers []Trigger
 
+	// A bcrypt-ed password used for connecting the web front-end.
+	WebPassword string `yaml:"web_password" toml:"web_password"`
+
 	// References to compiled triggers.
 	CompiledTriggers []*Trigger `yaml:"-" toml:"-"`
 

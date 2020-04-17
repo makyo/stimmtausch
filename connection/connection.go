@@ -22,6 +22,7 @@ import (
 	"github.com/juju/loggo"
 
 	"github.com/makyo/stimmtausch/config"
+	"github.com/makyo/stimmtausch/connection/fifo"
 	"github.com/makyo/stimmtausch/signal"
 	"github.com/makyo/stimmtausch/util"
 )
@@ -122,35 +123,6 @@ func (c *Connection) getConnectionFile(name string) string {
 // $HOME/.local/log/stimmtausch/{worldname}.
 func (c *Connection) getLogFile(name string) string {
 	return filepath.Join(c.config.LogDir, c.name, name)
-}
-
-// makeFIFO creates the FIFO file for the world, used to manage the information
-// sent to and recieved from the connection.
-func (c *Connection) makeFIFO() error {
-	log.Tracef("creating FIFO file for %s", c.name)
-	file := c.getConnectionFile(inFile)
-	var err error
-
-	log.Tracef("checking if FIFO exists")
-	if _, err = os.Stat(file); err == nil {
-		log.Errorf("FIFO for connection %s already exists!", c.name)
-		return fmt.Errorf("FIFO for connection %s already exists, cowardly not continuing", c.name)
-	}
-
-	log.Tracef("making FIFO")
-	if err = syscall.Mkfifo(file, 0644); err != nil {
-		log.Errorf("unable to make FIFO for %s!", c.name, err)
-		return err
-	}
-	log.Tracef("FIFO created as %s", file)
-
-	log.Tracef("opening FIFO")
-	if c.fifo, err = os.OpenFile(file, os.O_RDONLY|syscall.O_NONBLOCK, os.ModeNamedPipe); err != nil {
-		log.Errorf("unable to open FIFO for reading %s! %v", file, err)
-		return err
-	}
-	log.Debugf("FIFO opened as %s", c.fifo.Name())
-	return nil
 }
 
 // connect creates a TCP connection to the world's TCP address. It connects
@@ -388,9 +360,11 @@ func (c *Connection) Open() error {
 	var err error
 
 	log.Tracef("creating FIFO for %s", c.name)
-	if err = c.makeFIFO(); err != nil {
+	f, err := fifo.MakeFIFO(c.getConnectionFile(inFile), true)
+	if err != nil {
 		return err
 	}
+	c.fifo = f
 
 	log.Tracef("creating outfile for %s", c.name)
 	name := c.getConnectionFile(outFile)
