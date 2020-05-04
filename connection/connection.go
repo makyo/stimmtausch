@@ -248,6 +248,7 @@ func (c *Connection) readToFile() {
 				}
 			}
 			c.Close()
+			c.Connected = false
 			return
 		}
 		log.Tracef("%d characters read from %s", len(line), c.name)
@@ -360,6 +361,7 @@ func (c *Connection) Close() error {
 	if <-c.disconnected {
 		c.closeConnection()
 		c.cleanup()
+		c.env.Dispatch("_client:disconnected", c.name)
 
 		log.Infof("quit %s at %s", c.name, c.getTimestamp())
 	}
