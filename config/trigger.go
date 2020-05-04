@@ -119,22 +119,19 @@ func (t *Trigger) Run(input string, cfg *Config) (bool, string, []error) {
 func (t *Trigger) hiliteString(input string, matches [][]int) (string, error) {
 	log.Tracef("hiliting string")
 	original := input
-	var parts []string
-	offset := 0
-	for _, match := range matches {
-		start := match[0] - offset
-		end := match[1] - offset
+	// Work through hilites backwards, since applying them changes the length of the string
+	for i := len(matches) - 1; i >= 0; i-- {
+		match := matches[i]
+		start := match[0]
+		end := match[1]
 		before, target, after := input[:start], input[start:end], input[end:]
-		offset = match[1]
 		target, err := ansi.Apply(t.Attributes, target)
 		if err != nil {
 			log.Warningf("error applying hilites: %v (continuing anyway)", err)
 		}
-		parts = append(parts, before, target)
-		input = strings.Join(ansi.ANSIAtIndex(original, match[0]), "") + after
+		input = before + target + strings.Join(ansi.ANSIAtIndex(original, match[0]), "") + after
 	}
-	parts = append(parts, input)
-	return strings.Join(parts, ""), nil
+	return input, nil
 }
 
 // runScript runs a script (or any executable in $PATH) with the input string

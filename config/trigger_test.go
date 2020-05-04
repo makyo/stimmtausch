@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -76,13 +77,13 @@ func TestTriggers(t *testing.T) {
 			Convey("Once", func() {
 				_, line, errs := hilite.Run("Hello, Rose", c)
 				So(len(errs), ShouldEqual, 0)
-				So(line, ShouldEqual, "Hello, \x1b[1mRose\x1b[22m")
+				So(deAnsi(line), ShouldEqual, "Hello, C[1mRoseC[22m")
 			})
 
 			Convey("More than once", func() {
 				_, line, errs := hilite.Run("-I'm the Doctor -Doctor who?", c)
 				So(len(errs), ShouldEqual, 0)
-				So(line, ShouldEqual, "-I'm \x1b[1mthe Doctor\x1b[22m -\x1b[1mDoctor\x1b[22m who?")
+				So(deAnsi(line), ShouldEqual, "-I'm C[1mthe DoctorC[22m -C[1mDoctorC[22m who?")
 			})
 
 			Convey("And leave already hilited strings in place", func() {
@@ -102,11 +103,42 @@ func TestTriggers(t *testing.T) {
 				So(len(errs), ShouldEqual, 0)
 				_, line, errs := hl1.Run("Hello, Rose, how're you?", c)
 				So(len(errs), ShouldEqual, 0)
-				So(line, ShouldEqual, "\x1b[35mHello, Rose, how're you?\x1b[39m")
+				So(deAnsi(line), ShouldEqual, "C[35mHello, Rose, how're you?C[39m")
 				_, line, errs = hl2.Run(line, c)
-				So(line, ShouldEqual, "\x1b[35mHello, \x1b[36mRose\x1b[39m\x1b[35m, how're you?\x1b[39m")
+				So(deAnsi(line), ShouldEqual, "C[35mHello, C[36mRoseC[39mC[35m, how're you?C[39m")
 				_, line, errs = hl2.Run("\x1b[35mHello\x1b[0m, Rose, how're you?", c)
-				So(line, ShouldEqual, "\x1b[35mHello\x1b[0m, \x1b[36mRose\x1b[39m, how're you?")
+				So(deAnsi(line), ShouldEqual, "C[35mHelloC[0m, C[36mRoseC[39m, how're you?")
+			})
+
+			Convey("But won't clash with multiple matches", func() {
+				hl1, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "^You whisper.+",
+					Attributes: "cyan",
+				}).Compile()
+				So(err, ShouldBeNil)
+				hl2, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "Donna",
+					Attributes: "magenta",
+				}).Compile()
+				So(err, ShouldBeNil)
+				errs := c.FinalizeAndValidate()
+				So(len(errs), ShouldEqual, 0)
+				_, line, errs := hl1.Run("You whisper, \"Hello, Donna\" to Donna.", c)
+				So(len(errs), ShouldEqual, 0)
+				_, line, errs = hl2.Run(line, c)
+				So(len(errs), ShouldEqual, 0)
+				So(deAnsi(line), ShouldEqual, "C[36mYou whisper, \"Hello, C[35mDonnaC[39mC[36m\" to C[35mDonnaC[39mC[36m.C[39m")
+
+				// XXX https://github.com/makyo/stimmtausch/issues/62
+				SkipConvey("Even in reverse", func() {
+					_, line, errs := hl2.Run("You whisper, \"Hello, Donna\" to Donna.", c)
+					So(len(errs), ShouldEqual, 0)
+					_, line, errs = hl1.Run(line, c)
+					So(len(errs), ShouldEqual, 0)
+					So(deAnsi(line), ShouldEqual, "C[36mYou whisper, \"Hello, C[35mDonnaC[39mC[36m\" to C[35mDonnaC[39mC[36m.C[39m")
+				})
 			})
 		})
 
@@ -137,4 +169,9 @@ func TestTriggers(t *testing.T) {
 			})
 		})
 	})
+}
+
+// deAnsi replaces the escape character with C so that testing colors is easier.
+func deAnsi(text string) string {
+	return strings.ReplaceAll(text, "\x1b", "C")
 }
