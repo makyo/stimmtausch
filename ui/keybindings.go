@@ -8,7 +8,9 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"syscall"
 
 	"github.com/makyo/gotui"
 )
@@ -17,6 +19,29 @@ import (
 // the programm) says the main loop should stop running.
 func (t *tui) quit(g *gotui.Gui, v *gotui.View) error {
 	return gotui.ErrQuit
+}
+
+func (t *tui) suspend(g *gotui.Gui, v *gotui.View) error {
+	defer g.Update(func(gg *gotui.Gui) error {
+		x, y := g.Size()
+		if vv, err := g.SetView("redrawOverlay", 0, 0, x, y); err != nil {
+			log.Errorf("error drawing overlay: %+v", err)
+			return err
+		} else {
+			vv.Clear()
+			if err = gg.DeleteView("redrawOverlay"); err != nil {
+				log.Errorf("error deleting overlay: %+v", err)
+				return err
+			}
+			return t.onResize(gg, x, y)
+		}
+	})
+	if p, err := os.FindProcess(syscall.Getppid()); err == nil {
+		go p.Signal(syscall.SIGTSTP)
+	} else {
+		return err
+	}
+	return nil
 }
 
 // send sends whatever line is currently active in the input View to the
@@ -181,6 +206,9 @@ func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 // keybindings sets all keybindings used by the UI.
 func (t *tui) keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, t.quit); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gotui.KeyCtrlZ, gotui.ModNone, t.suspend); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("", gotui.KeyPgup, gotui.ModNone, t.scrollUp); err != nil {
