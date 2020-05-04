@@ -292,7 +292,7 @@ func (t *tui) switchConn(action, conn string) error {
 		found := false
 		for i, v := range t.views {
 			if v.connName == conn {
-				log.Tracef("switchign to %s", conn)
+				log.Tracef("switching to %s", conn)
 				t.currViewIndex = i
 				v.current = true
 				found = true
@@ -358,6 +358,9 @@ func (t *tui) listen() {
 				log.Errorf("error setting up connection in ui: %v", err)
 			}
 		case "_client:disconnect":
+			// Grey out tab in send title, grey out text in receivedView.
+			t.updateSendTitle()
+		case "_client:disconnected":
 			// Grey out tab in send title, grey out text in receivedView.
 			t.updateSendTitle()
 		case "_client:allDisconnect":
