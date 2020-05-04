@@ -88,6 +88,30 @@ func (t *tui) arrowDown(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+// home moves the cursor to the start of the current line.
+func (t *tui) home(g *gotui.Gui, v *gotui.View) error {
+	_, cy := v.Cursor()
+	v.SetCursor(0, cy)
+	return nil
+}
+
+// end moves the cursor to the end of the current line.
+func (t *tui) end(g *gotui.Gui, v *gotui.View) error {
+	_, cy := v.Cursor()
+	lines := v.ViewBufferLines()
+	// Return if we're on a line with zero width.
+	if len(lines) == 0 || len(lines[cy]) == 0 {
+		return nil
+	}
+	// Set the last column to either the width of the view or one character after the last.
+	lastCol, _ := v.Size()
+	if len(lines[cy]) < lastCol {
+		lastCol = len(lines[cy]) + 1
+	}
+	v.SetCursor(lastCol-1, cy)
+	return nil
+}
+
 // scrollConsole scrolls through text in the logging console.
 // TODO this should be a receivedView rather than Autoscroll
 func scrollConsole(v *gotui.View, delta int) {
@@ -175,6 +199,12 @@ func (t *tui) keybindings(g *gotui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, t.arrowDown); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("send", gotui.KeyHome, gotui.ModNone, t.home); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("send", gotui.KeyEnd, gotui.ModNone, t.end); err != nil {
 		return err
 	}
 	return nil
