@@ -4,7 +4,7 @@ clean:
 
 .PHONY: deps
 deps:
-	dep ensure -v
+	go build ./...
 
 .PHONY: deb
 deb: clean deps
