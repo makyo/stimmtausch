@@ -1,9 +1,15 @@
-stimmtausch (0.0.3) bionic cosmic focal; urgency=medium
+stimmtausch (0.0.3ubuntu1) bionic; urgency=medium
+
+  * Fix debuild compat
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 23:07:13 -0700
+
+stimmtausch (0.0.3) bionic; urgency=medium
 
   * Logging.
   * Bugfixes.
 
- -- Madiosn Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 19:07:31 -0700
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 19:07:31 -0700
 
 stimmtausch (0.0.2ubuntu1) bionic cosmic; urgency=medium
 

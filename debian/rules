@@ -12,5 +12,17 @@
 
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+override_dh_auto_test:
+
+override_dh_auto_build:
+	go install ./...
+
+override_dh_golang:
+	go install ./...
+
 %:
-	dh $@ --buildsystem=golang --with=golang
+	dh $@ --builddirectory=_build --buildsystem=golang --with=golang
