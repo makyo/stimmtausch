@@ -1,3 +1,10 @@
+stimmtausch (0.0.3) bionic cosmic focal; urgency=medium
+
+  * Logging.
+  * Bugfixes.
+
+ -- Madiosn Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 19:07:31 -0700
+
 stimmtausch (0.0.2ubuntu1) bionic cosmic; urgency=medium
 
   * Expanding distrobutions for PPA. 
