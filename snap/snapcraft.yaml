@@ -1,0 +1,23 @@
+name: stimmtausch
+base: core18
+version: git
+summary: Terminal-based MU* client
+description: |
+  Stimmtausch is a terminal-based MU* client for connecting to multi-user
+  online roleplaying games such as MUDs, MUSHes, MUCKs, and MOOs.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+apps:
+  stimmtausch:
+    command: bin/st
+    plugs: [personal-files, network]
+
+parts:
+  st:
+    plugin: go
+    go-packages:
+      - github.com/makyo/stimmtausch
+    source: .
+    source-type: git
