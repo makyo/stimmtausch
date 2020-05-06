@@ -19,7 +19,7 @@ var stripansiCmd = &cobra.Command{
 	Long: `Strip ANSI color codes from a file.
 
 If you have a log file which includes ANSI color codes, which might happen by
-accident when a Stimmtausch session is interrupted, you can run "st strip-ansi
+accident when a Stimmtausch session is interrupted, you can run "stimmtausch strip-ansi
 <input file> <output file>".`,
 	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {

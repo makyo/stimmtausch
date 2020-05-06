@@ -7,17 +7,26 @@ description: |
   online roleplaying games such as MUDs, MUSHes, MUCKs, and MOOs.
 
 grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+confinement: classic # use 'strict' once you have the right plugs and slots
 
 apps:
   stimmtausch:
-    command: bin/st
-    plugs: [personal-files, network]
+    command: bin/stimmtausch
 
 parts:
-  st:
+  stimmtausch:
     plugin: go
     go-packages:
       - github.com/makyo/stimmtausch
     source: .
     source-type: git
+    source-branch: snap
+    build-packages:
+      - gcc
+  config:
+    after: [stimmtausch]
+    plugin: dump
+    source: _conf/global
+    source-type: local
+    organize:
+      '*': etc/stimmtausch/

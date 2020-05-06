@@ -33,7 +33,7 @@ var headlessCmd = &cobra.Command{
 	Long: `Run Stimmtausch in headless mode.
 
 This will run Stimmtausch in headless mode. That is, it will connect to any
-servers or worlds you specify (see "st help" for details on that), but not
+servers or worlds you specify (see "stimmtausch help" for details on that), but not
 create a user interface. Use this if you want to use your own FIFO-aware
 UI such as <https://github.com/onlyhavecans/mm.vim>.`,
 	Args: cobra.MinimumNArgs(1),
