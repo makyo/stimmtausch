@@ -31,4 +31,4 @@ debian/stimmtausch
 debhelper-build-stamp
 *.substvars
 _build
-*.snap
+*.snap*
