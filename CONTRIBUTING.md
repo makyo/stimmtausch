@@ -25,5 +25,5 @@ So you want to contribute to Stimmtausch! Yay!
 * Run with `go run cmd/st/main.go` - you can watch the logs with `tail -F ~/.local/log/stimmtausch/stimmtausch.log`
 * You'll need to create a config file for your worlds, currently. This can live in `~/.strc` or `~/.config/stimmtausch/<whatever>.st.yaml`. You might want to set `stimmtausch.client.syslog.level` (in YAML-ese) to `DEBUG` or even `TRACE`
 
-[currms]: https://github.com/makyo/stimmtausch/milestone/2
-[currproj]: https://github.com/makyo/stimmtausch/projects/2
+[currms]: https://github.com/makyo/stimmtausch/milestone/7
+[currproj]: https://github.com/makyo/stimmtausch/projects/7

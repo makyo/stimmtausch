@@ -24,7 +24,7 @@ var log = loggo.GetLogger("stimmtausch.cmd")
 
 // rootCmd runs Stimmtausch with the GUI and connects to the specified world.
 var rootCmd = &cobra.Command{
-	Use:   "st [flags] [world-or-server...]",
+	Use:   "stimmtausch [flags] [world-or-server...]",
 	Short: "Run Stimmtausch.",
 	Long: `Run Stimmtausch.
 	
@@ -42,20 +42,20 @@ For example, say you have a server named "furrymuck" and a world named "fm_fox".
 You could connect to the world (which would be, say, the character Foxface on
 FurryMUCK) with:
 
-    st fm_fox
+    stimmtausch fm_fox
 	
 Or you could connect to FurryMUCK with:
 
-    st furrymuck
+    stimmtausch furrymuck
 	
 Finally, if you want to connect to another server entirely, you can do so with:
 
-    st mu.example.org:8889
+    stimmtausch mu.example.org:8889
 	
 You can combine these at will, of course. if you have the world "spr_rudder",
 you could connect to bot worlds, plus a new server, with:
 
-    st fm_fox spr_rudder mu.example.org:8889
+    stimmtausch fm_fox spr_rudder mu.example.org:8889
 	
 For more help, see https://stimmtausch.com`,
 	Args: cobra.ArbitraryArgs,
@@ -71,6 +71,7 @@ For more help, see https://stimmtausch.com`,
 			log.Criticalf("unable to read config: %v", err)
 			os.Exit(1)
 		}
+		log.Tracef("Config loaded")
 
 		if cfg.Client.Profile.CPU {
 			defer profile.Start().Stop()
@@ -105,7 +106,7 @@ For more help, see https://stimmtausch.com`,
 
 		<-done
 	},
-	Version: "0.0.2",
+	Version: "0.0.3",
 }
 
 // Execute executes the specified command via the root command.

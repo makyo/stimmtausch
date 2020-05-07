@@ -14,11 +14,15 @@
 export DH_VERBOSE=1
 
 # This has to be exported to make some magic below work.
-export DH_OPTIONS
-
-export DH_GOPKG := github.com/makyo/stimmtausch
+export GOPATH=${CURDIR}/_build
 
 override_dh_auto_test:
+	cd _build/ && go test -v github.com/makyo/stimmtausch/...
+
+override_dh_auto_build:
+	cd _build/ && go install github.com/makyo/stimmtausch/...
+
+override_dh_golang:
 
 %:
-	dh $@ --buildsystem=golang --with=golang
+	dh $@ --builddirectory=_build --buildsystem=golang --with=golang

@@ -1,3 +1,22 @@
+stimmtausch (0.0.3ubuntu2) UNRELEASED; urgency=medium
+
+  * Rename command to stimmtausch to match snap 
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Thu, 07 May 2020 15:10:40 -0700
+
+stimmtausch (0.0.3ubuntu1) bionic; urgency=medium
+
+  * Fix debuild compat
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 23:07:13 -0700
+
+stimmtausch (0.0.3) bionic; urgency=medium
+
+  * Logging.
+  * Bugfixes.
+
+ -- Madison Scott-Clary <makyo@drab-makyo.com>  Mon, 04 May 2020 19:07:31 -0700
+
 stimmtausch (0.0.2ubuntu1) bionic cosmic; urgency=medium
 
   * Expanding distrobutions for PPA. 

@@ -2,7 +2,7 @@
 layout: home
 ---
 
-Stimmtausch ([`st`](/cmd)) is a terminal-based MUCK client written in Go.
+Stimmtausch ([`stimmtausch`](/cmd)) is a terminal-based MUCK client written in Go.
 
 ## Installing
 
