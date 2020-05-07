@@ -1,1 +1,2 @@
 _conf/global/* /etc/stimmtausch
+_build/bin/stimmtausch
