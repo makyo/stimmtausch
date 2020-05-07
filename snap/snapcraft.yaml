@@ -20,7 +20,6 @@ parts:
       - github.com/makyo/stimmtausch
     source: .
     source-type: git
-    source-branch: snap
     build-packages:
       - gcc
   config:
