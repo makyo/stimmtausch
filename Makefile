@@ -6,12 +6,14 @@ clean:
 deps:
 	go build ./...
 
-.PHONY: deb
-deb: clean docs
+.PHONY: package
+package: clean docs
 	# Build binary package for GitHub.
 	gbp buildpackage --git-ignore-branch  # allow building from any branch
 	# Build source package for PPA
 	debuild -S -sa
+	# Build snap
+	snapcraft
 
 .PHONY: docs
 docs: deps
