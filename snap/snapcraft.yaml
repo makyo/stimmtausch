@@ -7,11 +7,38 @@ description: |
   online roleplaying games such as MUDs, MUSHes, MUCKs, and MOOs.
 
 grade: stable
-confinement: classic
+confinement: strict
+
+plugs:
+  config-files:
+    interface: personal-files
+    read:
+      - $HOME/.strc
+      - $HOME/.config/stimmtausch
+  share-files:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/stimmtausch
+  log-files:
+    interface: personal-files
+    write:
+      - $HOME/.local/log/stimmtausch
+
+layout:
+  /etc/stimmtausch:
+    symlink: $SNAP/etc/stimmtausch
 
 apps:
   stimmtausch:
     command: bin/stimmtausch
+    environment:
+      HOME: /home/$USER
+    plugs:
+      - home
+      - network
+      - config-files
+      - share-files
+      - log-files
 
 parts:
   stimmtausch:
@@ -20,8 +47,7 @@ parts:
       - github.com/makyo/stimmtausch
     source: .
     source-type: git
-    build-packages:
-      - gcc
+    source-branch: snap
   config:
     after: [stimmtausch]
     plugin: dump
