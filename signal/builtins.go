@@ -40,6 +40,7 @@ var builtins = map[string]func(string) ([]string, error){
 	"_client:disconnected":    passthrough,
 	"_client:allDisconnected": passthrough,
 	"_client:showModal":       titleSplit,
+	"_macro:send":             passthrough,
 }
 
 // fg handles the special case for the builtin `fg`, which sends a different

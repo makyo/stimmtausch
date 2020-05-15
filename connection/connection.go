@@ -378,6 +378,10 @@ func (c *Connection) listen() {
 			if err := c.parseLogSignal(res.Payload); err != nil {
 				log.Errorf("error executing log command: %v", err)
 			}
+		case "_macro:send":
+			if res.Payload[0] == c.name {
+				fmt.Fprint(c, res.Payload[1])
+			}
 		default:
 			continue
 		}
