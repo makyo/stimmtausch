@@ -30,13 +30,22 @@ type receivedView struct {
 	// Whether or not the world is currently active.
 	current bool
 
+	// Whether or not we're in `more` mode
+	hasMore bool
+
+	// How many more lines we have
+	more int
+
+	// Our current origin Y
+	scrollPos int
+
 	// The index of the view.
 	index int
 }
 
 // updateRecvOrigin updates the origin of every output gotui.View according to
 // how many lines are in the buffer.
-func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui) error {
+func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui, t *tui) error {
 	maxX, maxY := g.Size()
 	recvX0 := (maxX * index) - (maxX * v.index)
 	if vv, err := g.SetView(v.viewName, recvX0-1, 3, recvX0+maxX, maxY-5); err != nil {
@@ -48,7 +57,19 @@ func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui) error {
 			_, y := vv.Origin()
 			result := lines - vmaxY - 1
 			if result != y && result >= 0 {
-				log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, vv.SetOrigin(0, result))
+				if v.hasMore || !v.current {
+					v.more = result - y
+					v.hasMore = true
+					log.Debugf("got more lines (now +%d) for %v", v.more, v.viewName)
+				} else {
+					v.more = 0
+					v.hasMore = false
+					log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, vv.SetOrigin(0, result))
+				}
+				gg.Update(func(_ *gotui.Gui) error {
+					t.updateSendTitle()
+					return nil
+				})
 			}
 			return nil
 		})

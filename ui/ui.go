@@ -37,6 +37,16 @@ type tui struct {
 
 var log = loggo.GetLogger("stimmtausch.ui")
 
+// view returns the view for the given name, similar to gotui.Gui.View()
+func (t *tui) view(name string) (*receivedView, error) {
+	for _, v := range t.views {
+		if v.viewName == name {
+			return v, nil
+		}
+	}
+	return nil, fmt.Errorf("receivedView %s not found", name)
+}
+
 // connect tells the client to connect to the provided connection string, If
 // successful, it will construct a receivedView to represent and hold that
 // connection.
@@ -103,10 +113,11 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 
 		// Attach a hook that writes to the view when a line is received in
 		// the received history for the connection.
+		tv := t.currView
 		t.currView.buffer.AddPostWriteHook(func(line *HistoryLine) error {
 			fmt.Fprint(v, line.Text)
 			g.Update(func(gg *gotui.Gui) error {
-				return t.currView.updateRecvOrigin(t.currViewIndex, gg)
+				return tv.updateRecvOrigin(t.currViewIndex, gg, t)
 			})
 			return nil
 		})
@@ -186,7 +197,7 @@ func (t *tui) layout(g *gotui.Gui) error {
 			return err
 		} else {
 			for i, view := range t.views {
-				if err := view.updateRecvOrigin(i, g); err != nil {
+				if err := view.updateRecvOrigin(i, g, t); err != nil {
 					return err
 				}
 			}
@@ -230,7 +241,11 @@ func (t *tui) updateSendTitle() {
 	sep := " | "
 	t.titleLen = 0 - len(sep) + 2
 	for i, v := range t.views {
-		t.titleLen += len(v.displayName) + len(sep)
+		title := v.displayName
+		if v.hasMore {
+			title = fmt.Sprintf("%s (+%d)", v.displayName, v.more)
+		}
+		t.titleLen += len(title) + len(sep)
 		c, ok := t.client.Conn(v.connName)
 		if !ok {
 			continue
@@ -239,15 +254,31 @@ func (t *tui) updateSendTitle() {
 		v.connected = connected
 		if v.current {
 			if connected {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, v.displayName)
+				if v.hasMore {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.ActiveMore, title)
+				} else {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, title)
+				}
 			} else {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, v.displayName)
+				if v.hasMore {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
+				} else {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, title)
+				}
 			}
 		} else {
 			if connected {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, v.displayName)
+				if v.hasMore {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.InactiveMore, title)
+				} else {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, title)
+				}
 			} else {
-				conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, v.displayName)
+				if v.hasMore {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
+				} else {
+					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, title)
+				}
 			}
 		}
 	}
@@ -309,7 +340,7 @@ func (t *tui) switchConn(action, conn string) error {
 	}
 	t.currView = t.views[t.currViewIndex]
 	for _, v := range t.views {
-		if err := v.updateRecvOrigin(t.currViewIndex, t.g); err != nil {
+		if err := v.updateRecvOrigin(t.currViewIndex, t.g, t); err != nil {
 			return err
 		}
 	}

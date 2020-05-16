@@ -133,7 +133,10 @@ func (t *tui) scrollUp(g *gotui.Gui, v *gotui.View) error {
 	if result < 0 {
 		result = 0
 	}
+	t.currView.hasMore = true
+	t.currView.more = lines - (result + maxY)
 	log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, v.SetOrigin(0, result))
+	t.updateSendTitle()
 	return nil
 }
 
@@ -151,11 +154,17 @@ func (t *tui) scrollDown(g *gotui.Gui, v *gotui.View) error {
 	if result < lines {
 		if result+maxY > lines {
 			result = result - (result + maxY - lines) - 1
+			t.currView.hasMore = false
 		}
 		if result != y {
+			t.currView.more = lines - (result + maxY)
 			log.Debugf("got %d lines, setting origin to 0,%d: %v", lines, result, v.SetOrigin(0, result))
 		}
+	} else {
+		t.currView.hasMore = false
+		t.currView.more = 0
 	}
+	t.updateSendTitle()
 	return nil
 }
 
@@ -173,7 +182,7 @@ func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	// https://github.com/makyo/stimmtausch/issues/46
 	v.SetOrigin(x, y)
 	g.Update(func(gg *gotui.Gui) error {
-		return t.currView.updateRecvOrigin(t.currViewIndex, gg)
+		return t.currView.updateRecvOrigin(t.currViewIndex, gg, t)
 	})
 	return nil
 }

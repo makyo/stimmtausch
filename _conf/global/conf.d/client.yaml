@@ -66,14 +66,14 @@ stimmtausch:
           # Focused world
           active: "bold+white"
           # Focused world, scrolled up with new activity
-          active_more: "bold+green"
+          active_more: "bold+underline+white"
           # Non-focused world
           inactive: "steelblue"
           # Non-focused world with new activity
-          inactive_more: "steelblue+bold"
+          inactive_more: "steelblue+underline"
           # Disconnected world (non-focused)
           disconnected: "mediumvioletred"
           # Disconnected world with new activity
-          disconnected_more: "mediumvioletred+bold"
+          disconnected_more: "mediumvioletred+underline"
           # Disconnected world (non-focused) with unread lines
           disconnected_active: "deeppink3"
