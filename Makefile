@@ -1,6 +1,7 @@
 .PHONY: clean
 clean:
 	rm -rf .bundle .sass-cache _site vendor
+	rm *.snap*
 
 .PHONY: deps
 deps:

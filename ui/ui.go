@@ -310,7 +310,7 @@ func (t *tui) switchConn(action, conn string) error {
 			t.currViewIndex = len(t.views) + t.currViewIndex
 		} else if t.currViewIndex >= len(t.views) {
 			if len(t.views) > 1 {
-				t.currViewIndex %= len(t.views) - 1
+				t.currViewIndex %= len(t.views)
 			} else {
 				t.currViewIndex = 0
 			}
