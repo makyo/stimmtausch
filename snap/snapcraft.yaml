@@ -10,19 +10,10 @@ grade: stable
 confinement: strict
 
 plugs:
-  config-files:
+  dot-config-stimmtausch:
     interface: personal-files
     read:
-      - $HOME/.strc
       - $HOME/.config/stimmtausch
-  share-files:
-    interface: personal-files
-    write:
-      - $HOME/.local/share/stimmtausch
-  log-files:
-    interface: personal-files
-    write:
-      - $HOME/.local/log/stimmtausch
 
 layout:
   /etc/stimmtausch:
