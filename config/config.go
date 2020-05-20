@@ -113,7 +113,6 @@ func Load() (*Config, error) {
 	log.Tracef("loading local config dirs")
 	snoot.AddGlob(filepath.Join(ConfigDir, "*.st.*"))
 	snoot.AddGlob(filepath.Join(ConfigDir, "*", "*.st.*"))
-	snoot.MaybeAddFile(filepath.Join(HomeDir, ".strc"))
 
 	if err := snoot.Snuffle(); err != nil {
 		return nil, err
