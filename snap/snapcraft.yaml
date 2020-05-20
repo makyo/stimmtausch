@@ -27,9 +27,7 @@ apps:
     plugs:
       - home
       - network
-      - config-files
-      - share-files
-      - log-files
+      - dot-config-stimmtausch
 
 parts:
   stimmtausch:
