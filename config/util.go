@@ -34,7 +34,7 @@ func InitDirs() {
 	startDir := os.Getenv("SNAP_USER_COMMON")
 	if startDir == "" {
 		WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
-		LogDir = filepath.Join(startDir, ".local", "log", "stimmtausch")
+		LogDir = filepath.Join(HomeDir, ".local", "log", "stimmtausch")
 	} else {
 		WorkingDir = filepath.Join(startDir, "worlds")
 		LogDir = filepath.Join(startDir, "logs")

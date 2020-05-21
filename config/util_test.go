@@ -27,8 +27,8 @@ func TestUtils(t *testing.T) {
 			os.Setenv("SNAP_USER_COMMON", snapCommon)
 			config.InitDirs()
 			So(config.ConfigDir, ShouldEqual, filepath.Join(homeDir, ".config", "stimmtausch"))
-			So(config.WorkingDir, ShouldEqual, filepath.Join(snapCommon, "share", "stimmtausch"))
-			So(config.LogDir, ShouldEqual, filepath.Join(snapCommon, "log", "stimmtausch"))
+			So(config.WorkingDir, ShouldEqual, filepath.Join(snapCommon, "worlds"))
+			So(config.LogDir, ShouldEqual, filepath.Join(snapCommon, "logs"))
 		})
 	})
 }
