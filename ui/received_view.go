@@ -48,7 +48,7 @@ type receivedView struct {
 func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui, t *tui) error {
 	maxX, maxY := g.Size()
 	recvX0 := (maxX * index) - (maxX * v.index)
-	if vv, err := g.SetView(v.viewName, recvX0-1, 3, recvX0+maxX, maxY-5); err != nil {
+	if vv, err := g.SetView(v.viewName, recvX0-1, -1, recvX0+maxX, maxY-5); err != nil {
 		return err
 	} else {
 		g.Update(func(gg *gotui.Gui) error {

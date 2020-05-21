@@ -26,7 +26,9 @@ So! Two big updates! The first, of course, is that the [milestone for 0.0.3](htt
 
 @cyveris will be helping me out a lot more in terms of project organization, so hopefully there will be more work coming up, too.
 
-Now, a bit of bad news on this release: something about the combination of launchpad and my Debian packaging setup stopped playing well together, so there is no release in the PPA at this time. If you want to install from a .deb, you will have to do so by [downloading it](https://github.com/makyo/stimmtausch/releases/tag/0.0.3) and installing via `dpkg -i`. I'm still poking at it a little bit, but, as a small upside, I've successfully managed to snap the application, and it will soon be available on the snap store, once I either figure out how to get it working with strict confinement or convince the store folks to publish with classic confinement.
+Now, a bit of bad news on this release: something about the combination of launchpad and my Debian packaging setup stopped playing well together, so there is no release in the PPA at this time. ~~If you want to install from a .deb, you will have to do so by [downloading it](https://github.com/makyo/stimmtausch/releases/tag/0.0.3) and installing via `dpkg -i`.~~ I gave up on this! Loser!
+
+Instead, I'm moving to snaps! The upside to this is that development can move a lot faster because releases don't hurt quite so much. It will soon be available on the snap store. It requires one manual override in order to use `~/.config/stimmtausch` for your configuration files, but they're working on making that automatic. See the latest post for more information.
 
 Anyway!
 
