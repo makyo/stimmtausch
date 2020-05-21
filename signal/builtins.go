@@ -32,6 +32,9 @@ var builtins = map[string]func(string) ([]string, error){
 	// Help
 	"help": passthrough,
 
+	// Reload
+	"reload": passthrough,
+
 	// Internals
 	"syslog":                  syslog,
 	"_":                       passthrough,
