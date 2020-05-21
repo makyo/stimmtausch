@@ -44,7 +44,7 @@ UI such as <https://github.com/makyo/stimmtausch.vim>.`,
 		} else {
 			initLogging(logLevel)
 		}
-		cfg, err := config.Load()
+		cfg, err := config.New()
 		if err != nil {
 			log.Criticalf("unable to read config: %v", err)
 			os.Exit(1)

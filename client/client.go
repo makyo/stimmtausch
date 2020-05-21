@@ -143,6 +143,10 @@ func (c *Client) listen() {
 			res.Name = "_client:disconnect"
 			c.Close(res.Payload[0])
 			go c.Env.DirectDispatch(res)
+		case "reload":
+			if err := c.Config.Reload(); err != nil {
+				log.Errorf("unable to reload config: %v; continuing as is...", err)
+			}
 		default:
 			log.Tracef("client got unknown signal result %v", res)
 			continue

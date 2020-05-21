@@ -96,12 +96,9 @@ func (c *Config) FinalizeAndValidate() []error {
 	return errs
 }
 
-// Load populates a config object with configuration data from all available
+// load populates a config object with configuration data from all available
 // sources.
-func Load() (*Config, error) {
-	log.Debugf("loading configuration")
-	InitDirs()
-
+func load() (*Config, error) {
 	var wrap wrapper
 	snoot := snuffler.New(&wrap)
 
@@ -125,4 +122,32 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+// Reload loads config into a new object and then copies over its internals into
+// the old object.
+func (c *Config) Reload() error {
+	log.Debugf("reloading configuration")
+
+	newCfg, err := load()
+	if err != nil {
+		return err
+	}
+
+	c.Version = newCfg.Version
+	c.ServerTypes = newCfg.ServerTypes
+	c.Servers = newCfg.Servers
+	c.Worlds = newCfg.Worlds
+	c.Triggers = newCfg.Triggers
+	c.CompiledTriggers = newCfg.CompiledTriggers
+	c.Client = newCfg.Client
+	return nil
+}
+
+// New returns a new config object all loaded and validated.
+func New() (*Config, error) {
+	log.Debugf("loading configuration")
+	InitDirs()
+
+	return load()
 }
