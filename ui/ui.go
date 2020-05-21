@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/juju/loggo"
-	"github.com/juju/loggo/loggocolor"
 	ansi "github.com/makyo/ansigo"
 	"github.com/makyo/gotui"
 
@@ -142,13 +141,6 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 // postCreate finishes setting up stuff after the ui has been built for the
 // first time.
 func (t *tui) postCreate(g *gotui.Gui) error {
-	console, err := g.View("console")
-	if err != nil {
-		return err
-	}
-
-	loggo.RegisterWriter("console", loggocolor.NewColorWriter(console))
-
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
 		if t.currView == nil || !t.currView.connected {
@@ -185,14 +177,6 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 // layout acts as the layout manager for the gotui.Gui, creating views.
 func (t *tui) layout(g *gotui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("console", 0, 0, maxX-1, 3); err != nil {
-		if err != gotui.ErrUnknownView {
-			log.Warningf("unable to create view %+v", err)
-			return err
-		}
-		v.Autoscroll = true
-		g.Update(t.postCreate)
-	}
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
@@ -217,6 +201,7 @@ func (t *tui) layout(g *gotui.Gui) error {
 		}
 		v.Frame = false
 		fmt.Fprint(v, " No world ")
+		g.Update(t.postCreate)
 	}
 	return nil
 }
