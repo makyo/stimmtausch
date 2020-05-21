@@ -112,13 +112,6 @@ func (t *tui) end(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
-// scrollConsole scrolls through text in the logging console.
-// TODO this should be a receivedView rather than Autoscroll
-func scrollConsole(v *gotui.View, delta int) {
-	_, y := v.Origin()
-	v.SetOrigin(0, y+delta)
-}
-
 // scrollUp scrolls the output buffer up by one screen. If that would go
 // negative, it only scrolls to zero to prevent an error.
 func (t *tui) scrollUp(g *gotui.Gui, v *gotui.View) error {

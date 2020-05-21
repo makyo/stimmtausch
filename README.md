@@ -4,13 +4,12 @@
 
 # Stimmtausch
 
-Stimmtausch (`st`) is a terminal-based MUCK client written in Go.
+Stimmtausch (`stimmtausch`) is a terminal-based MUCK client written in Go.
 
 ## Installing
 
 ```bash
-sudo add-apt-repository -u ppa:makyo/st
-sudo apt install stimmtausch
+sudo snap install --channel=edge stimmtausch
 ```
 
 ## More information

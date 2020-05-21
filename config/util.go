@@ -33,11 +33,13 @@ func InitDirs() {
 	}
 	startDir := os.Getenv("SNAP_USER_COMMON")
 	if startDir == "" {
-		startDir = filepath.Join(HomeDir, ".local")
+		WorkingDir = filepath.Join(HomeDir, ".local", "share", "stimmtausch")
+		LogDir = filepath.Join(HomeDir, ".local", "log", "stimmtausch")
+	} else {
+		WorkingDir = filepath.Join(startDir, "worlds")
+		LogDir = filepath.Join(startDir, "logs")
 	}
 	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
-	WorkingDir = filepath.Join(startDir, "share", "stimmtausch")
-	LogDir = filepath.Join(startDir, "log", "stimmtausch")
 	globalConfig = []string{
 		// Locations for installed configuration files.
 		"/etc/stimmtausch/st.yaml",

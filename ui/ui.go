@@ -20,6 +20,7 @@ import (
 	"github.com/makyo/stimmtausch/client"
 	"github.com/makyo/stimmtausch/help"
 	"github.com/makyo/stimmtausch/signal"
+	"github.com/makyo/stimmtausch/util"
 )
 
 type tui struct {
@@ -87,7 +88,8 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 
 		// Prime the view with a newline, which keeps it from complaining about
 		// coordinates later.
-		fmt.Fprintln(v, "\n ")
+		fmt.Fprintln(v, util.Logo())
+		fmt.Fprintln(v, ansi.MaybeApply("bold+243", "\nConnecting to "+conn.GetDisplayName()+"...\n"))
 		v.Wrap = true
 		v.WordWrap = true
 		v.IndentFirst = t.client.Config.Client.UI.IndentFirst
