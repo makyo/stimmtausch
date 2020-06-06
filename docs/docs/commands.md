@@ -35,7 +35,7 @@ As with TinyFugue, one communicates with Stimmtausch via commands starting with 
 `Ctrl+L`
 :   Redraw the screen
 
-`Esc+&rarr;` and `Esc+&larr;`
+`Esc+→` and `Esc+←`
 :   Rotate one world to the right or left (equivalent to `/>` and `/<`)
 
 `Ctrl+]` and `Ctrl+[`
