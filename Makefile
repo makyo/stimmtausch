@@ -28,3 +28,6 @@ docs: deps
 	echo "---\nlayout: default\ntitle: \"Command: stimmtausch strip-ansi\"\n---\n\n" > docs/cmd/stimmtausch_strip-ansi.md.bak
 	cat docs/cmd/stimmtausch_strip-ansi.md | sed -e 's/.md)/)/g' | sed -e 's/](st/](\/cmd\/st/g' >> docs/cmd/stimmtausch_strip-ansi.md.bak
 	mv docs/cmd/stimmtausch_strip-ansi.md.bak docs/cmd/stimmtausch_strip-ansi.md
+	echo "---\nlayout: default\ntitle: \"Command: stimmtausch config\"\n---\n\n" > docs/cmd/stimmtausch_config.md.bak
+	cat docs/cmd/stimmtausch_config.md | sed -e 's/.md)/)/g' | sed -e 's/](st/](\/cmd\/st/g' >> docs/cmd/stimmtausch_config.md.bak
+	mv docs/cmd/stimmtausch_config.md.bak docs/cmd/stimmtausch_config.md
