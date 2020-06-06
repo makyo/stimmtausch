@@ -16,10 +16,27 @@ As with TinyFugue, one communicates with Stimmtausch via commands starting with 
 :   Disconnect from the specified connection. If no argument is provided, it disconnects from the current world.
 
 `/fg [directionOrConnectionName]`
-:   Switch to the given world. If called as `/fg <` or `/fg >`, it switches one world in the given direction. As a shortcut for those, you can also use `/<` or `/>`
+:   Switch to the given world. If called as `/fg <` or `/fg >`, it switches one world in the given direction. As a shortcut for those, you can also use `/<` or `/>`. `/fg` without a direction or connection is equivalent to `/]` below.
+
+`/]` and `/[`
+:   Rotate to the next active world in that direction. For example, `/]` keeps calling `/>` until it hits a world with more lines (stopping at the current world if it doesn't find it).
 
 `/quit`
 :   Disconnects from all worlds and quits the program.
 
 `/syslog [level] [message]`
 :   Simple test command that logs a message to the system log at the given level (which can be `trace`, `debug`, `info`, `warning`, `error`, `critical`).`
+
+## Key bindings
+
+`Ctrl+C`
+:   Quit Stimmtausch
+
+`Ctrl+L`
+:   Redraw the screen
+
+`Esc+&rarr;` and `Esc+&larr;`
+:   Rotate one world to the right or left (equivalent to `/>` and `/<`)
+
+`Ctrl+]` and `Ctrl+[`
+:   Rotate to the next active world to the right or left (equivalent to `/]` and `/[`)

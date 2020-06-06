@@ -285,7 +285,33 @@ func (t *tui) updateSendTitle() {
 // switchConn switches to a different connection, either by rotating the
 // stack of connections or by switching to the given name.
 func (t *tui) switchConn(action, conn string) error {
-	if action == "rotate" {
+	if len(t.views) == 1 {
+		return nil
+	}
+	if action == "active" {
+		log.Tracef("rotating to active conn %s", conn)
+		if conn == "1" {
+			for i := t.currViewIndex + 1; i != t.currViewIndex; i++ {
+				if i >= len(t.views) {
+					i = -1
+					continue
+				}
+				if t.views[i].hasMore {
+					return t.switchConn("switch", t.views[i].connName)
+				}
+			}
+		} else if conn == "-1" {
+			for i := t.currViewIndex - 1; i != t.currViewIndex; i-- {
+				if i < 0 {
+					i = len(t.views)
+					continue
+				}
+				if t.views[i].hasMore {
+					return t.switchConn("switch", t.views[i].connName)
+				}
+			}
+		}
+	} else if action == "rotate" {
 		i, err := strconv.Atoi(conn)
 		if err != nil {
 			return err
@@ -304,21 +330,20 @@ func (t *tui) switchConn(action, conn string) error {
 		}
 		t.views[t.currViewIndex].current = true
 	} else if action == "switch" {
-		if conn == "" {
-			// TODO switch to the next active connection
-		}
 		found := false
+		var newIndex int
 		for i, v := range t.views {
 			if v.connName == conn {
 				log.Tracef("switching to %s", conn)
-				t.currViewIndex = i
 				v.current = true
+				newIndex = i
 				found = true
 				break
 			}
 		}
 		if found {
 			t.views[t.currViewIndex].current = false
+			t.currViewIndex = newIndex
 		} else {
 			return fmt.Errorf("connection %s not found", conn)
 		}
@@ -341,7 +366,7 @@ func (t *tui) listen() {
 	for {
 		res := <-t.listener
 		switch res.Name {
-		case "fg", ">", "<":
+		case "fg", ">", "<", "[", "]":
 			// Switch to active view or error if not found.
 			if err := t.switchConn(res.Payload[0], res.Payload[1]); err != nil {
 				log.Warningf("error switching connections: %v", err)

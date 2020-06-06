@@ -18,6 +18,8 @@ var builtins = map[string]func(string) ([]string, error){
 	"fg": fg,
 	">":  func(_ string) ([]string, error) { return fg(">") },
 	"<":  func(_ string) ([]string, error) { return fg("<") },
+	"]":  func(_ string) ([]string, error) { return fg("]") },
+	"[":  func(_ string) ([]string, error) { return fg("[") },
 
 	// Connections
 	"connect":    passthrough,
@@ -50,9 +52,13 @@ var builtins = map[string]func(string) ([]string, error){
 func fg(args string) ([]string, error) {
 	args = wsRE.Split(args, -1)[0]
 	switch args {
+	case "[":
+		return []string{"active", "-1"}, nil
+	case "]", "":
+		return []string{"active", "1"}, nil
 	case "<":
 		return []string{"rotate", "-1"}, nil
-	case ">", "":
+	case ">":
 		return []string{"rotate", "1"}, nil
 	default:
 		return []string{"switch", args}, nil
