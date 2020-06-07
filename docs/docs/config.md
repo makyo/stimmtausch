@@ -172,6 +172,10 @@ Values
 
       Example: `type: hilite`
 
+    * `world` (*string* optional; the name (not display name) of a world) - the world to which this trigger should apply. If none is specified, it will apply to every world.
+
+      Example: `world: fm_foxface`
+
     * `match` (*string* either `match` or `matches` or both are required) - the [regular expression](https://golang.org/pkg/regexp/) to match in the line.
 
       Example: `match: "[Ff]oxface"`
@@ -204,8 +208,9 @@ stimmtausch:
           type: hilite
           matches: ["[Ff]oxface", "[Rr]udderbutt"]
           attributes: "bold+green"
-        - name: "I hate this guy..."
+        - name: "I hate this guy, but he's only on FM..."
           type: gag
+          world: furrymuck
           match: "(?i)bad-wolf"
         # More triggers...
 ```
