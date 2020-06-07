@@ -9,7 +9,7 @@ title: Configuration
 
 Stimmtausch is designed to be configurable from the ground up, as much as possible. It relies on configuration sources in one of three formats: YAML, TOML, or JSON. The default configuration sets up the very basics, and from there, it starts loading every file in `$HOME/.config/stimmtausch` whose name includes the string `.st.` - `worlds.st.yaml`, `triggers.st.yaml`, and so on.
 
-Any values showing up in later files *override* values in earlier files. See [snuffler](https://github.com/makyo/snuffler) for more on that.
+Any values showing up in later files *override* values in earlier files. See [snuffler](https://github.com/makyo/snuffler) for more on that. You can see the effective configuration by running `stimmtausch config`, which will build the internal configuration that the client uses and then dump it back out to the screen. To see all of the builtin defaults by themselves, you can run `stimmtausch config --default`.
 
 Configuration settings are broken down into a few categories:
 
