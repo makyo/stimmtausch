@@ -112,4 +112,5 @@ stimmtausch:
           disconnected_more: "mediumvioletred+underline"
           # Disconnected world (non-focused) with unread lines
           disconnected_active: "deeppink3"
+        modal_title: "bold+cyan"
 `

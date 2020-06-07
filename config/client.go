@@ -82,5 +82,6 @@ type UI struct {
 			DisconnectedMore   string `yaml:"disconnected_more" toml:"disconnected_more"`     // TODO
 			DisconnectedActive string `yaml:"disconnected_active" toml:"disconnected_active"` // TODO
 		} `yaml:"send_title" toml:"send_title"`
+		ModalTitle string `yaml:"modal_title" toml:"modal_title"`
 	}
 }

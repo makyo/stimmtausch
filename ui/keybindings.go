@@ -161,6 +161,24 @@ func (t *tui) scrollDown(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+func (t *tui) scrollModalUp(g *gotui.Gui, v *gotui.View) error {
+	_, y := v.Origin()
+	if y != 0 {
+		v.SetOrigin(0, y-1)
+	}
+	return nil
+}
+
+func (t *tui) scrollModalDown(g *gotui.Gui, v *gotui.View) error {
+	_, y := v.Origin()
+	_, maxY := v.Size()
+	lines := len(v.ViewBufferLines())
+	if y+maxY <= lines {
+		v.SetOrigin(0, y+1)
+	}
+	return nil
+}
+
 // redraw forces a rerender of the current view in order to ensure that everything is in order
 func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	log.Debugf("redrawing")
@@ -197,6 +215,23 @@ func (t *tui) activeWorldRight(g *gotui.Gui, v *gotui.View) error {
 
 func (t *tui) activeWorldLeft(g *gotui.Gui, v *gotui.View) error {
 	go t.client.Env.Dispatch("[", "")
+	return nil
+}
+
+func (t *tui) closeModal(g *gotui.Gui, v *gotui.View) error {
+	if err := g.DeleteView("modal"); err != nil {
+		return err
+	}
+	if err := g.DeleteView("modalTitle"); err != nil {
+		return err
+	}
+	if err := g.DeleteView("modalHelp"); err != nil {
+		return err
+	}
+	go g.Update(func(gg *gotui.Gui) error {
+		_, err := g.SetCurrentView("send")
+		return err
+	})
 	return nil
 }
 
@@ -239,6 +274,15 @@ func (t *tui) keybindings(g *gotui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnd, gotui.ModNone, t.end); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("modal", gotui.KeyEnter, gotui.ModNone, t.closeModal); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("modal", gotui.KeyArrowUp, gotui.ModNone, t.scrollModalUp); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("modal", gotui.KeyArrowDown, gotui.ModNone, t.scrollModalDown); err != nil {
 		return err
 	}
 	return nil
