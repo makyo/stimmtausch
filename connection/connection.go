@@ -258,7 +258,7 @@ func (c *Connection) readToFile() {
 		var applies, gag, logAnyway bool
 		orig := line
 		for _, trigger := range c.config.CompiledTriggers {
-			applies, line, triggerErrs = trigger.Run(line, c.config)
+			applies, line, triggerErrs = trigger.Run(c.world.Name, line, c.config)
 			if len(triggerErrs) != 0 {
 				errs = append(errs, triggerErrs...)
 			}

@@ -21,6 +21,9 @@ type Trigger struct {
 	// The type of trigger: hilite, gag, script, macro.
 	Type string
 
+	// The world to which this trigger applies (if blank, applies to all).
+	World string
+
 	// A regexp to match against.
 	Match string
 
@@ -84,11 +87,16 @@ func (t Trigger) Compile() (*Trigger, error) {
 
 // Run takes the provided byte-slice from the world and, if it matches, runs
 // the action specified in the trigger based on the type (hilite, gag, script
-// macro). It returns the (potentially modified) input, whether or not the
-// trigger matched, and any errors it encountered along the way.
-func (t *Trigger) Run(input string, cfg *Config) (bool, string, []error) {
+// macro) if the world matches the one specified in the trigger (if none is
+// specified, it matches all worlds). It returns the (potentially modified)
+// input, whether or not the trigger matched, and any errors it encountered
+// along the way.
+func (t *Trigger) Run(world, input string, cfg *Config) (bool, string, []error) {
 	log.Tracef("running trigger %s", t.Name)
 	applies := false
+	if t.World != "" && t.World != world {
+		return false, input, []error{}
+	}
 	var errs []error
 	for _, re := range t.reList {
 		if matches := re.FindAllStringSubmatchIndex(input, -1); len(matches) != 0 {
