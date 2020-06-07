@@ -180,6 +180,26 @@ func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	return nil
 }
 
+func (t *tui) worldRight(g *gotui.Gui, v *gotui.View) error {
+	go t.client.Env.Dispatch(">", "")
+	return nil
+}
+
+func (t *tui) worldLeft(g *gotui.Gui, v *gotui.View) error {
+	go t.client.Env.Dispatch("<", "")
+	return nil
+}
+
+func (t *tui) activeWorldRight(g *gotui.Gui, v *gotui.View) error {
+	go t.client.Env.Dispatch("]", "")
+	return nil
+}
+
+func (t *tui) activeWorldLeft(g *gotui.Gui, v *gotui.View) error {
+	go t.client.Env.Dispatch("[", "")
+	return nil
+}
+
 // keybindings sets all keybindings used by the UI.
 func (t *tui) keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, t.quit); err != nil {
@@ -192,6 +212,18 @@ func (t *tui) keybindings(g *gotui.Gui) error {
 		return err
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, t.redraw); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gotui.KeyArrowRight, gotui.ModAlt, t.worldRight); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gotui.KeyArrowLeft, gotui.ModAlt, t.worldLeft); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gotui.KeyCtrlRsqBracket, gotui.ModNone, t.activeWorldRight); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", gotui.KeyCtrlLsqBracket, gotui.ModNone, t.activeWorldLeft); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, t.send); err != nil {

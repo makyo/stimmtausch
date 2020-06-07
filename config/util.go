@@ -41,17 +41,7 @@ func InitDirs() {
 	}
 	ConfigDir = filepath.Join(HomeDir, ".config", "stimmtausch")
 	globalConfig = []string{
-		// Locations for installed configuration files.
-		"/etc/stimmtausch/st.yaml",
-		"/etc/stimmtausch/conf.d/*.yaml",
-		"/etc/stimmtausch/conf.d/*.toml",
-		"/etc/stimmtausch/conf.d/*.json",
-
 		// Locations for development configuration files.
-		"_conf/global/st.yaml",
-		"_conf/global/conf.d/*.yaml",
-		"_conf/global/conf.d/*.toml",
-		"_conf/global/conf.d/*.json",
 		"_conf/local/*.yaml",
 		"_conf/local/*.toml",
 		"_conf/local/*.json",

@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 
 	"github.com/juju/loggo"
-
 	"github.com/makyo/snuffler"
+	"gopkg.in/yaml.v2"
 )
 
 var log = loggo.GetLogger("stimmtausch.config")
@@ -100,6 +100,9 @@ func (c *Config) FinalizeAndValidate() []error {
 // sources.
 func load() (*Config, error) {
 	var wrap wrapper
+	if err := yaml.Unmarshal([]byte(DefaultConfig), &wrap); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal default config: %+q", err)
+	}
 	snoot := snuffler.New(&wrap)
 
 	log.Tracef("loading global config dirs")
@@ -142,6 +145,11 @@ func (c *Config) Reload() error {
 	c.CompiledTriggers = newCfg.CompiledTriggers
 	c.Client = newCfg.Client
 	return nil
+}
+
+func (c *Config) Dump() string {
+	out, _ := yaml.Marshal(&wrapper{Stimmtausch: *c})
+	return string(out)
 }
 
 // New returns a new config object all loaded and validated.
