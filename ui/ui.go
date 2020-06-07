@@ -386,7 +386,12 @@ func (t *tui) listen() {
 			go t.client.Env.DirectDispatch(res)
 		case "help":
 			// get the command text and tell the system to display it in a modal
-			cmd := res.Payload[0]
+			var cmd string
+			if len(res.Payload) == 0 {
+				cmd = "help"
+			} else {
+				cmd = res.Payload[0]
+			}
 			h, ok := help.HelpMessages[cmd]
 			if !ok {
 				log.Warningf("no help available for /%s", cmd)
@@ -413,12 +418,51 @@ func (t *tui) listen() {
 			res.Name = "_tui:showModal"
 			go t.client.Env.DirectDispatch(res)
 		case "_tui:showModal":
-			fmt.Fprintf(t.currView.buffer, "~~~~~ %s\n%s\n~~~~~\n", res.Payload[0], res.Payload[1])
+			t.createModal(res.Payload[0], res.Payload[1])
 		default:
 			log.Tracef("got unknown signal result %v", res)
 			continue
 		}
 	}
+}
+
+func (t *tui) createModal(title, content string) {
+	go t.g.Update(func(g *gotui.Gui) error {
+		maxX, maxY := g.Size()
+		if v, err := g.SetView("modal", 3, 3, maxX-4, maxY-6); err != nil {
+			if err != gotui.ErrUnknownView {
+				log.Warningf("unable to create modal view %+v", err)
+				return err
+			}
+			v.Frame = true
+			v.FrameFgColor = gotui.ColorCyan | gotui.AttrBold
+			v.Wrap = true
+			v.WordWrap = true
+			fmt.Fprint(v, content)
+		}
+		if v, err := g.SetView("modalTitle", 5, 2, len(title)+8, 4); err != nil {
+			if err != gotui.ErrUnknownView {
+				log.Warningf("unable to create modal view %+v", err)
+				return err
+			}
+			v.Frame = false
+			fmt.Fprintf(v, " %s ", ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ModalTitle, title))
+		}
+		modalHelpText := " Scroll: ↑/↓ | Close: <Enter> "
+		if v, err := g.SetView("modalHelp", maxX-3-len(modalHelpText), maxY-7, maxX-6, maxY-5); err != nil {
+			if err != gotui.ErrUnknownView {
+				log.Warningf("unable to create modal view %+v", err)
+				return err
+			}
+			v.Frame = false
+			fmt.Fprint(v, ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ModalTitle, modalHelpText))
+		}
+		if _, err := g.SetCurrentView("modal"); err != nil {
+			log.Warningf("unable to set current view %+v", err)
+			return err
+		}
+		return nil
+	})
 }
 
 // Run creates the UI and starts the mainloop.

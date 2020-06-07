@@ -7,6 +7,17 @@
 package help
 
 var HelpMessages = map[string]Help{
+	"help": Help{
+		Name:      "/help",
+		ShortDesc: "command help",
+		Synopsis: map[string]string{
+			"":          "show this help",
+			"<command>": "show help for <command> (without the `/`)",
+		},
+		Overview:    "Give help on an internal command",
+		Description: "Find out more information on topics in Stimmtausch by using the /help command. For instance, to learn about the `/log` command, type `/help log`.\n\n`Available topics:`\n\n{HELPTOPICS}",
+	},
+
 	"log": Help{
 		Name:      "/log",
 		ShortDesc: "connection logging",
@@ -25,14 +36,16 @@ var HelpMessages = map[string]Help{
 		Name:      "/fg",
 		ShortDesc: "bring world to the foreground",
 		Synopsis: map[string]string{
-			"":        "rotate to the next world to the right",
+			"":        "rotate to the next active world to the right (same as `/]`)",
 			">":       "rotate to the next world to the right",
 			"<":       "rotate to the next world to the left",
+			"]":       "rotate to the next active world to the right",
+			"[":       "rotate to the next active world to the left",
 			"<world>": "switch to the named world",
 		},
 		Overview:    "Command to control moving between worlds.",
 		Description: "Moving between worlds in Stimmtausch is accomplished with the /fg command. You can rotate between worlds by using the special world names > and <, otherwise you can specifi which world you would like to bring to the foreground.",
-		SeeAlso:     "/> (same as `/fg >`), /< (same as `/fg <`)",
+		SeeAlso:     "`/>` (same as `/fg >`), `/<` (same as `/fg <`), `/]` (same as `/fg ]`), `/[` (same as `/fg [`)",
 	},
 
 	"connect": Help{
@@ -45,7 +58,7 @@ var HelpMessages = map[string]Help{
 		},
 		Overview:    "Command to connect to worlds.",
 		Description: "Connecting to worlds in Stimmtausch is accomplished with the /connect command. You can connect to worlds named in your configuration files.", // Additionally, you can connect to servers named in your configuration without user information, or to a specified address and port. In each of the latter two cases, you will be given a temporary world name which you can use with other commands.
-		SeeAlso:     "/disconnect, /fg",
+		SeeAlso:     "`/disconnect`, `/fg`",
 	},
 
 	"disconnect": Help{
@@ -56,7 +69,7 @@ var HelpMessages = map[string]Help{
 		},
 		Overview:    "Command to disconnect from worlds.",
 		Description: "Disconnecting from worlds in Stimmtausch is accomplished with the /disconnect command. It accepts a world name.",
-		SeeAlso:     "/connect",
+		SeeAlso:     "`/connect`",
 	},
 
 	"quit": Help{

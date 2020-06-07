@@ -132,6 +132,10 @@ func (c *Client) listen() {
 		res := <-c.listener
 		switch res.Name {
 		case "connect", "c":
+			if len(res.Payload) == 0 {
+				log.Errorf("no world or server specified")
+				continue
+			}
 			res.Name = "_client:connect"
 			_, err := c.Connect(res.Payload[0])
 			res.Err = err
