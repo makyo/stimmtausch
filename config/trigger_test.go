@@ -66,22 +66,22 @@ func TestTriggers(t *testing.T) {
 		)
 
 		Convey("One can tell whether or not they apply", func() {
-			applies, _, _ := hilite.Run("Hello, Rose", c)
+			applies, _, _ := hilite.Run("world", "Hello, Rose", c)
 			So(applies, ShouldBeTrue)
-			applies, _, _ = hilite.Run("bad-wolf", c)
+			applies, _, _ = hilite.Run("world", "bad-wolf", c)
 			So(applies, ShouldBeFalse)
 		})
 
 		Convey("They can hilite", func() {
 
 			Convey("Once", func() {
-				_, line, errs := hilite.Run("Hello, Rose", c)
+				_, line, errs := hilite.Run("world", "Hello, Rose", c)
 				So(len(errs), ShouldEqual, 0)
 				So(deAnsi(line), ShouldEqual, "Hello, C[1mRoseC[22m")
 			})
 
 			Convey("More than once", func() {
-				_, line, errs := hilite.Run("-I'm the Doctor -Doctor who?", c)
+				_, line, errs := hilite.Run("world", "-I'm the Doctor -Doctor who?", c)
 				So(len(errs), ShouldEqual, 0)
 				So(deAnsi(line), ShouldEqual, "-I'm C[1mthe DoctorC[22m -C[1mDoctorC[22m who?")
 			})
@@ -101,12 +101,12 @@ func TestTriggers(t *testing.T) {
 				So(err, ShouldBeNil)
 				errs := c.FinalizeAndValidate()
 				So(len(errs), ShouldEqual, 0)
-				_, line, errs := hl1.Run("Hello, Rose, how're you?", c)
+				_, line, errs := hl1.Run("world", "Hello, Rose, how're you?", c)
 				So(len(errs), ShouldEqual, 0)
 				So(deAnsi(line), ShouldEqual, "C[35mHello, Rose, how're you?C[39m")
-				_, line, errs = hl2.Run(line, c)
+				_, line, errs = hl2.Run("world", line, c)
 				So(deAnsi(line), ShouldEqual, "C[35mHello, C[36mRoseC[39mC[35m, how're you?C[39m")
-				_, line, errs = hl2.Run("\x1b[35mHello\x1b[0m, Rose, how're you?", c)
+				_, line, errs = hl2.Run("world", "\x1b[35mHello\x1b[0m, Rose, how're you?", c)
 				So(deAnsi(line), ShouldEqual, "C[35mHelloC[0m, C[36mRoseC[39m, how're you?")
 			})
 
@@ -125,32 +125,68 @@ func TestTriggers(t *testing.T) {
 				So(err, ShouldBeNil)
 				errs := c.FinalizeAndValidate()
 				So(len(errs), ShouldEqual, 0)
-				_, line, errs := hl1.Run("You whisper, \"Hello, Donna\" to Donna.", c)
+				_, line, errs := hl1.Run("world", "You whisper, \"Hello, Donna\" to Donna.", c)
 				So(len(errs), ShouldEqual, 0)
-				_, line, errs = hl2.Run(line, c)
+				_, line, errs = hl2.Run("world", line, c)
 				So(len(errs), ShouldEqual, 0)
 				So(deAnsi(line), ShouldEqual, "C[36mYou whisper, \"Hello, C[35mDonnaC[39mC[36m\" to C[35mDonnaC[39mC[36m.C[39m")
 
 				// XXX https://github.com/makyo/stimmtausch/issues/62
 				SkipConvey("Even in reverse", func() {
-					_, line, errs := hl2.Run("You whisper, \"Hello, Donna\" to Donna.", c)
+					_, line, errs := hl2.Run("world", "You whisper, \"Hello, Donna\" to Donna.", c)
 					So(len(errs), ShouldEqual, 0)
-					_, line, errs = hl1.Run(line, c)
+					_, line, errs = hl1.Run("world", line, c)
 					So(len(errs), ShouldEqual, 0)
 					So(deAnsi(line), ShouldEqual, "C[36mYou whisper, \"Hello, C[35mDonnaC[39mC[36m\" to C[35mDonnaC[39mC[36m.C[39m")
 				})
 			})
+
+			Convey("They can be specific to a world", func() {
+				hl1, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "Donna",
+					Attributes: "cyan",
+				}).Compile()
+				So(err, ShouldBeNil)
+				hl2, err := (config.Trigger{
+					Type:       "hilite",
+					Match:      "Rose",
+					World:      "genesis",
+					Attributes: "cyan",
+				}).Compile()
+				So(err, ShouldBeNil)
+
+				applies, line, errs := hl1.Run("stubworld", "Rose Donna", c)
+				So(applies, ShouldEqual, true)
+				So(len(errs), ShouldEqual, 0)
+				So(deAnsi(line), ShouldEqual, "Rose C[36mDonnaC[39m")
+
+				applies, line, errs = hl2.Run("stubworld", "Rose Donna", c)
+				So(applies, ShouldEqual, false)
+				So(len(errs), ShouldEqual, 0)
+				So(deAnsi(line), ShouldEqual, "Rose Donna")
+
+				applies, line, errs = hl1.Run("genesis", "Rose Donna", c)
+				So(applies, ShouldEqual, true)
+				So(len(errs), ShouldEqual, 0)
+				So(deAnsi(line), ShouldEqual, "Rose C[36mDonnaC[39m")
+
+				applies, line, errs = hl2.Run("genesis", "Rose Donna", c)
+				So(applies, ShouldEqual, true)
+				So(len(errs), ShouldEqual, 0)
+				So(deAnsi(line), ShouldEqual, "C[36mRoseC[39m Donna")
+			})
 		})
 
 		Convey("They can gag (but what to do about that is on the client)", func() {
-			applies, line, errs := gag.Run("bad-wolf", c)
+			applies, line, errs := gag.Run("world", "bad-wolf", c)
 			So(len(errs), ShouldEqual, 0)
 			So(line, ShouldEqual, "bad-wolf")
 			So(applies, ShouldBeTrue)
 		})
 
 		Convey("They can call a macro", func() {
-			_, line, errs := macro.Run("Mickey Smith", c)
+			_, line, errs := macro.Run("world", "Mickey Smith", c)
 			So(line, ShouldEqual, "Mickey Smith")
 
 			Convey("NOT IMPLEMENTED YET", func() {
@@ -160,7 +196,7 @@ func TestTriggers(t *testing.T) {
 		})
 
 		Convey("They can call a script", func() {
-			_, line, errs := script.Run("Donna Noble", c)
+			_, line, errs := script.Run("world", "Donna Noble", c)
 			So(line, ShouldEqual, "Donna Noble")
 
 			Convey("NOT IMPLEMENTED YET", func() {
