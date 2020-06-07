@@ -15,10 +15,6 @@ plugs:
     read:
       - $HOME/.config/stimmtausch
 
-layout:
-  /etc/stimmtausch:
-    symlink: $SNAP/etc/stimmtausch
-
 apps:
   stimmtausch:
     command: bin/stimmtausch
