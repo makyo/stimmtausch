@@ -5,17 +5,11 @@ title: Configuration
 
 ## Configuration
 
-*TL;DR:* There are lots of configuration options, and most of them are set for you except for [worlds](#worlds) and [triggers](#triggers), which you'll probably want to put in `~/.strc`.
+*TL;DR:* There are lots of configuration options, and most of them are set for you except for [worlds](#worlds) and [triggers](#triggers), which you'll probably want to put in your local configuration.
 
-Stimmtausch is designed to be configurable from the ground up, as much as possible. It relies on configuration files in one of three formats: YAML, TOML, or JSON. These files are read in order from:
+Stimmtausch is designed to be configurable from the ground up, as much as possible. It relies on configuration sources in one of three formats: YAML, TOML, or JSON. The default configuration sets up the very basics, and from there, it starts loading every file in `$HOME/.config/stimmtausch` whose name includes the string `.st.` - `worlds.st.yaml`, `triggers.st.yaml`, and so on.
 
-* `/etc/stimmtausch/st.yaml`
-* `/etc/stimmtausch/conf.d/*`
-* `$HOME/.config/stimmtausch/*.st.*`
-* `$HOME/.config/stimmtausch/*/*.st.*`
-* `$HOME/.strc`
-
-Any values showing up in later files override values in earlier files. See [snuffler](https://github.com/makyo/snuffler) for more on that.
+Any values showing up in later files *override* values in earlier files. See [snuffler](https://github.com/makyo/snuffler) for more on that.
 
 Configuration settings are broken down into a few categories:
 
@@ -54,6 +48,7 @@ Values
 stimmtausch:
     server_types:
         muck:
+            name: "TinyMUCK, FuzzballMUCK, etc."
             connect_string: "connect $username $password"
             disconnect_string: "QUIT"
 ```
@@ -221,6 +216,73 @@ stimmtausch:
 
 #### Syslog
 
+`show_syslog`
+:   Whether or not to show the syslog in a pane in the UI *(not implemented)*
+
+`log_level`
+:   Minimum level of log to output out of TRACE, DEBUG, INFO, WARNING, ERROR, and CRITICAL --- *Default: INFO*
+
+#### Profile
+
+Only one may be set to true at once.
+
+`mem`
+:   Whether or not to profile memory --- *Default: false*
+
+`cpu`
+:   Whether or not to profile CPU usage --- *Default: false*
+
 #### Logging
 
+`time_string`
+:   Date/time format to use in an example string. The numbers matter, because Golang. The date must follow the reference date/time of 3:04:05PM on January 2nd, 2006, Mountain Standard Time (-0700). 1-2 3:4:5 6 7. It's silly, but I don't make [the rules](https://golang.org/pkg/time/#Time.Format). --- *Default: 2006-01-02T150405*
+
+`log_timestamps`
+:   Whether or not to include the timestamp in the log files *(not implemented)*
+
+`log_world`
+:   Whether or not to keep the log for the connection to the world after disconnecting. --- *Default: true*
+
 #### UI
+
+`scrollback`
+:   How many lines received from the connection to keep in memory. --- *Default: 5000*
+
+`history`
+:   How many lines sent to the connection to keep in memory. --- *Default: 500*
+
+`unified_history_buffer`
+:   Whether or not to keep a separate history buffer for each connection or to have one for all connections --- *(not implemented, effectively true)*
+
+`vim_keybindings`
+:   sigh... *(not implemented)*
+
+`indent_first`
+:   Number of spaces for indenting the first line of a wrapped line. --- *Default: 0*
+
+`indent_subsequent`
+:   Number of spaces for indenting the subsequent lines of a wrapped line --- *Default: 4*
+
+`mouse`
+:   Whether or not to capture mouse events (note that, if true, many terminals will not let you click URLs or select text) --- *Default: false*
+
+`colors`
+:   [Colors and attributes](https://ansigo.projects.makyo.io/) used in the client UI itself. *Default:*
+
+    ```yaml
+    send_title:
+      # Focused world
+      active: "bold+white"
+      # Focused world, scrolled up with new activity
+      active_more: "bold+underline+white"
+      # Non-focused world
+      inactive: "steelblue"
+      # Non-focused world with new activity
+      inactive_more: "steelblue+underline"
+      # Disconnected world (non-focused)
+      disconnected: "mediumvioletred"
+      # Disconnected world with new activity
+      disconnected_more: "mediumvioletred+underline"
+      # Disconnected world (non-focused) with unread lines
+      disconnected_active: "deeppink3"
+    ```
