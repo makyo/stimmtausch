@@ -33,10 +33,3 @@ parts:
     source: .
     source-type: git
     source-branch: master
-  config:
-    after: [stimmtausch]
-    plugin: dump
-    source: _conf/global
-    source-type: local
-    organize:
-      '*': etc/stimmtausch/
