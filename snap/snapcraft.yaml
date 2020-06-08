@@ -32,7 +32,7 @@ parts:
       - github.com/makyo/stimmtausch
     source: .
     source-type: git
-    source-branch: snap
+    source-branch: master
   config:
     after: [stimmtausch]
     plugin: dump
