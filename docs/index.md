@@ -9,5 +9,5 @@ Stimmtausch ([`stimmtausch`](/cmd)) is a terminal-based MUCK client written in G
 ## Installing
 
 ```bash
-sudo snap install --channel=edge stimmtausch
+sudo snap install --beta stimmtausch
 ```
