@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/juju/errgo"
 	"github.com/makyo/gotui"
 )
 
@@ -117,7 +118,7 @@ func (t *tui) end(g *gotui.Gui, v *gotui.View) error {
 func (t *tui) scrollUp(g *gotui.Gui, v *gotui.View) error {
 	v, err := g.View(t.currView.viewName)
 	if err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	_, y := v.Origin()
 	_, maxY := v.Size()
@@ -138,7 +139,7 @@ func (t *tui) scrollUp(g *gotui.Gui, v *gotui.View) error {
 func (t *tui) scrollDown(g *gotui.Gui, v *gotui.View) error {
 	v, err := g.View(t.currView.viewName)
 	if err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	_, y := v.Origin()
 	_, maxY := v.Size()
@@ -193,7 +194,7 @@ func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	// https://github.com/makyo/stimmtausch/issues/46
 	v.SetOrigin(x, y)
 	g.Update(func(gg *gotui.Gui) error {
-		return t.currView.updateRecvOrigin(t.currViewIndex, gg, t)
+		return errgo.Mask(t.currView.updateRecvOrigin(t.currViewIndex, gg, t))
 	})
 	return nil
 }
@@ -220,70 +221,73 @@ func (t *tui) activeWorldLeft(g *gotui.Gui, v *gotui.View) error {
 
 func (t *tui) closeModal(g *gotui.Gui, v *gotui.View) error {
 	if err := g.DeleteView("modal"); err != nil {
-		return err
+		return errgo.NoteMask(err, "removing modal")
 	}
 	if err := g.DeleteView("modalTitle"); err != nil {
-		return err
+		return errgo.NoteMask(err, "removing modal title")
 	}
 	if err := g.DeleteView("modalHelp"); err != nil {
-		return err
+		return errgo.NoteMask(err, "removing modal help")
 	}
 	go g.Update(func(gg *gotui.Gui) error {
-		_, err := g.SetCurrentView("send")
-		return err
+		if _, err := g.SetCurrentView("send"); err != nil {
+			return errgo.NoteMask(err, "setting send current")
+		}
+		return nil
 	})
+	t.modalOpen = false
 	return nil
 }
 
 // keybindings sets all keybindings used by the UI.
 func (t *tui) keybindings(g *gotui.Gui) error {
 	if err := g.SetKeybinding("", gotui.KeyCtrlC, gotui.ModNone, t.quit); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyPgup, gotui.ModNone, t.scrollUp); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyPgdn, gotui.ModNone, t.scrollDown); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlL, gotui.ModNone, t.redraw); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyArrowRight, gotui.ModAlt, t.worldRight); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyArrowLeft, gotui.ModAlt, t.worldLeft); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlRsqBracket, gotui.ModNone, t.activeWorldRight); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("", gotui.KeyCtrlLsqBracket, gotui.ModNone, t.activeWorldLeft); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, t.send); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, t.arrowUp); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyArrowDown, gotui.ModNone, t.arrowDown); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyHome, gotui.ModNone, t.home); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnd, gotui.ModNone, t.end); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("modal", gotui.KeyEnter, gotui.ModNone, t.closeModal); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("modal", gotui.KeyArrowUp, gotui.ModNone, t.scrollModalUp); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("modal", gotui.KeyArrowDown, gotui.ModNone, t.scrollModalDown); err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 	return nil
 }

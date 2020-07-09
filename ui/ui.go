@@ -12,7 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/juju/errgo"
 	"github.com/juju/loggo"
+	//"github.com/juju/loggo/loggocolor"
 	ansi "github.com/makyo/ansigo"
 	"github.com/makyo/gotui"
 
@@ -26,6 +28,7 @@ type tui struct {
 	g             *gotui.Gui
 	client        *client.Client
 	sent          *History
+	errs          *History
 	currView      *receivedView
 	currViewIndex int
 	views         []*receivedView
@@ -33,6 +36,7 @@ type tui struct {
 	ready         chan bool
 	title         string
 	titleLen      int
+	modalOpen     bool
 }
 
 var log = loggo.GetLogger("stimmtausch.ui")
@@ -44,7 +48,7 @@ func (t *tui) view(name string) (*receivedView, error) {
 			return v, nil
 		}
 	}
-	return nil, fmt.Errorf("receivedView %s not found", name)
+	return nil, errgo.Newf("receivedView %s not found", name)
 }
 
 // connect tells the client to connect to the provided connection string, If
@@ -67,7 +71,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			err := conn.Open()
 			if err != nil {
 				log.Errorf("unable to open connection for %s: %v", name, err)
-				return err
+				return errgo.Mask(err)
 			}
 			t.currView = v
 			t.currViewIndex = v.index
@@ -82,7 +86,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 	if v, err := g.SetView(viewName, -3, -3, -1, -1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
-			return err
+			return errgo.Mask(err)
 		}
 
 		// Prime the view with a newline, which keeps it from complaining about
@@ -118,7 +122,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		t.currView.buffer.AddPostWriteHook(func(line *HistoryLine) error {
 			fmt.Fprint(v, line.Text)
 			g.Update(func(gg *gotui.Gui) error {
-				return tv.updateRecvOrigin(t.currViewIndex, gg, t)
+				return errgo.Mask(tv.updateRecvOrigin(t.currViewIndex, gg, t))
 			})
 			return nil
 		})
@@ -130,7 +134,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 		err = conn.Open()
 		if err != nil {
 			log.Errorf("unable to open connection for %s: %v", name, err)
-			return err
+			return errgo.Mask(err)
 		}
 		t.currView.connected = conn.Connected
 		t.updateSendTitle()
@@ -141,6 +145,18 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 // postCreate finishes setting up stuff after the ui has been built for the
 // first time.
 func (t *tui) postCreate(g *gotui.Gui) error {
+	log.Tracef("setting up error listener")
+	log.Tracef("...or not, because this causes a crash on error, but I'd like this in the future.")
+	//if err := loggo.RegisterWriter("tui", loggo.NewMinimumLevelWriter(loggocolor.NewColorWriter(t.errs), loggo.WARNING)); err == nil {
+	//	t.errs.AddPostWriteHook(func(line *HistoryLine) error {
+	//		log.Tracef("got errs post write hook: %v", line)
+	//go t.createModal("Stimmtausch error", line.Text)
+	//		return nil
+	//	})
+	//} else {
+	//	log.Errorf("error setting up error handler: %v", err)
+	//}
+
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
 		if t.currView == nil || !t.currView.connected {
@@ -164,7 +180,7 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 		_, err := fmt.Fprintln(t.currView.conn, line.Text)
 		if err != nil {
 			log.Warningf("error writing to connection")
-			return err
+			return errgo.Mask(err)
 		}
 		return nil
 	})
@@ -180,24 +196,24 @@ func (t *tui) layout(g *gotui.Gui) error {
 	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
-			return err
+			return errgo.Mask(err)
 		} else {
 			for i, view := range t.views {
 				if err := view.updateRecvOrigin(i, g, t); err != nil {
-					return err
+					return errgo.Mask(err)
 				}
 			}
 		}
 		v.Editable = true
 		v.Wrap = true
 		if _, err := g.SetCurrentView("send"); err != nil {
-			return err
+			return errgo.Mask(err)
 		}
 	}
 	if v, err := g.SetView("title", 2, maxY-6, t.titleLen+3, maxY-4); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
-			return err
+			return errgo.Mask(err)
 		}
 		v.Frame = false
 		fmt.Fprint(v, " No world ")
@@ -215,9 +231,9 @@ func (t *tui) onResize(g *gotui.Gui, x, y int) error {
 	}
 	v, err := g.View(t.currView.viewName)
 	if err != nil {
-		return err
+		return errgo.Mask(err)
 	}
-	return t.redraw(g, v)
+	return errgo.Mask(t.redraw(g, v))
 }
 
 // updateSendTitle updates the title of the input buffer frame to show the
@@ -297,7 +313,7 @@ func (t *tui) switchConn(action, conn string) error {
 					continue
 				}
 				if t.views[i].hasMore {
-					return t.switchConn("switch", t.views[i].connName)
+					return errgo.Mask(t.switchConn("switch", t.views[i].connName))
 				}
 			}
 		} else if conn == "-1" {
@@ -307,14 +323,14 @@ func (t *tui) switchConn(action, conn string) error {
 					continue
 				}
 				if t.views[i].hasMore {
-					return t.switchConn("switch", t.views[i].connName)
+					return errgo.Mask(t.switchConn("switch", t.views[i].connName))
 				}
 			}
 		}
 	} else if action == "rotate" {
 		i, err := strconv.Atoi(conn)
 		if err != nil {
-			return err
+			return errgo.Mask(err)
 		}
 		log.Tracef("rotating conns %d", i)
 		t.views[t.currViewIndex].current = false
@@ -345,15 +361,15 @@ func (t *tui) switchConn(action, conn string) error {
 			t.views[t.currViewIndex].current = false
 			t.currViewIndex = newIndex
 		} else {
-			return fmt.Errorf("connection %s not found", conn)
+			return errgo.Newf("connection %s not found", conn)
 		}
 	} else {
-		return fmt.Errorf("received unexpected action %s", action)
+		return errgo.Newf("received unexpected action %s", action)
 	}
 	t.currView = t.views[t.currViewIndex]
 	for _, v := range t.views {
 		if err := v.updateRecvOrigin(t.currViewIndex, t.g, t); err != nil {
-			return err
+			return errgo.Mask(err)
 		}
 	}
 	t.updateSendTitle()
@@ -414,6 +430,10 @@ func (t *tui) listen() {
 		case "_client:allDisconnect":
 			// do we really need to do anything?
 			t.updateSendTitle()
+		case "_client:quitReady":
+			go t.g.Update(func(g *gotui.Gui) error {
+				return gotui.ErrQuit
+			})
 		case "_client:showModal":
 			res.Name = "_tui:showModal"
 			go t.client.Env.DirectDispatch(res)
@@ -427,13 +447,18 @@ func (t *tui) listen() {
 }
 
 func (t *tui) createModal(title, content string) {
+	log.Tracef("showing modal with title %s", title)
+	if t.modalOpen {
+		return
+	}
 	go t.g.Update(func(g *gotui.Gui) error {
 		maxX, maxY := g.Size()
 		if v, err := g.SetView("modal", 3, 3, maxX-4, maxY-6); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
-				return err
+				return errgo.Mask(err)
 			}
+			t.modalOpen = true
 			v.Frame = true
 			v.FrameFgColor = gotui.ColorCyan | gotui.AttrBold
 			v.Wrap = true
@@ -443,7 +468,7 @@ func (t *tui) createModal(title, content string) {
 		if v, err := g.SetView("modalTitle", 5, 2, len(title)+8, 4); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
-				return err
+				return errgo.Mask(err)
 			}
 			v.Frame = false
 			fmt.Fprintf(v, " %s ", ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ModalTitle, title))
@@ -452,14 +477,14 @@ func (t *tui) createModal(title, content string) {
 		if v, err := g.SetView("modalHelp", maxX-3-len(modalHelpText), maxY-7, maxX-6, maxY-5); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
-				return err
+				return errgo.Mask(err)
 			}
 			v.Frame = false
 			fmt.Fprint(v, ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ModalTitle, modalHelpText))
 		}
 		if _, err := g.SetCurrentView("modal"); err != nil {
 			log.Warningf("unable to set current view %+v", err)
-			return err
+			return errgo.Mask(err)
 		}
 		return nil
 	})
@@ -497,7 +522,8 @@ func (t *tui) Run(done, ready chan bool) {
 
 	log.Tracef("running UI...")
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {
-		log.Criticalf("ui unexpectedly quit: %v", err)
+		t.errs.Close()
+		log.Criticalf("ui unexpectedly quit: %s", err)
 	}
 	t.client.CloseAll()
 	done <- true
@@ -508,6 +534,7 @@ func New(c *client.Client) *tui {
 	return &tui{
 		client:   c,
 		sent:     NewHistory(c.Config.Client.UI.History),
+		errs:     NewHistory(100),
 		title:    " No world ",
 		titleLen: 10,
 	}
