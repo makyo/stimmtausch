@@ -30,6 +30,9 @@ type History struct {
 
 	// A list of functions to execute whenever the buffer is written to.
 	postWriteHooks []func(*HistoryLine) error
+
+	// Whether or not the buffer is closed.
+	closed bool
 }
 
 // add appends a line to the history, rolling a line out if necessary.
@@ -99,6 +102,9 @@ func (h *History) String() string {
 // errors that occured.
 // Fulfills io.Writer
 func (h *History) Write(line []byte) (int, error) {
+	if h.closed {
+		return -1, nil
+	}
 	log.Tracef("received %d bytes", len(line))
 	h.add(string(line))
 
@@ -120,12 +126,16 @@ func (h *History) Size() int {
 // Close does nothing, and does it splendidly.
 // Fulfills io.Closer
 func (h *History) Close() error {
+	h.closed = true
 	return nil
 }
 
 // AddPostWriteHook accepts a function to be run whenever a write to the buffer
 // succeeds.
 func (h *History) AddPostWriteHook(f func(*HistoryLine) error) {
+	if h.closed {
+		return
+	}
 	h.postWriteHooks = append(h.postWriteHooks, f)
 }
 

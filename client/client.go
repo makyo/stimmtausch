@@ -151,8 +151,10 @@ func (c *Client) listen() {
 			if err := c.Config.Reload(); err != nil {
 				log.Errorf("unable to reload config: %v; continuing as is...", err)
 			}
+		case "quit":
+			c.CloseAll()
+			go c.Env.Dispatch("_client:quitReady", "")
 		default:
-			log.Tracef("client got unknown signal result %v", res)
 			continue
 		}
 	}
