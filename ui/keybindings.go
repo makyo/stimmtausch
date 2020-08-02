@@ -25,7 +25,14 @@ func (t *tui) quit(g *gotui.Gui, v *gotui.View) error {
 func (t *tui) send(g *gotui.Gui, v *gotui.View) error {
 	buf := strings.TrimSpace(v.Buffer())
 	if len(buf) == 0 {
-		return nil
+		// A single space is often used for defaulting values; allow that, but
+		// otherwise trim the space. This is a hacky way to check, but it
+		// appears that gotui won't fill the buffer with just spaces.
+		if x, _ := v.Cursor(); x != 0 {
+			buf = " "
+		} else {
+			return nil
+		}
 	}
 	fmt.Fprint(t.sent, buf)
 	v.Clear()
