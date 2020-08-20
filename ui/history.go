@@ -33,10 +33,29 @@ type History struct {
 
 	// Whether or not the buffer is closed.
 	closed bool
+
+	// Whether or not the current line is complete.
+	lineComplete bool
+
+	// Whether or not the writer should only write on newlines
+	allowFragments bool
 }
 
 // add appends a line to the history, rolling a line out if necessary.
-func (h *History) add(line string) {
+func (h *History) add(line string) bool {
+	if h.allowFragments {
+		containsNewline := strings.Contains(line, "\n")
+		if !h.lineComplete {
+			h.appendToCurrent(line)
+			if containsNewline {
+				h.lineComplete = true
+				return true
+			} else {
+				return false
+			}
+		}
+		h.lineComplete = containsNewline
+	}
 	l := &HistoryLine{
 		Timestamp: time.Now(),
 		Text:      line,
@@ -46,6 +65,15 @@ func (h *History) add(line string) {
 		h.lines = h.lines[1 : h.max+1]
 	}
 	h.curr = len(h.lines) - 1
+	if h.allowFragments {
+		return h.lineComplete
+	}
+	return true
+}
+
+// appendToCurrent appends a string to the current line.
+func (h *History) appendToCurrent(line string) {
+	h.lines[h.curr].Text = h.lines[h.curr].Text + line
 }
 
 // Current returns the current line in the buffer.
@@ -106,14 +134,15 @@ func (h *History) Write(line []byte) (int, error) {
 		return -1, nil
 	}
 	log.Tracef("received %d bytes", len(line))
-	h.add(string(line))
+	if h.add(string(line)) {
 
-	// This currently happens synchronously and serially. Should make sure we
-	// want to do it this way or use a context.
-	for _, hook := range h.postWriteHooks {
-		err := hook(h.Current())
-		if err != nil {
-			return len(line), err
+		// This currently happens synchronously and serially. Should make sure we
+		// want to do it this way or use a context.
+		for _, hook := range h.postWriteHooks {
+			err := hook(h.Current())
+			if err != nil {
+				return len(line), err
+			}
 		}
 	}
 	return len(line), nil
@@ -140,10 +169,12 @@ func (h *History) AddPostWriteHook(f func(*HistoryLine) error) {
 }
 
 // NewHistory returns a new history buffer.
-func NewHistory(max int) *History {
+func NewHistory(max int, allowFragments bool) *History {
 	return &History{
-		curr:  0,
-		max:   max,
-		lines: []*HistoryLine{},
+		curr:           0,
+		max:            max,
+		lines:          []*HistoryLine{},
+		lineComplete:   true,
+		allowFragments: allowFragments,
 	}
 }
