@@ -14,7 +14,7 @@ import (
 
 	"github.com/juju/errgo"
 	"github.com/juju/loggo"
-	//"github.com/juju/loggo/loggocolor"
+	"github.com/juju/loggo/loggocolor"
 	ansi "github.com/makyo/ansigo"
 	"github.com/makyo/gotui"
 
@@ -103,7 +103,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			displayName: conn.GetDisplayName(),
 			conn:        conn,
 			viewName:    viewName,
-			buffer:      NewHistory(t.client.Config.Client.UI.Scrollback),
+			buffer:      NewHistory(t.client.Config.Client.UI.Scrollback, false),
 			current:     true,
 			index:       len(t.views),
 		}
@@ -145,17 +145,19 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 // postCreate finishes setting up stuff after the ui has been built for the
 // first time.
 func (t *tui) postCreate(g *gotui.Gui) error {
-	log.Tracef("setting up error listener")
-	log.Tracef("...or not, because this causes a crash on error, but I'd like this in the future.")
-	//if err := loggo.RegisterWriter("tui", loggo.NewMinimumLevelWriter(loggocolor.NewColorWriter(t.errs), loggo.WARNING)); err == nil {
-	//	t.errs.AddPostWriteHook(func(line *HistoryLine) error {
-	//		log.Tracef("got errs post write hook: %v", line)
-	//go t.createModal("Stimmtausch error", line.Text)
-	//		return nil
-	//	})
-	//} else {
-	//	log.Errorf("error setting up error handler: %v", err)
-	//}
+	if t.client.Config.Client.Syslog.LogLevel != "TRACE" {
+		log.Tracef("setting up error listener")
+		if err := loggo.RegisterWriter("tui", loggo.NewMinimumLevelWriter(loggocolor.NewColorWriter(t.errs), loggo.WARNING)); err == nil {
+			t.errs.AddPostWriteHook(func(line *HistoryLine) error {
+				t.createModal("Stimmtausch error", line.Text)
+				return nil
+			})
+		} else {
+			log.Errorf("error setting up error handler: %v", err)
+		}
+	} else {
+		log.Tracef("not setting up error listener because I expect you're watching logs")
+	}
 
 	log.Tracef("setting up sent buffer to write to active connection")
 	t.sent.AddPostWriteHook(func(line *HistoryLine) error {
@@ -523,7 +525,9 @@ func (t *tui) Run(done, ready chan bool) {
 	log.Tracef("running UI...")
 	if err := t.g.MainLoop(); err != nil && err != gotui.ErrQuit {
 		t.errs.Close()
-		log.Criticalf("ui unexpectedly quit: %s", err)
+		log.Criticalf("ui unexpectedly quit: %s: %s", err, errgo.Details(err))
+		fmt.Printf("Oh no! Something went very wrong :( Here's all we know: %s: %s\n", err, errgo.Details(err))
+		fmt.Println("Your connections will all close gracefully and any logs properly closed out.")
 	}
 	t.client.CloseAll()
 	done <- true
@@ -533,8 +537,8 @@ func (t *tui) Run(done, ready chan bool) {
 func New(c *client.Client) *tui {
 	return &tui{
 		client:   c,
-		sent:     NewHistory(c.Config.Client.UI.History),
-		errs:     NewHistory(100),
+		sent:     NewHistory(c.Config.Client.UI.History, false),
+		errs:     NewHistory(100, true),
 		title:    " No world ",
 		titleLen: 10,
 	}

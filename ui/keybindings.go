@@ -199,7 +199,9 @@ func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
 	fmt.Fprint(v, t.currView.buffer.String())
 	// XXX This doesn't preserve, and I don't know why. Drat.
 	// https://github.com/makyo/stimmtausch/issues/46
-	v.SetOrigin(x, y)
+	if err = v.SetOrigin(x, y); err != nil {
+		return errgo.NoteMask(err, "setting origin in redraw")
+	}
 	g.Update(func(gg *gotui.Gui) error {
 		return errgo.Mask(t.currView.updateRecvOrigin(t.currViewIndex, gg, t))
 	})
