@@ -8,7 +8,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/juju/errgo"
 	"github.com/makyo/gotui"
@@ -18,26 +17,6 @@ import (
 // the programm) says the main loop should stop running.
 func (t *tui) quit(g *gotui.Gui, v *gotui.View) error {
 	return gotui.ErrQuit
-}
-
-// send sends whatever line is currently active in the input View to the
-// sent buffer (and thus to the world via a post-write hook).
-func (t *tui) send(g *gotui.Gui, v *gotui.View) error {
-	buf := strings.TrimSpace(v.Buffer())
-	if len(buf) == 0 {
-		// A single space is often used for defaulting values; allow that, but
-		// otherwise trim the space. This is a hacky way to check, but it
-		// appears that gotui won't fill the buffer with just spaces.
-		if x, _ := v.Cursor(); x != 0 {
-			buf = " "
-		} else {
-			return nil
-		}
-	}
-	fmt.Fprint(t.sent, buf)
-	v.Clear()
-	v.SetCursor(0, 0)
-	return nil
 }
 
 // arrowUp moves the cursor up in the input View. If there is text for the
@@ -189,6 +168,9 @@ func (t *tui) scrollModalDown(g *gotui.Gui, v *gotui.View) error {
 
 // redraw forces a rerender of the current view in order to ensure that everything is in order
 func (t *tui) redraw(g *gotui.Gui, v *gotui.View) error {
+	if t.currView == nil {
+		return nil
+	}
 	log.Debugf("redrawing")
 	v, err := g.View(t.currView.viewName)
 	if err != nil {
@@ -275,6 +257,9 @@ func (t *tui) keybindings(g *gotui.Gui) error {
 		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModNone, t.send); err != nil {
+		return errgo.Mask(err)
+	}
+	if err := g.SetKeybinding("send", gotui.KeyEnter, gotui.ModAlt, t.forceNewline); err != nil {
 		return errgo.Mask(err)
 	}
 	if err := g.SetKeybinding("send", gotui.KeyArrowUp, gotui.ModNone, t.arrowUp); err != nil {

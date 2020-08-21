@@ -25,6 +25,9 @@ type Server struct {
 
 	// The type of server (MUCK, MUSH, etc...) this is.
 	ServerType string `yaml:"type" toml:"type"`
+
+	// The maximum length of a buffer
+	MaxBuffer uint `yaml:"max_buffer"m toml:"max_buffer"`
 }
 
 // ServerType represents a type of server (MUCK, MUSH, etc...), which mostly
