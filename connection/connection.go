@@ -447,6 +447,11 @@ func (c *Connection) GetDisplayName() string {
 	return c.world.DisplayName
 }
 
+// GetMaxBuffer returns the max buffer lengh for a server.
+func (c *Connection) GetMaxBuffer() uint {
+	return c.server.MaxBuffer
+}
+
 // NewConnection creates a new conneciton with the given world. One can
 // also specify whether or not to use SSL, allow insecure SSL certs, and
 // whether to log all output by default.

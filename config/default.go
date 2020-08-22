@@ -28,6 +28,7 @@ stimmtausch:
       ssl: true
       insecure: true
       type: muck
+      max_buffer: 1024
     spindizzy:
       host: muck.spindizzy.org
       port: 7073

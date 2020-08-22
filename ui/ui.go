@@ -104,6 +104,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 			conn:        conn,
 			viewName:    viewName,
 			buffer:      NewHistory(t.client.Config.Client.UI.Scrollback, false),
+			maxBuffer:   conn.GetMaxBuffer(),
 			current:     true,
 			index:       len(t.views),
 		}
@@ -211,6 +212,21 @@ func (t *tui) layout(g *gotui.Gui) error {
 		if _, err := g.SetCurrentView("send"); err != nil {
 			return errgo.Mask(err)
 		}
+		oldEditor := v.Editor
+		v.Editor = gotui.EditorFunc(func(v *gotui.View, key gotui.Key, ch rune, mod gotui.Modifier) {
+			oldEditor.Edit(v, key, ch, mod)
+			go g.Update(func(gg *gotui.Gui) error {
+				return t.updateCharCount(gg, v)
+			})
+		})
+	}
+	if v, err := g.SetView("charcount", maxX-16, maxY-2, maxX-2, maxY); err != nil {
+		if err != gotui.ErrUnknownView {
+			log.Warningf("unable to create view %+v", err)
+			return errgo.Mask(err)
+		}
+		v.Frame = false
+		fmt.Fprint(v, strings.Repeat("─", 10)+" 0 ")
 	}
 	if v, err := g.SetView("title", 2, maxY-6, t.titleLen+3, maxY-4); err != nil {
 		if err != gotui.ErrUnknownView {

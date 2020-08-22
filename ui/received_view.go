@@ -28,6 +28,9 @@ type receivedView struct {
 	// The connection's output buffer
 	buffer *History
 
+	// The maximum number of characters the world will accept
+	maxBuffer uint
+
 	// Whether or not the world is currently active.
 	current bool
 
