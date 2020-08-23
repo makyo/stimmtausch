@@ -82,6 +82,10 @@ Values
 
       Example: `type: muck`
 
+    * `max_buffer` (*number*) - The maximum buffer size the server will accept before cutting off messages.
+
+      Example: `max_buffer: 1024`
+
 **Default**
 
 ```yaml
@@ -93,23 +97,27 @@ stimmtausch:
             ssl: true
             insecure: true
             type: muck
+            max_buffer: 2048
         furrymuck:
             host: furrymuck.com
             port: 8899
             ssl: true
             insecure: true
             type: muck
+            max_buffer: 2048
         tapestries:
             host: tapestries.fur.com
             port: 6699
             ssl: true
             insecure: true
             type: muck
+            max_buffer: 2048
         spindizzy:
             host: muck.spindizzy.org
             port: 7073
             ssl: true
             type: muck
+            max_buffer: 2048
 ```
 
 ### Worlds
