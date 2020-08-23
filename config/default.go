@@ -16,14 +16,14 @@ stimmtausch:
       ssl: true
       insecure: true
       type: muck
-	  max_buffer: 2048
+      max_buffer: 2048
     furrymuck:
       host: furrymuck.com
       port: 8899
       ssl: true
       insecure: true
       type: muck
-	  max_buffer: 2048
+      max_buffer: 2048
     tapestries:
       host: tapestries.fur.com
       port: 6699
@@ -36,7 +36,7 @@ stimmtausch:
       port: 7073
       ssl: true
       type: muck
-	  max_buffer: 2048
+      max_buffer: 2048
 
   # Settings pertaining to running the client, but not necessarily stuff the user
   # would want to worry about.
