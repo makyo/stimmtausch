@@ -212,6 +212,10 @@ func (c *Connection) readToConn() {
 				continue
 			}
 			text := scanner.Text()
+			if len(text) == 0 {
+				log.Infof("got an empty string from the buffer, which is weird.")
+				continue
+			}
 			if text[0] == '/' {
 				s := strings.SplitN(text[1:], " ", 2)
 				if len(s) == 1 {
