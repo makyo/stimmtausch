@@ -5,7 +5,7 @@ author: Maddy
 excerpt: In which Maddy helps our buffer-busting friends.
 ---
 
-<script id="asciicast-etrki2gwV9hTvm8HnT3UOz9vv" src="https://asciinema.org/a/etrki2gwV9hTvm8HnT3UOz9vv.js?cols=112" async></script>
+<script id="asciicast-etrki2gwV9hTvm8HnT3UOz9vv" src="https://asciinema.org/a/etrki2gwV9hTvm8HnT3UOz9vv.js" data-cols="112" async></script>
 
 Lookie there! Now you can see how much you've typed and whether or not you're going over your buffer! Not only that, but you can now enter more than one line at a time!
 
