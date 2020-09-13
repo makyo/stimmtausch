@@ -16,7 +16,7 @@ func TestBuiltins(t *testing.T) {
 		e.AddListener("l", listener)
 
 		Convey("There are passthrough builtins", func() {
-			passthroughTests := []string{"_", "connect", "disconnect"}
+			passthroughTests := []string{"_", "connect"}
 			for _, m := range passthroughTests {
 				go e.Dispatch(m, "rose tyler")
 				result := <-listener
