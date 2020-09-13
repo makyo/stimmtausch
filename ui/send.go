@@ -13,17 +13,25 @@ import (
 // send sends whatever line is currently active in the input View to the
 // sent buffer (and thus to the world via a post-write hook).
 func (t *tui) send(g *gotui.Gui, v *gotui.View) error {
-	for i, l := range v.BufferLines() {
+	lines := v.BufferLines()
+	for i, l := range lines {
 		buf := strings.TrimSpace(l)
-		if i == 0 && len(buf) == 0 {
+		if i != len(lines)-1 && len(buf) == 0 {
 			// A single space is often used for defaulting values; allow that, but
 			// otherwise trim the space. This is a hacky way to check, but it
 			// appears that gotui won't fill the buffer with just spaces.
+			// If it's the last line in the buffer lines, then it's likely a dropped
+			// space. See below.
 			if x, _ := v.Cursor(); x != 0 {
 				buf = " "
 			} else {
 				return nil
 			}
+		}
+		if len(buf) == 0 {
+			// Occasionally, by vagaries of gotui, an empty line will be sent.
+			// Ignore that.
+			continue
 		}
 		fmt.Fprint(t.sent, buf)
 		time.Sleep(100 * time.Millisecond)
