@@ -15,7 +15,7 @@ var HelpMessages = map[string]Help{
 			"<command>": "show help for <command> (without the `/`)",
 		},
 		Overview:    "Give help on an internal command",
-		Description: "Find out more information on topics in Stimmtausch by using the /help command. For instance, to learn about the `/log` command, type `/help log`.\n\n`Available topics:`\n\n{HELPTOPICS}",
+		Description: "Find out more information on topics in Stimmtausch by using the /help command. For instance, to learn about the `/log` command, type `/help log`.\n\n    Available topics:\n\n    {HELPTOPICS}",
 	},
 
 	"log": Help{
@@ -58,18 +58,30 @@ var HelpMessages = map[string]Help{
 		},
 		Overview:    "Command to connect to worlds.",
 		Description: "Connecting to worlds in Stimmtausch is accomplished with the /connect command. You can connect to worlds named in your configuration files.", // Additionally, you can connect to servers named in your configuration without user information, or to a specified address and port. In each of the latter two cases, you will be given a temporary world name which you can use with other commands.
-		SeeAlso:     "`/disconnect`, `/fg`",
+		SeeAlso:     "`/c` (shortcut for `/connect`), `/disconnect`, `/fg`",
 	},
 
 	"disconnect": Help{
 		Name:      "/disconnect",
 		ShortDesc: "disconnect from worlds",
 		Synopsis: map[string]string{
-			"<world>": "disconnect from the world specified",
+			"[-r]":         "disconnect from the current world",
+			"[-r] <world>": "disconnect from the world specified",
 		},
 		Overview:    "Command to disconnect from worlds.",
-		Description: "Disconnecting from worlds in Stimmtausch is accomplished with the /disconnect command. It accepts a world name.",
-		SeeAlso:     "`/connect`",
+		Description: "Disconnecting from worlds in Stimmtausch is accomplished with the /disconnect command. It accepts a world name. Passing `-r` will remove the world from the world list as well.",
+		SeeAlso:     "`/dc` (shortcut for `/disconnect`), `/connect`, `/remove`",
+	},
+
+	"remove": Help{
+		Name:      "/remove",
+		ShortDesc: "remove the world from the UI",
+		Synopsis: map[string]string{
+			"<world>": "removes the current world from the UI's world list",
+		},
+		Overview:    "Command to remove the current world from the UI's world list",
+		Description: "This command will remove the current world from the world list in the UI. It will do so whether or not the world is currently connected. There is currently no way to add that world back in, so use with care!",
+		SeeAlso:     "`/disconnect -r`",
 	},
 
 	"quit": Help{

@@ -144,9 +144,22 @@ func (c *Client) listen() {
 			if len(res.Payload) == 0 {
 				continue
 			}
+			world := res.Payload[0]
+			remove := false
+			if world == "-r" {
+				if len(res.Payload) != 2 {
+					log.Errorf("missing world in disconnect command: %v", res.Payload)
+					continue
+				}
+				remove = true
+				world = res.Payload[1]
+			}
 			res.Name = "_client:disconnect"
-			c.Close(res.Payload[0])
+			c.Close(world)
 			go c.Env.DirectDispatch(res)
+			if remove {
+				go c.Env.Dispatch("_client:removeWorld", world)
+			}
 		case "reload":
 			if err := c.Config.Reload(); err != nil {
 				log.Errorf("unable to reload config: %v; continuing as is...", err)

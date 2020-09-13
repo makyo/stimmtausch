@@ -258,52 +258,57 @@ func (t *tui) onResize(g *gotui.Gui, x, y int) error {
 // world list with the active world and inactive worlds specified differently.
 func (t *tui) updateSendTitle() {
 	_, maxY := t.g.Size()
-	conns := make([]string, len(t.views))
-	sep := " | "
-	t.titleLen = 0 - len(sep) + 2
-	for i, v := range t.views {
-		title := v.displayName
-		if v.hasMore {
-			title = fmt.Sprintf("%s (+%d)", v.displayName, v.more)
-		}
-		t.titleLen += len(title) + len(sep)
-		c, ok := t.client.Conn(v.connName)
-		if !ok {
-			continue
-		}
-		connected := c.Connected
-		v.connected = connected
-		if v.current {
-			if connected {
-				if v.hasMore {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.ActiveMore, title)
+	if len(t.views) == 0 {
+		t.title = "No world"
+		t.titleLen = len(t.title) + 2
+	} else {
+		conns := make([]string, len(t.views))
+		sep := " | "
+		t.titleLen = 0 - len(sep) + 2
+		for i, v := range t.views {
+			title := v.displayName
+			if v.hasMore {
+				title = fmt.Sprintf("%s (+%d)", v.displayName, v.more)
+			}
+			t.titleLen += len(title) + len(sep)
+			c, ok := t.client.Conn(v.connName)
+			if !ok {
+				continue
+			}
+			connected := c.Connected
+			v.connected = connected
+			if v.current {
+				if connected {
+					if v.hasMore {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.ActiveMore, title)
+					} else {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, title)
+					}
 				} else {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Active, title)
+					if v.hasMore {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
+					} else {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, title)
+					}
 				}
 			} else {
-				if v.hasMore {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
+				if connected {
+					if v.hasMore {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.InactiveMore, title)
+					} else {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, title)
+					}
 				} else {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedActive, title)
-				}
-			}
-		} else {
-			if connected {
-				if v.hasMore {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.InactiveMore, title)
-				} else {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Inactive, title)
-				}
-			} else {
-				if v.hasMore {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
-				} else {
-					conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, title)
+					if v.hasMore {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.DisconnectedMore, title)
+					} else {
+						conns[i] = ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.SendTitle.Disconnected, title)
+					}
 				}
 			}
 		}
+		t.title = strings.Join(conns, sep)
 	}
-	t.title = strings.Join(conns, sep)
 	log.Tracef("setting title to %s", t.title)
 	if v, err := t.g.SetView("title", 1, maxY-6, t.titleLen+3, maxY-4); err == nil {
 		t.g.Update(func(_ *gotui.Gui) error {
@@ -394,6 +399,35 @@ func (t *tui) switchConn(action, conn string) error {
 	return nil
 }
 
+// removeWorld removes a world from the UI.
+func (t *tui) removeWorld(world string) error {
+	var r *receivedView
+	for i, v := range t.views {
+		if v.connName == world {
+			r = v
+			t.views = append(t.views[:i], t.views[i+1:]...)
+			i++
+			if len(t.views) > 0 {
+				t.switchConn("rotate", "1")
+			} else {
+				t.currView = nil
+			}
+			break
+		}
+	}
+	if r != nil {
+		log.Infof("attempting to removew view %s", r.viewName)
+		go t.g.Update(func(g *gotui.Gui) error {
+			if err := g.DeleteView(r.viewName); err != nil {
+				log.Errorf("unable to delete view %s: %v", r.viewName, err)
+			}
+			t.updateSendTitle()
+			return nil
+		})
+	}
+	return nil
+}
+
 // listen listens for events from the signal environment, then does nothing (but
 // does it splendidly)
 func (t *tui) listen() {
@@ -412,10 +446,10 @@ func (t *tui) listen() {
 		case "disconnect", "dc":
 			// If it's a disconnect without a payload, redispatch with the
 			// current connection's name.
-			if len(res.Payload) != 0 {
+			if (len(res.Payload) == 1 && res.Payload[0] != "-r") || len(res.Payload) != 0 || t.currView == nil {
 				continue
 			}
-			res.Payload = []string{t.currView.connName}
+			res.Payload = append(res.Payload, t.currView.connName)
 			log.Tracef("disconnecting current world %+v", res)
 			go t.client.Env.DirectDispatch(res)
 		case "help":
@@ -457,6 +491,13 @@ func (t *tui) listen() {
 			go t.client.Env.DirectDispatch(res)
 		case "_tui:showModal":
 			t.createModal(res.Payload[0], res.Payload[1])
+		case "_client:removeWorld", "remove", "r":
+			if len(res.Payload) != 1 {
+				log.Warningf("tried to remove a world without an argument")
+			}
+			if err := t.removeWorld(res.Payload[0]); err != nil {
+				log.Errorf("unable to remove world %s: %v", res.Payload[0], err)
+			}
 		default:
 			log.Tracef("got unknown signal result %v", res)
 			continue

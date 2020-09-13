@@ -24,8 +24,10 @@ var builtins = map[string]func(string) ([]string, error){
 	// Connections
 	"connect":    passthrough,
 	"c":          passthrough,
-	"disconnect": passthrough,
-	"dc":         passthrough,
+	"disconnect": partsPassthrough,
+	"dc":         partsPassthrough,
+	"remove":     passthrough,
+	"r":          passthrough,
 	"quit":       passthrough,
 
 	// Logging
@@ -45,6 +47,7 @@ var builtins = map[string]func(string) ([]string, error){
 	"_client:disconnected":    passthrough,
 	"_client:allDisconnected": passthrough,
 	"_client:showModal":       titleSplit,
+	"_client:removeWorld":     passthrough,
 	"_client:quitReady":       passthrough,
 }
 
