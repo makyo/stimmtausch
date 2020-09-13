@@ -56,6 +56,13 @@ func textSeeAlso(seeAlso string) string {
 }
 
 func textDescription(description string) string {
+	if strings.Contains(description, "{HELPTOPICS}") {
+		description = strings.ReplaceAll(description, "{HELPTOPICS}", textTopics())
+	}
+	return refer(description)
+}
+
+func textTopics() string {
 	topics := []string{}
 	for cmd, h := range HelpMessages {
 		topics = append(topics, fmt.Sprintf("    \t%s\t%s", ansi.MaybeApplyWithReset("cyan", cmd), h.ShortDesc))

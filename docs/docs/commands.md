@@ -12,8 +12,11 @@ As with TinyFugue, one communicates with Stimmtausch via commands starting with 
 `/connect [connectStr]`, `/c [connectStr]`
 :   Connect to the specified world/server/connection string. The argument is required
 
-`/disconnect [connectionName]`, `/dc [connectionName]`
-:   Disconnect from the specified connection. If no argument is provided, it disconnects from the current world.
+`/disconnect [-r] [connectionName]`, `/dc [-r] [connectionName]`
+:   Disconnect from the specified connection. If no world is provided, it disconnects from the current world. If `-r` is provided, it also removes the world from the UI.
+
+`/remove [world]`, `/r [world]`
+:   Remove the current world from the UI. **Warning:** this does not disconnect the world, and there is no way to re-attach a world to the UI yet, so use with care. Provided mostly for removing stale, disconnected worlds from the UI.
 
 `/fg [directionOrConnectionName]`
 :   Switch to the given world. If called as `/fg <` or `/fg >`, it switches one world in the given direction. As a shortcut for those, you can also use `/<` or `/>`. `/fg` without a direction or connection is equivalent to `/]` below.
