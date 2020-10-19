@@ -83,7 +83,7 @@ func (t *tui) connect(name string, g *gotui.Gui) error {
 
 	viewName := fmt.Sprintf("recv%d", len(t.views))
 	log.Tracef("building received view %s", viewName)
-	if v, err := g.SetView(viewName, -3, -3, -1, -1); err != nil {
+	if v, err := maybeSetView(viewName, -3, -3, -1, -1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return errgo.Mask(err)
@@ -196,7 +196,7 @@ func (t *tui) postCreate(g *gotui.Gui) error {
 // layout acts as the layout manager for the gotui.Gui, creating views.
 func (t *tui) layout(g *gotui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
+	if v, err := maybeSetView("send", 0, maxY-5, maxX-1, maxY-1); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return errgo.Mask(err)
@@ -220,7 +220,7 @@ func (t *tui) layout(g *gotui.Gui) error {
 			})
 		})
 	}
-	if v, err := g.SetView("charcount", maxX-16, maxY-2, maxX-2, maxY); err != nil {
+	if v, err := maybeSetView("charcount", maxX-16, maxY-2, maxX-2, maxY); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return errgo.Mask(err)
@@ -228,7 +228,7 @@ func (t *tui) layout(g *gotui.Gui) error {
 		v.Frame = false
 		fmt.Fprint(v, strings.Repeat("─", 10)+" 0 ")
 	}
-	if v, err := g.SetView("title", 2, maxY-6, t.titleLen+3, maxY-4); err != nil {
+	if v, err := maybeSetView("title", 2, maxY-6, t.titleLen+3, maxY-4); err != nil {
 		if err != gotui.ErrUnknownView {
 			log.Warningf("unable to create view %+v", err)
 			return errgo.Mask(err)
@@ -310,7 +310,7 @@ func (t *tui) updateSendTitle() {
 		t.title = strings.Join(conns, sep)
 	}
 	log.Tracef("setting title to %s", t.title)
-	if v, err := t.g.SetView("title", 1, maxY-6, t.titleLen+3, maxY-4); err == nil {
+	if v, err := maybeSetView("title", 1, maxY-6, t.titleLen+3, maxY-4); err == nil {
 		t.g.Update(func(_ *gotui.Gui) error {
 			v.Clear()
 			fmt.Fprintf(v, " %s ", t.title)
@@ -494,6 +494,7 @@ func (t *tui) listen() {
 		case "_client:removeWorld", "remove", "r":
 			if len(res.Payload) != 1 {
 				log.Warningf("tried to remove a world without an argument")
+				continue
 			}
 			if err := t.removeWorld(res.Payload[0]); err != nil {
 				log.Errorf("unable to remove world %s: %v", res.Payload[0], err)
@@ -512,7 +513,7 @@ func (t *tui) createModal(title, content string) {
 	}
 	go t.g.Update(func(g *gotui.Gui) error {
 		maxX, maxY := g.Size()
-		if v, err := g.SetView("modal", 3, 3, maxX-4, maxY-6); err != nil {
+		if v, err := maybeSetView("modal", 3, 3, maxX-4, maxY-6); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
 				return errgo.Mask(err)
@@ -524,7 +525,7 @@ func (t *tui) createModal(title, content string) {
 			v.WordWrap = true
 			fmt.Fprint(v, content)
 		}
-		if v, err := g.SetView("modalTitle", 5, 2, len(title)+8, 4); err != nil {
+		if v, err := maybeSetView("modalTitle", 5, 2, len(title)+8, 4); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
 				return errgo.Mask(err)
@@ -533,7 +534,7 @@ func (t *tui) createModal(title, content string) {
 			fmt.Fprintf(v, " %s ", ansi.MaybeApplyWithReset(t.client.Config.Client.UI.Colors.ModalTitle, title))
 		}
 		modalHelpText := " Scroll: ↑/↓ | Close: <Enter> "
-		if v, err := g.SetView("modalHelp", maxX-3-len(modalHelpText), maxY-7, maxX-6, maxY-5); err != nil {
+		if v, err := maybeSetView("modalHelp", maxX-3-len(modalHelpText), maxY-7, maxX-6, maxY-5); err != nil {
 			if err != gotui.ErrUnknownView {
 				log.Warningf("unable to create modal view %+v", err)
 				return errgo.Mask(err)

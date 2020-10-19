@@ -52,11 +52,9 @@ type receivedView struct {
 func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui, t *tui) error {
 	maxX, maxY := g.Size()
 	recvX0 := (maxX * index) - (maxX * v.index)
-	if vv, err := g.SetView(v.viewName, recvX0-1, -1, recvX0+maxX, maxY-5); err != nil {
-		log.Errorf("tried to set view to an invalid point (%d, %d) (%d %d)", recvX0-1, -1, recvX0+maxX, maxY-5)
-		// return errgo.Mask(err)
-		// Until https://github.com/makyo/stimmtausch/issues/115 is addressed, return nil.
-		return nil
+	if vv, err := maybeSetView(v.viewName, recvX0-1, -1, recvX0+maxX, maxY-5); err != nil {
+		log.Warningf("unable to set view: %v", err)
+		return errgo.Mask(err)
 	} else {
 		g.Update(func(gg *gotui.Gui) error {
 			lines := len(vv.ViewBufferLines())
