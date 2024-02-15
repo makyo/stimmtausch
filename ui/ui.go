@@ -549,6 +549,17 @@ func (t *tui) createModal(title, content string) {
 	})
 }
 
+// GetMaxWidth returns the max requested width (or 100%).
+func (t *tui) GetMaxWidth() int {
+	maxX, _ := t.g.Size()
+	maxWidth := t.client.Config.Client.UI.MaxWidth
+	log.Debugf("maxX is %d and maxWidth is %d", maxX, maxWidth)
+	if maxWidth <= 0 || maxWidth > maxX {
+		maxWidth = maxX
+	}
+	return maxWidth
+}
+
 // Run creates the UI and starts the mainloop.
 func (t *tui) Run(done, ready chan bool) {
 	t.ready = ready

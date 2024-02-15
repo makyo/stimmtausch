@@ -53,6 +53,9 @@ type UI struct {
 	// How many lines of history (data sent) to keep in memory.
 	History int
 
+	// How many columns to restrict the output view to.
+	MaxWidth int `yaml:"max_width" toml:"max_width"`
+
 	// Whether or not to use a unified history buffer for all
 	// connections, or one per.
 	// TODO

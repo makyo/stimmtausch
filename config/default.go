@@ -37,6 +37,11 @@ stimmtausch:
       ssl: true
       type: muck
       max_buffer: 2048
+    post-self:
+      host: muck.post-self.ink
+      port: 4201
+      ssl: false
+      max_buffer: 4096
 
   # Settings pertaining to running the client, but not necessarily stuff the user
   # would want to worry about.
@@ -88,6 +93,9 @@ stimmtausch:
       # Whether or not to keep a separate history buffer for each connection
       # or to have one history boffer for all connections.
       unified_history_buffer: true
+
+      # How wide to restrict the output text width to (0 for full width)
+      max_width: 0
 
       # Whether or not to use Vim-style key bindings
       vim_keybindings: false

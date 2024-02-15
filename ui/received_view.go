@@ -51,8 +51,13 @@ type receivedView struct {
 // how many lines are in the buffer.
 func (v *receivedView) updateRecvOrigin(index int, g *gotui.Gui, t *tui) error {
 	maxX, maxY := g.Size()
+	maxWidth := t.GetMaxWidth()
+	if maxWidth <= 0 || maxWidth > maxX {
+		maxWidth = maxX
+	}
+	log.Debugf("setting recv max width to %d", maxWidth)
 	recvX0 := (maxX * index) - (maxX * v.index)
-	if vv, err := g.SetView(v.viewName, recvX0-1, -1, recvX0+maxX, maxY-5); err != nil {
+	if vv, err := g.SetView(v.viewName, recvX0-1, -1, recvX0+maxWidth, maxY-5); err != nil {
 		log.Errorf("tried to set view to an invalid point (%d, %d) (%d %d)", recvX0-1, -1, recvX0+maxX, maxY-5)
 		// return errgo.Mask(err)
 		// Until https://github.com/makyo/stimmtausch/issues/115 is addressed, return nil.
