@@ -494,8 +494,10 @@ func (t *tui) listen() {
 		case "_client:removeWorld", "remove", "r":
 			if len(res.Payload) != 1 {
 				log.Warningf("tried to remove a world without an argument")
+				continue
 			}
-			if err := t.removeWorld(res.Payload[0]); err != nil {
+			world := res.Payload[0]
+			if err := t.removeWorld(world); err != nil {
 				log.Errorf("unable to remove world %s: %v", res.Payload[0], err)
 			}
 		default:
