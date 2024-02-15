@@ -30,6 +30,7 @@ var (
 	log    = loggo.GetLogger("stimmtausch.connection")
 	userRe = regexp.MustCompile("\\$username")
 	passRe = regexp.MustCompile("\\$password")
+	zwnjRe = regexp.MustCompile("\u200c$")
 )
 
 // Hardcoded client settings.
@@ -174,6 +175,7 @@ func (c *Connection) connect() error {
 		log.Warningf("unable to set keep alive period for %s - you may get booted. %v", c.name, err)
 	}
 	c.connection = conn
+	fmt.Fprintln(c.connection, "\xff\xfdCHARSET unicode")
 	log.Debugf("connected to server for %s", c.name)
 
 	if c.server.SSL {
@@ -239,7 +241,8 @@ func (c *Connection) readToFile() {
 	reader := bufio.NewReader(c.connection)
 	tp := textproto.NewReader(reader)
 	for {
-		line, err := tp.ReadLine()
+		bareLine, err := tp.ReadLine()
+		line := strings.ToValidUTF8(bareLine, "")
 		if err != nil {
 			if !c.Connected {
 				return
@@ -272,6 +275,8 @@ func (c *Connection) readToFile() {
 				logAnyway = trigger.LogAnyway
 			}
 		}
+		// Some worlds end a line with a ZWNJ (\u200c) in order to aid in triggers in wrapped text. Remove before printing
+		line = zwnjRe.ReplaceAllString(line, "")
 		if len(errs) != 0 {
 			log.Errorf("errors encountered processing triggers: %q", errs)
 		}
