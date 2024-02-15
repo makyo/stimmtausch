@@ -1,5 +1,5 @@
 name: stimmtausch
-base: core18
+base: core22 # the base snap is the execution environment for this snap
 version: git
 summary: Terminal-based MU* client
 description: |
@@ -28,8 +28,6 @@ apps:
 parts:
   stimmtausch:
     plugin: go
-    go-packages:
-      - github.com/makyo/stimmtausch
-    source: .
+    source: https://github.com/makyo/stimmtausch
     source-type: git
-    source-branch: master
+    build-packages: [golang-go]
