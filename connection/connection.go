@@ -48,7 +48,7 @@ const (
 	fifoReadDelay = 100 * time.Millisecond
 
 	// The keepalive setting for connections. See note below.
-	keepalive = 15 * time.Minute
+	keepalive = 1 * time.Minute
 )
 
 // getTimestamp gets the current time in the format specified above.
